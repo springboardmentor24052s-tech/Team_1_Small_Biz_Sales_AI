@@ -4,7 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -13,13 +13,29 @@ from app.db.session import get_db
 from app.models.auth import AuthSession
 from app.models.identity import RoleCode, User, UserStatus
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+bearer_scheme = HTTPBearer(
+    auto_error=False,
+    scheme_name="BearerAuth",
+    description="Paste the access token returned by POST /api/v1/auth/login.",
+)
 DBSession = Annotated[Session, Depends(get_db)]
+
+
+def get_bearer_token(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+) -> str:
+    if credentials is None or credentials.scheme.casefold() != "bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bearer access token is required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return credentials.credentials
 
 
 def get_current_user(
     db: DBSession,
-    token: Annotated[str, Depends(oauth2_scheme)],
+    token: Annotated[str, Depends(get_bearer_token)],
 ) -> User:
     payload = decode_jwt(token, "access")
     try:

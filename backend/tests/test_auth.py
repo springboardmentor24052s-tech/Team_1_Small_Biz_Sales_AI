@@ -3,6 +3,19 @@ from fastapi.testclient import TestClient
 from tests.conftest import TEST_PASSWORD, auth_header
 
 
+def test_openapi_uses_bearer_token_authorization(client: TestClient):
+    schema = client.get("/api/v1/openapi.json").json()
+    bearer = schema["components"]["securitySchemes"]["BearerAuth"]
+
+    assert bearer == {
+        "type": "http",
+        "description": "Paste the access token returned by POST /api/v1/auth/login.",
+        "scheme": "bearer",
+    }
+    assert {"BearerAuth": []} in schema["paths"]["/api/v1/users/me"]["get"]["security"]
+    assert "security" not in schema["paths"]["/api/v1/auth/login"]["post"]
+
+
 def test_registration_verification_login_refresh_and_logout(client: TestClient):
     register = client.post(
         "/api/v1/auth/register",

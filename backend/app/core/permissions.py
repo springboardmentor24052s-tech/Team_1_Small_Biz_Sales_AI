@@ -26,10 +26,15 @@ class Permissions:
     SALES_UPDATE_STORE = "sales.update.store"
     SALES_UPDATE_OWN = "sales.update.own"
     SALES_VOID = "sales.void"
+    INVENTORY_READ_ALL = "inventory.read.all"
+    INVENTORY_READ_STORE = "inventory.read.store"
+    INVENTORY_UPDATE_STORE = "inventory.update.store"
     INVOICES_READ = "invoices.read"
     INVOICES_MANAGE = "invoices.manage"
     REPORTS_EXPORT_BUSINESS = "reports.export.business"
     REPORTS_EXPORT_OPERATIONAL = "reports.export.operational"
+    CUSTOMERS_READ_ALL = "customers.read.all"
+    CUSTOMERS_READ_SUMMARY = "customers.read.summary"
     CUSTOMERS_READ_ASSIGNED = "customers.read.assigned"
     USERS_READ = "users.read"
     USERS_MANAGE = "users.manage"
@@ -66,6 +71,8 @@ ROLE_DEFINITIONS: dict[RoleCode, dict[str, object]] = {
             Permissions.DASHBOARD_RECOMMENDATIONS_VIEW,
             Permissions.DASHBOARD_SEGMENTS_VIEW,
             Permissions.SALES_READ_ALL,
+            Permissions.INVENTORY_READ_ALL,
+            Permissions.CUSTOMERS_READ_ALL,
             Permissions.INVOICES_READ,
             Permissions.REPORTS_EXPORT_BUSINESS,
         },
@@ -85,6 +92,9 @@ ROLE_DEFINITIONS: dict[RoleCode, dict[str, object]] = {
             Permissions.SALES_CREATE,
             Permissions.SALES_UPDATE_STORE,
             Permissions.SALES_VOID,
+            Permissions.INVENTORY_READ_STORE,
+            Permissions.INVENTORY_UPDATE_STORE,
+            Permissions.CUSTOMERS_READ_SUMMARY,
             Permissions.INVOICES_READ,
             Permissions.REPORTS_EXPORT_OPERATIONAL,
         },

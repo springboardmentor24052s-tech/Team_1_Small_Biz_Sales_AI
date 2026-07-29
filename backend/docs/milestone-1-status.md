@@ -19,10 +19,14 @@
 | Dashboard access management | Server-generated module access for each role | Dashboard access tests |
 | Sales dashboard | Revenue, transactions, quantity, average order value, scope and freshness metadata | Dashboard scope tests |
 | Transaction workflow | Create, read, update, list, paginate and void with role scope | Sales scope tests |
+| Dataset import | Repeatable product, inventory and order upserts from cleaned CSV files | Import service and committed-sample tests |
+| Inventory API | List, filter, summarize, read and update inventory with tenant/store scope | Inventory RBAC tests |
+| Customer summaries | Repeatable customer import plus tenant/summary/assigned customer scopes | Customer API and import tests |
+| Imported dashboard data | Imported orders use the existing sales transaction KPI query | Import-to-dashboard integration test |
 | Audit trail | Authentication, administrator and sales events; administrator read endpoint | Admin workflow tests |
 | Database delivery | PostgreSQL-ready models and Alembic initial migration | `alembic check` |
 | Deployment setup | Non-root API image, PostgreSQL Compose service and health checks | Compose configuration review |
-| Engineering checks | Ruff lint/format and pytest coverage | Seven tests, 87% statement coverage |
+| Engineering checks | Ruff lint/format and pytest coverage | Thirteen tests passing |
 
 ## Integration dependencies
 

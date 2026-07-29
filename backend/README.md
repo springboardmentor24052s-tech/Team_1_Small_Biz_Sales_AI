@@ -17,6 +17,8 @@ sales transaction flow.
 - Append-only audit events for authentication and privileged operations
 - Role-specific dashboard navigation and sales KPI scope
 - Sales transaction create, list, update, and void workflow
+- Repeatable cleaned sales and inventory import with stable upsert keys
+- Tenant- and store-scoped product and inventory APIs
 - PostgreSQL migrations, Docker Compose, health checks, OpenAPI, linting, and tests
 
 ## Project layout
@@ -58,6 +60,15 @@ docker compose up --build
 The API is available at `http://localhost:8000`. Interactive documentation is at
 `http://localhost:8000/api/v1/docs`.
 
+To test a protected endpoint in the interactive documentation:
+
+1. Run `POST /api/v1/auth/login`.
+2. Copy `access_token` from the response.
+3. Select **Authorize** at the top of the page.
+4. Paste the token into the BearerAuth field and confirm.
+
+Swagger adds the `Bearer` prefix automatically, so paste only the token.
+
 The bootstrap administrator must enroll TOTP MFA after the first login:
 
 1. `POST /api/v1/auth/login`
@@ -80,6 +91,54 @@ uvicorn app.main:app --reload
 
 SQLite is the default when no database URL is configured and is intended only for local
 development. PostgreSQL is the supported production database.
+
+## Import Milestone 1 data
+
+Run migrations and authorization bootstrap before importing. The tenant, store and seller must
+already exist. From `backend/`, import the reviewed repository samples with:
+
+```powershell
+python -m app.commands.import_data `
+  --tenant hello `
+  --store MAIN `
+  --seller sales.demo@marketmind.example.com `
+  --sales ..\data\processed\sales_cleaned_sample.csv `
+  --inventory ..\data\processed\inventory_cleaned_sample.csv `
+  --customers ..\data\processed\customer_summary_sample.csv
+```
+
+The importer groups sales lines by order, excludes cancellations and invalid financial rows, and
+upserts products, inventory, sales and customer summaries using stable tenant/store keys. Running
+the same command again does not create duplicates. The resulting sales transactions are read
+directly by `GET /api/v1/dashboard/sales`.
+
+Inventory endpoints:
+
+- `GET /api/v1/inventory`
+- `GET /api/v1/inventory/summary`
+- `GET /api/v1/inventory/{inventory_id}`
+- `PATCH /api/v1/inventory/{inventory_id}`
+
+Business Owners can view tenant-wide inventory. Store Managers can view and update their assigned
+store. Sales Executives have no inventory access. Administrators have tenant-wide access after MFA.
+
+Customer endpoints:
+
+- `GET /api/v1/customers`
+- `GET /api/v1/customers/summary`
+- `GET /api/v1/customers/{customer_id}`
+
+Business Owners and Administrators can view tenant customer records. Store Managers receive the
+customer summary, while Sales Executives only receive customers assigned to them.
+
+For local UI testing, create the four demo accounts with:
+
+```powershell
+python -m app.commands.seed_demo
+```
+
+The command prints the local credentials and the administrator TOTP setup secret. These accounts
+are for development only.
 
 ## Quality checks
 

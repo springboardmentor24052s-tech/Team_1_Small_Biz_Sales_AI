@@ -30,6 +30,7 @@ class SalesTransactionResponse(ORMModel):
     tenant_id: UUID
     store_id: UUID
     seller_id: UUID
+    source_system: str
     external_reference: str | None
     occurred_at: datetime
     currency: str

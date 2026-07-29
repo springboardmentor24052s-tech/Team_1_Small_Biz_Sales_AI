@@ -26,7 +26,12 @@ class Settings(BaseSettings):
     password_min_length: int = 12
     max_login_failures: int = 5
     account_lock_minutes: int = 15
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
+    cors_origins: list[str] = Field(
+        default_factory=lambda: [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ]
+    )
     expose_development_tokens: bool = True
     initial_admin_email: str | None = None
     initial_admin_password: SecretStr | None = None

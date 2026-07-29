@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 
-from app.api.dependencies import CurrentUser, DBSession, oauth2_scheme
+from app.api.dependencies import CurrentUser, DBSession, get_bearer_token
 from app.core.config import settings
 from app.core.security import (
     create_jwt,
@@ -161,7 +161,7 @@ def logout(
     request: Request,
     db: DBSession,
     user: CurrentUser,
-    token: str = Depends(oauth2_scheme),
+    token: str = Depends(get_bearer_token),
 ):
     from app.core.security import decode_jwt
 
