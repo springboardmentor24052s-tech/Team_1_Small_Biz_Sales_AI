@@ -60,28 +60,37 @@ export const Login = () => {
     e.preventDefault();
     setErrorMessage('');
 
-    if (!email || !password) {
-      setErrorMessage('Please enter both email and password.');
-      return;
-    }
+    const trimmedEmail = email.trim();
 
-    if (password.length < 4) {
-      setErrorMessage('Invalid credentials. Password must be at least 4 characters.');
+    if (!trimmedEmail || !password.trim()) {
+     setErrorMessage('Please enter both email and password.');
+     return;
+}
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(trimmedEmail)) {
+      setErrorMessage('Please enter a valid email address.');
       return;
-    }
+}
+
+    if (password.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long.');
+      return;
+}
 
     setIsLoading(true);
 
     try {
       if (authMode === 'login') {
-        await login(email, password, selectedRole);
+        await login(trimmedEmail, password, selectedRole);
         const roleObj = MOCK_ROLES.find(r => r.id === selectedRole);
         addToast(`Welcome back! Authenticated as ${roleObj?.name || 'User'}`, 'success');
       } else {
         // Registration flow
         await authService.register({
           name: name || 'New Workspace User',
-          email,
+          email: trimmedEmail,
           password,
           role: selectedRole
         });
