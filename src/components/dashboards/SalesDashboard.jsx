@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MOCK_SALES_DATA } from '../../data/mockData';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { useToast } from '../../context/ToastContext';
+import dashboardService from '../../services/dashboardService';
 import {
   Target,
   CheckCircle2,
@@ -12,9 +13,9 @@ import {
   Sparkles,
   PhoneCall,
   Mail,
-  Calendar,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -28,7 +29,27 @@ import {
 
 export const SalesDashboard = () => {
   const { addToast } = useToast();
-  const { kpis, pipelineStages, recentLeads, dailyAchievement } = MOCK_SALES_DATA;
+  const [data, setData] = useState(MOCK_SALES_DATA);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      setLoading(true);
+      try {
+        const res = await dashboardService.getSalesMetrics();
+        if (res && res.kpis) {
+          setData(res);
+        }
+      } catch (err) {
+        console.warn('Sales Dashboard API Notice:', err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMetrics();
+  }, []);
+
+  const { kpis, pipelineStages, recentLeads, dailyAchievement } = data;
 
   const handleContactLead = (name, method) => {
     addToast(`Initiated ${method} to ${name}`, 'info');
@@ -49,15 +70,18 @@ export const SalesDashboard = () => {
           </p>
         </div>
 
-        <Button
-          variant="glass"
-          size="sm"
-          onClick={() => addToast('Opening AI Call Assistant...', 'info')}
-          icon={PhoneCall}
-          className="shrink-0"
-        >
-          Start AI Sales Calls
-        </Button>
+        <div className="flex items-center gap-3">
+          {loading && <Loader2 className="w-5 h-5 animate-spin text-amber-300" />}
+          <Button
+            variant="glass"
+            size="sm"
+            onClick={() => addToast('Opening AI Call Assistant...', 'info')}
+            icon={PhoneCall}
+            className="shrink-0"
+          >
+            Start AI Sales Calls
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards Grid */}

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MOCK_OWNER_DATA } from '../../data/mockData';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { useToast } from '../../context/ToastContext';
+import dashboardService from '../../services/dashboardService';
 import {
   DollarSign,
   ShoppingCart,
@@ -11,18 +12,14 @@ import {
   TrendingUp,
   Sparkles,
   ArrowUpRight,
-  ArrowDownRight,
   Zap,
-  BarChart2,
-  PieChart as PieIcon,
-  Download
+  Download,
+  Loader2
 } from 'lucide-react';
 import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
@@ -34,7 +31,28 @@ import {
 
 export const OwnerDashboard = () => {
   const { addToast } = useToast();
-  const { kpis, salesTrend, categoryDistribution, topProducts, aiRecommendations } = MOCK_OWNER_DATA;
+  const [data, setData] = useState(MOCK_OWNER_DATA);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      setLoading(true);
+      try {
+        const res = await dashboardService.getOwnerMetrics();
+        if (res && res.kpis) {
+          setData(res);
+        }
+      } catch (err) {
+        console.warn('Dashboard API Notice:', err.message);
+        // Retain mock data fallback
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMetrics();
+  }, []);
+
+  const { kpis, salesTrend, categoryDistribution, topProducts, aiRecommendations } = data;
 
   const handleAction = (title) => {
     addToast(`Triggered AI Recommendation: ${title}`, 'success');
@@ -56,6 +74,7 @@ export const OwnerDashboard = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          {loading && <Loader2 className="w-5 h-5 animate-spin text-indigo-300" />}
           <Button
             variant="glass"
             size="sm"

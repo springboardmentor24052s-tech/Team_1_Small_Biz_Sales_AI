@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MOCK_MANAGER_DATA } from '../../data/mockData';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Badge } from '../ui/Badge';
@@ -6,8 +6,8 @@ import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { useToast } from '../../context/ToastContext';
+import dashboardService from '../../services/dashboardService';
 import {
-  PackageCheck,
   AlertTriangle,
   XCircle,
   Truck,
@@ -16,17 +16,38 @@ import {
   Search,
   Building2,
   CheckCircle2,
-  Boxes
+  Boxes,
+  Loader2
 } from 'lucide-react';
 
 export const ManagerDashboard = () => {
   const { addToast } = useToast();
-  const { kpis, lowStockAlerts, inventoryItems, suppliers } = MOCK_MANAGER_DATA;
+  const [data, setData] = useState(MOCK_MANAGER_DATA);
+  const [loading, setLoading] = useState(false);
 
   const [searchFilter, setSearchFilter] = useState('');
   const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [reorderQty, setReorderQty] = useState('50');
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      setLoading(true);
+      try {
+        const res = await dashboardService.getManagerMetrics();
+        if (res && res.kpis) {
+          setData(res);
+        }
+      } catch (err) {
+        console.warn('Manager API Notice:', err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMetrics();
+  }, []);
+
+  const { kpis, lowStockAlerts, inventoryItems, suppliers } = data;
 
   const filteredItems = inventoryItems.filter(item =>
     item.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
@@ -63,15 +84,18 @@ export const ManagerDashboard = () => {
           </p>
         </div>
 
-        <Button
-          variant="danger"
-          size="md"
-          icon={PlusCircle}
-          onClick={() => handleOpenReorder(lowStockAlerts[0])}
-          className="shrink-0 font-bold"
-        >
-          Quick Bulk Reorder
-        </Button>
+        <div className="flex items-center gap-3">
+          {loading && <Loader2 className="w-5 h-5 animate-spin text-rose-300" />}
+          <Button
+            variant="danger"
+            size="md"
+            icon={PlusCircle}
+            onClick={() => handleOpenReorder(lowStockAlerts[0])}
+            className="shrink-0 font-bold"
+          >
+            Quick Bulk Reorder
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards Grid */}

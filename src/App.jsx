@@ -20,12 +20,24 @@ import { InventoryModule } from './components/modules/InventoryModule';
 import { CustomersModule } from './components/modules/CustomersModule';
 import { ReportsModule } from './components/modules/ReportsModule';
 import { SettingsModule } from './components/modules/SettingsModule';
+import { Loader2 } from 'lucide-react';
 
 const MainAppContent = () => {
-  const { isAuthenticated, currentRole } = useAuth();
+  const { isAuthenticated, currentRole, isAuthLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 text-white">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+          <p className="text-sm font-medium text-slate-300">Authenticating MarketMind session...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Login />;
@@ -33,7 +45,7 @@ const MainAppContent = () => {
 
   // Render role-specific dashboard when activeTab is 'dashboard'
   const renderDashboardView = () => {
-    switch (currentRole.id) {
+    switch (currentRole?.id) {
       case 'owner':
         return <OwnerDashboard />;
       case 'manager':
