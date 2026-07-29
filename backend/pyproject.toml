@@ -29,6 +29,10 @@ dev = [
   "ruff==0.12.5",
 ]
 
+[project.scripts]
+marketmind-import = "app.commands.import_data:main"
+marketmind-seed-demo = "app.commands.seed_demo:main"
+
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
 

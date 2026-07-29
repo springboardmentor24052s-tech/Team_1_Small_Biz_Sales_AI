@@ -1,109 +1,132 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import { dashboardRouteForRole } from './api/auth';
+import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
+import { DataProvider } from './context/DataContext';
 
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Profile from './pages/Profile';
-import AdminDashboard from './pages/AdminDashboard';
-import OwnerDashboard from './pages/OwnerDashboard';
-import ManagerDashboard from './pages/ManagerDashboard';
-import SalesDashboard from './pages/SalesDashboard';
-import Inventory from './pages/Inventory';
-import Users from './pages/Users';
-import Predict from './pages/Predict';
+import { Login } from './components/auth/Login';
+import { Sidebar } from './components/common/Sidebar';
+import { Navbar } from './components/common/Navbar';
+import { ToastContainer } from './components/common/ToastContainer';
+import { AiAssistantModal } from './components/common/AiAssistantModal';
+import { UIComponentLibrary } from './components/common/UIComponentLibrary';
 
-function RoleRedirect() {
-  const { roleId, isAuthenticated } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return <Navigate to={dashboardRouteForRole(roleId)} replace />;
-}
+import { OwnerDashboard } from './components/dashboards/OwnerDashboard';
+import { ManagerDashboard } from './components/dashboards/ManagerDashboard';
+import { SalesDashboard } from './components/dashboards/SalesDashboard';
+import { AdminDashboard } from './components/dashboards/AdminDashboard';
 
-// Role-id groups mirror require_roles(...) in the backend's main.py exactly.
-const ADMIN = [1];
-const OWNER_UP = [1, 2];
-const MANAGER_UP = [1, 2, 3];
-const SALES_UP = [1, 2, 3, 4];
+import { SalesModule } from './components/modules/SalesModule';
+import { InventoryModule } from './components/modules/InventoryModule';
+import { CustomersModule } from './components/modules/CustomersModule';
+import { ReportsModule } from './components/modules/ReportsModule';
+import { SettingsModule } from './components/modules/SettingsModule';
+
+const MainAppContent = () => {
+  const { isAuthenticated, isInitializing, currentRole } = useAuth();
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-indigo-300 flex items-center justify-center font-semibold">
+        Connecting to MarketMind...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
+  // Render role-specific dashboard when activeTab is 'dashboard'
+  const renderDashboardView = () => {
+    switch (currentRole.id) {
+      case 'owner':
+        return <OwnerDashboard />;
+      case 'manager':
+        return <ManagerDashboard />;
+      case 'sales':
+        return <SalesDashboard />;
+      case 'admin':
+        return <AdminDashboard />;
+      default:
+        return <OwnerDashboard />;
+    }
+  };
+
+  // Render dynamic main view
+  const renderMainContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return renderDashboardView();
+      case 'sales':
+        return <SalesModule />;
+      case 'inventory':
+        return <InventoryModule />;
+      case 'customers':
+        return <CustomersModule />;
+      case 'reports':
+        return <ReportsModule />;
+      case 'components':
+        return <UIComponentLibrary />;
+      case 'settings':
+        return <SettingsModule />;
+      default:
+        return renderDashboardView();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 transition-colors duration-300 flex">
+      {/* Collapsible Sidebar */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+      />
+
+      {/* Top Header Navbar */}
+      <Navbar
+        isCollapsed={isCollapsed}
+        onOpenAiModal={() => setIsAiModalOpen(true)}
+      />
+
+      {/* Dynamic Main Workspace Container */}
+      <main
+        className={`flex-1 pt-20 pb-12 px-4 sm:px-8 transition-all duration-300 ${
+          isCollapsed ? 'ml-20' : 'ml-64'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+          {renderMainContent()}
+        </div>
+      </main>
+
+      {/* Global Toast Alerts */}
+      <ToastContainer />
+
+      {/* AI Assistant Modal */}
+      <AiAssistantModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+      />
+    </div>
+  );
+};
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-
-        <Route path="/" element={<RoleRedirect />} />
-        <Route path="/dashboard" element={<RoleRedirect />} />
-
-        <Route
-          path="/admin-dashboard"
-          element={
-            <ProtectedRoute allow={ADMIN}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/owner-dashboard"
-          element={
-            <ProtectedRoute allow={OWNER_UP}>
-              <OwnerDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/manager-dashboard"
-          element={
-            <ProtectedRoute allow={MANAGER_UP}>
-              <ManagerDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/sales-dashboard"
-          element={
-            <ProtectedRoute allow={SALES_UP}>
-              <SalesDashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/inventory"
-          element={
-            <ProtectedRoute allow={MANAGER_UP}>
-              <Inventory />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/users"
-          element={
-            <ProtectedRoute allow={ADMIN}>
-              <Users />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/predict"
-          element={
-            <ProtectedRoute>
-              <Predict />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AuthProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <DataProvider>
+            <MainAppContent />
+          </DataProvider>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

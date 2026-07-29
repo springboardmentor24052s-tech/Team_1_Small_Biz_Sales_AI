@@ -36,6 +36,15 @@ def create_transaction(
         raise HTTPException(status_code=422, detail="Store does not belong to this tenant")
     if user.store_id and user.store_id != store.id:
         raise HTTPException(status_code=403, detail="Transaction is outside your store scope")
+    if payload.external_reference and db.scalar(
+        select(SalesTransaction.id).where(
+            SalesTransaction.tenant_id == user.tenant_id,
+            SalesTransaction.store_id == store.id,
+            SalesTransaction.source_system == "manual",
+            SalesTransaction.external_reference == payload.external_reference,
+        )
+    ):
+        raise HTTPException(status_code=409, detail="Transaction reference already exists")
 
     transaction = SalesTransaction(
         tenant_id=user.tenant_id,
@@ -125,6 +134,16 @@ def update_transaction(
         raise HTTPException(status_code=404, detail="Transaction not found")
     if item.status == TransactionStatus.VOIDED:
         raise HTTPException(status_code=409, detail="A voided transaction cannot be changed")
+    if payload.external_reference and db.scalar(
+        select(SalesTransaction.id).where(
+            SalesTransaction.id != item.id,
+            SalesTransaction.tenant_id == item.tenant_id,
+            SalesTransaction.store_id == item.store_id,
+            SalesTransaction.source_system == item.source_system,
+            SalesTransaction.external_reference == payload.external_reference,
+        )
+    ):
+        raise HTTPException(status_code=409, detail="Transaction reference already exists")
     before = {key: str(getattr(item, key)) for key in payload.model_dump(exclude_unset=True)}
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(item, field, value)
