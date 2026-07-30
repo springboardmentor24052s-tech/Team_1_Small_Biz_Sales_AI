@@ -1,5 +1,13 @@
-backend/sales_model.pkl
-
+.env
+.venv/
 __pycache__/
-*.pyc
-backend/sales_model.pkl
+.pytest_cache/
+*.py[cod]
+*.db
+*.sqlite3
+
+data/raw/*
+!data/raw/*.csv
+data/processed/*
+!data/processed/*.csv
+!data/processed/*.json
