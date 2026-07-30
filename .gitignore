@@ -6,7 +6,6 @@ __pycache__/
 *.db
 *.sqlite3
 
-# Full datasets stay outside Git. Only reviewed samples belong in these folders.
 data/raw/*
 !data/raw/*.csv
 data/processed/*
