@@ -25,3 +25,7 @@ redistribution conditions.
 
 These samples are development fixtures, not model-training datasets. Recreate them with the command
 in `preprocessing/README.md`.
+
+## Contribution
+
+Dataset collection and preparation work for Milestone 1 was contributed by Komal (`komal283`).

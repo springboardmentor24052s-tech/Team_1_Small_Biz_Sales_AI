@@ -4,6 +4,8 @@ FastAPI backend for the first MarketMind milestone. It provides authentication, 
 role-based access control, user administration, role-scoped dashboard access, and a working
 sales transaction flow.
 
+Backend development and Milestone 1 integration are maintained on the `Garvitk001` branch.
+
 ## What is included
 
 - Registration, email verification, login, logout, password reset, and profile updates
