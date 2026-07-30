@@ -45,3 +45,4 @@ directory with `npm run dev`, then open `http://127.0.0.1:5173`.
 - Backend and Milestone 1 integration: Garvit (`Garvitk001`)
 - Frontend design and features: Divyanka (`divyanka-0525`) and Tejananda (`Tejananda`)
 - Dataset selection and preprocessing: Komal (`komal283`)
+- Documentation(`Akshaya29`)
