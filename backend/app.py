@@ -1,4 +1,14 @@
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+
+# Load dataset
+df = pd.read_csv("data/cleaned_sales_report.csv")
+
+print(df.head(5))
+
+print(df.shape)
+
+import pandas as pd
 
 # Load dataset
 df = pd.read_csv(
@@ -36,3 +46,16 @@ df.to_csv("cleaned_sales_report.csv", index=False)
 
 print("✅ Data cleaning completed successfully!")
 print("Final Shape:", df.shape)
+
+
+
+X = df.drop(columns=["Amount"])
+y = df["Amount"]
+
+encoder = LabelEncoder()
+df["Category"] = encoder.fit_transform(df["Category"])
+
+train= pd.read_csv("data/cleaned_sales_report.csv")
+print(train.head())
+print(train.shape)
+print(train.columns)

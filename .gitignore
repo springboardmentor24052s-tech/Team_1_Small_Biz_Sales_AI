@@ -1,0 +1,5 @@
+backend/sales_model.pkl
+
+__pycache__/
+*.pyc
+backend/sales_model.pkl
