@@ -92,6 +92,7 @@ const MainAppContent = () => {
       <Navbar
         isCollapsed={isCollapsed}
         onOpenAiModal={() => setIsAiModalOpen(true)}
+        onNavigate={setActiveTab}
       />
 
       {/* Dynamic Main Workspace Container */}

@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.core.permissions import Permissions
 from app.core.security import hash_password, random_token, utcnow
 from app.models.auth import SecurityTokenPurpose
-from app.models.identity import Role, User, UserStatus
+from app.models.identity import Role, Store, User, UserStatus
 from app.schemas.auth import DevelopmentTokenResponse
 from app.schemas.common import MessageResponse
 from app.schemas.users import (
@@ -23,6 +23,7 @@ from app.schemas.users import (
     ProfileUpdate,
     RoleChangeRequest,
     RoleResponse,
+    StoreResponse,
     UserInvitationRequest,
     UserResponse,
 )
@@ -255,3 +256,15 @@ def role_catalog(
         select(Role).options(selectinload(Role.permissions)).order_by(Role.name)
     ).all()
     return [serialize_role(role) for role in roles]
+
+
+@router.get("/stores/catalog", response_model=list[StoreResponse])
+def store_catalog(
+    db: DBSession,
+    user: User = Depends(require_permissions(Permissions.USERS_READ)),
+):
+    return db.scalars(
+        select(Store)
+        .where(Store.tenant_id == user.tenant_id, Store.is_active.is_(True))
+        .order_by(Store.name)
+    ).all()

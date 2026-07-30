@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { request } from '../api/client';
 import { MOCK_ROLES } from '../data/mockData';
 
@@ -35,12 +35,14 @@ export const AuthProvider = ({ children }) => {
   const [currentRole, setCurrentRole] = useState(MOCK_ROLES[0]);
   const [isInitializing, setIsInitializing] = useState(true);
   const [userEmail, setUserEmail] = useState('');
+  const [profile, setProfile] = useState(null);
 
   const clearSession = () => {
     localStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
     setTokens(null);
     setAccess(null);
+    setProfile(null);
     setUserEmail('');
   };
 
@@ -52,9 +54,14 @@ export const AuthProvider = ({ children }) => {
     setTokens(nextTokens);
   };
 
-  const loadAccess = async (accessToken) => {
-    const nextAccess = await request('/dashboard/access', { token: accessToken });
+  const loadSession = async (accessToken) => {
+    const [nextAccess, nextProfile] = await Promise.all([
+      request('/dashboard/access', { token: accessToken }),
+      request('/users/me', { token: accessToken })
+    ]);
     setAccess(nextAccess);
+    setProfile(nextProfile);
+    setUserEmail(nextProfile.email);
     setCurrentRole(roleFromAccess(nextAccess));
     return nextAccess;
   };
@@ -66,7 +73,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       try {
-        await loadAccess(tokens.access_token);
+        await loadSession(tokens.access_token);
       } catch {
         clearSession();
       } finally {
@@ -87,9 +94,33 @@ export const AuthProvider = ({ children }) => {
     });
     saveTokens(nextTokens, rememberMe);
     setUserEmail(email);
-    const nextAccess = await loadAccess(nextTokens.access_token);
+    const nextAccess = await loadSession(nextTokens.access_token);
     return roleFromAccess(nextAccess);
   };
+
+  const register = (payload) =>
+    request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+
+  const verifyEmail = (token) =>
+    request('/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ token })
+    });
+
+  const requestPasswordReset = (email) =>
+    request('/auth/password-reset/request', {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    });
+
+  const confirmPasswordReset = ({ token, newPassword }) =>
+    request('/auth/password-reset/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ token, new_password: newPassword })
+    });
 
   const api = async (path, options = {}) => {
     if (!tokens?.access_token) throw new Error('Not authenticated');
@@ -120,19 +151,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const value = useMemo(
-    () => ({
-      isAuthenticated: Boolean(tokens && access),
-      isInitializing,
-      currentRole,
-      access,
-      userEmail,
-      login,
-      logout,
-      api
-    }),
-    [tokens, access, isInitializing, currentRole, userEmail]
-  );
+  const reauthenticate = ({ password, mfaCode }) =>
+    api('/auth/reauthenticate', {
+      method: 'POST',
+      body: JSON.stringify({
+        password,
+        mfa_code: mfaCode || null
+      })
+    });
+
+  const value = {
+    isAuthenticated: Boolean(tokens && access),
+    isInitializing,
+    currentRole,
+    access,
+    profile,
+    userEmail,
+    login,
+    logout,
+    api,
+    register,
+    verifyEmail,
+    requestPasswordReset,
+    confirmPasswordReset,
+    reauthenticate
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

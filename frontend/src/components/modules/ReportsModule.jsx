@@ -1,12 +1,10 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
+import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { useToast } from '../../context/ToastContext';
-import { BarChart3, Download, Calendar, Filter, Sparkles } from 'lucide-react';
+import { Badge } from '../ui/Badge';
+import { BarChart3, Download } from 'lucide-react';
 
 export const ReportsModule = () => {
-  const { addToast } = useToast();
-
   const reports = [
     { title: 'Executive Monthly Financial Summary', type: 'Financial PDF', size: '2.4 MB', date: 'July 2026' },
     { title: 'Stock Movement & Inventory Valuation', type: 'CSV Audit', size: '1.1 MB', date: 'July 2026' },
@@ -23,9 +21,10 @@ export const ReportsModule = () => {
             <span>Reports & Deep Analytics</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Generate custom audit statements and automated executive exports
+            Report generation and downloadable files are planned after Milestone 1
           </p>
         </div>
+        <Badge variant="warning">Planned Reporting Module</Badge>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -40,9 +39,9 @@ export const ReportsModule = () => {
                 variant="outline"
                 size="sm"
                 icon={Download}
-                onClick={() => addToast(`Downloaded ${r.title}`, 'success')}
+                disabled
               >
-                Download
+                Planned
               </Button>
             </div>
           </Card>

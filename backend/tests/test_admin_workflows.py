@@ -52,6 +52,18 @@ def test_admin_invitation_role_change_and_audit(
         "X-Reauth-Token": reauth.json()["reauth_token"],
     }
 
+    stores = client.get("/api/v1/users/stores/catalog", headers=auth_header(admin_token))
+    assert stores.status_code == 200
+    assert stores.json() == [
+        {
+            "id": str(store.id),
+            "name": store.name,
+            "code": store.code,
+            "timezone": store.timezone,
+            "is_active": True,
+        }
+    ]
+
     invite = client.post(
         "/api/v1/users/invite",
         json={

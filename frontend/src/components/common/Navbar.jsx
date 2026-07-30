@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../context/ToastContext';
 import { MOCK_NOTIFICATIONS } from '../../data/mockData';
@@ -16,17 +17,68 @@ import {
   X
 } from 'lucide-react';
 
-export const Navbar = ({ isCollapsed, onOpenAiModal }) => {
+export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
   const { currentRole, userEmail, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const { addToast } = useToast();
+  const { salesTransactions, inventoryItems, customers } = useData();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef(null);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
 
   const unreadCount = notifications.filter(n => n.unread).length;
+  const searchResults = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (query.length < 2) return [];
+    const results = [
+      ...salesTransactions.map((transaction) => ({
+        id: transaction.id,
+        type: 'Transaction',
+        label: transaction.external_reference || transaction.id.slice(0, 8),
+        detail: `${transaction.source_system} • ₹${Number(transaction.total_amount).toLocaleString('en-IN')}`,
+        tab: 'sales'
+      })),
+      ...inventoryItems.map((item) => ({
+        id: item.id,
+        type: 'Inventory',
+        label: item.product.name,
+        detail: `${item.product.sku} • ${item.stock_quantity} units`,
+        tab: 'inventory'
+      })),
+      ...customers.map((customer) => ({
+        id: customer.id,
+        type: 'Customer',
+        label: customer.external_customer_id,
+        detail: `${customer.order_count} orders • ₹${Number(customer.total_revenue).toLocaleString('en-IN')}`,
+        tab: 'customers'
+      }))
+    ];
+    return results
+      .filter((result) => `${result.label} ${result.detail} ${result.type}`.toLowerCase().includes(query))
+      .slice(0, 8);
+  }, [searchQuery, salesTransactions, inventoryItems, customers]);
+
+  useEffect(() => {
+    const focusSearch = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', focusSearch);
+    return () => window.removeEventListener('keydown', focusSearch);
+  }, []);
+
+  const openSearchResult = (result) => {
+    onNavigate(result.tab);
+    setSearchQuery('');
+    setIsSearchOpen(false);
+  };
 
   const handleMarkAllRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
@@ -44,15 +96,48 @@ export const Navbar = ({ isCollapsed, onOpenAiModal }) => {
         <div className="relative w-full">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input
+            ref={searchInputRef}
             type="text"
-            placeholder="Search SKUs, deals, customers, or ask AI... (Ctrl+K)"
+            placeholder="Search transactions, inventory and customers..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+              setIsSearchOpen(true);
+            }}
+            onFocus={() => setIsSearchOpen(true)}
+            onBlur={() => window.setTimeout(() => setIsSearchOpen(false), 150)}
             className="w-full pl-10 pr-12 py-2 bg-slate-100 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all"
           />
           <kbd className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded shadow-xs">
-            ⌘K
+            Ctrl K
           </kbd>
+          {isSearchOpen && searchQuery.trim().length >= 2 && (
+            <div className="absolute left-0 right-0 top-11 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+              {searchResults.length ? (
+                searchResults.map((result) => (
+                  <button
+                    key={`${result.type}-${result.id}`}
+                    type="button"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => openSearchResult(result)}
+                    className="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-3 py-2.5 text-left last:border-0 hover:bg-indigo-50 dark:border-slate-800 dark:hover:bg-slate-800"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold text-slate-900 dark:text-slate-100">{result.label}</p>
+                      <p className="truncate text-[11px] text-slate-500">{result.detail}</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-800">
+                      {result.type}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <p className="px-3 py-4 text-center text-xs text-slate-500">
+                  No permitted records match “{searchQuery.trim()}”.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -93,10 +178,10 @@ export const Navbar = ({ isCollapsed, onOpenAiModal }) => {
             <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-scale-up">
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
                 <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Notifications</h4>
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Demo Notifications</h4>
                   {unreadCount > 0 && (
                     <span className="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400 rounded-full">
-                      {unreadCount} new
+                      Sample data
                     </span>
                   )}
                 </div>

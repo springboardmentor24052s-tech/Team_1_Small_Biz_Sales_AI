@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -13,6 +14,7 @@ from app.schemas.dashboard import (
     DashboardAccessResponse,
     DashboardModule,
     KPIValue,
+    RevenueSeriesPoint,
     SalesDashboardResponse,
 )
 
@@ -96,17 +98,18 @@ def sales_dashboard(
     if (end - start).days > 366:
         raise HTTPException(status_code=422, detail="Dashboard range cannot exceed 366 days")
 
+    conditions = [
+        SalesTransaction.tenant_id == user.tenant_id,
+        SalesTransaction.status == TransactionStatus.COMPLETED,
+        SalesTransaction.occurred_at >= start,
+        SalesTransaction.occurred_at < end,
+    ]
     query = select(
         func.coalesce(func.sum(SalesTransaction.total_amount), 0),
         func.count(SalesTransaction.id),
         func.coalesce(func.sum(SalesTransaction.item_count), 0),
         func.max(SalesTransaction.updated_at),
-    ).where(
-        SalesTransaction.tenant_id == user.tenant_id,
-        SalesTransaction.status == TransactionStatus.COMPLETED,
-        SalesTransaction.occurred_at >= start,
-        SalesTransaction.occurred_at < end,
-    )
+    ).where(*conditions)
 
     permissions = user.permission_codes
     scope = "business"
@@ -114,20 +117,37 @@ def sales_dashboard(
     seller_id = None
     if Permissions.DASHBOARD_SALES_ALL not in permissions:
         if Permissions.DASHBOARD_SALES_STORE in permissions and user.store_id:
-            query = query.where(SalesTransaction.store_id == user.store_id)
+            conditions.append(SalesTransaction.store_id == user.store_id)
             scope = "store"
             store_id = user.store_id
         elif Permissions.DASHBOARD_SALES_PERSONAL in permissions:
-            query = query.where(SalesTransaction.seller_id == user.id)
+            conditions.append(SalesTransaction.seller_id == user.id)
             scope = "personal"
             store_id = user.store_id
             seller_id = user.id
         else:
             raise HTTPException(status_code=403, detail="No dashboard scope is assigned")
 
+    query = query.where(*conditions[4:])
     revenue, count, quantity, freshness = db.execute(query).one()
     revenue = Decimal(revenue or 0)
     average = revenue / count if count else Decimal("0")
+    daily_totals: dict = defaultdict(lambda: [Decimal("0"), 0])
+    series_rows = db.execute(
+        select(SalesTransaction.occurred_at, SalesTransaction.total_amount).where(*conditions)
+    ).all()
+    for occurred_at, amount in series_rows:
+        bucket = occurred_at.date()
+        daily_totals[bucket][0] += Decimal(amount)
+        daily_totals[bucket][1] += 1
+    revenue_series = [
+        RevenueSeriesPoint(
+            date=bucket,
+            revenue=values[0],
+            transaction_count=values[1],
+        )
+        for bucket, values in sorted(daily_totals.items())
+    ]
     state = "ready" if count else "empty"
     return SalesDashboardResponse(
         scope=scope,
@@ -159,6 +179,7 @@ def sales_dashboard(
             unit=user.tenant.currency,
             definition="Completed transaction revenue divided by transaction count",
         ),
+        revenue_series=revenue_series,
         state=state,
         message="No completed transactions match this scope and date range" if not count else None,
     )

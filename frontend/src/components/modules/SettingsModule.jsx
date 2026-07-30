@@ -40,7 +40,7 @@ export const SettingsModule = () => {
             <Input label="Company Legal Name" defaultValue="MarketMind Retail Systems Inc." />
             <Input label="Support Email Address" defaultValue="support@marketmind.ai" />
             <Input label="Tax ID / VAT Registration" defaultValue="US-991204812" />
-            <Input label="Default Currency" defaultValue="USD ($)" />
+            <Input label="Default Currency" defaultValue="INR (₹)" />
           </div>
         </Card>
 

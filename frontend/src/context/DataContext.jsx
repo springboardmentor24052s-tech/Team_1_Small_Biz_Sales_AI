@@ -2,11 +2,16 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 
 const DataContext = createContext(null);
+const DEFAULT_SALES_DATE_RANGE = {
+  from: '2022-03-01',
+  to: '2022-06-30'
+};
 
 const moduleCodes = (access) => new Set((access?.modules || []).map((module) => module.code));
 
 export const DataProvider = ({ children }) => {
   const { isAuthenticated, access, api } = useAuth();
+  const [salesDateRange, setSalesDateRange] = useState(DEFAULT_SALES_DATE_RANGE);
   const [data, setData] = useState({
     salesDashboard: null,
     salesTransactions: [],
@@ -19,7 +24,7 @@ export const DataProvider = ({ children }) => {
     isLoading: false
   });
 
-  const refresh = async () => {
+  const refresh = async (requestedRange = salesDateRange) => {
     if (!isAuthenticated || !access) return;
     setData((current) => ({ ...current, isLoading: true, apiError: null }));
     const modules = moduleCodes(access);
@@ -27,8 +32,12 @@ export const DataProvider = ({ children }) => {
     const assign = {};
 
     if (modules.has('sales')) {
+      const params = new URLSearchParams({
+        date_from: `${requestedRange.from}T00:00:00Z`,
+        date_to: `${requestedRange.to}T23:59:59Z`
+      });
       requests.push(
-        api('/dashboard/sales?date_from=2022-03-01T00:00:00Z&date_to=2022-07-01T00:00:00Z')
+        api(`/dashboard/sales?${params}`)
           .then((value) => { assign.salesDashboard = value; })
       );
       requests.push(
@@ -62,8 +71,13 @@ export const DataProvider = ({ children }) => {
     refresh();
   }, [isAuthenticated, access?.role]);
 
+  const applySalesDateRange = async (nextRange) => {
+    setSalesDateRange(nextRange);
+    await refresh(nextRange);
+  };
+
   return (
-    <DataContext.Provider value={{ ...data, refresh }}>
+    <DataContext.Provider value={{ ...data, refresh, salesDateRange, applySalesDateRange }}>
       {children}
     </DataContext.Provider>
   );

@@ -35,10 +35,10 @@ export const MOCK_ROLES = [
 
 export const MOCK_OWNER_DATA = {
   kpis: {
-    totalRevenue: { value: '$148,520', change: '+18.4%', isPositive: true, timeFrame: 'vs last month' },
+    totalRevenue: { value: '₹1,48,520', change: '+18.4%', isPositive: true, timeFrame: 'vs last month' },
     totalOrders: { value: '1,842', change: '+12.1%', isPositive: true, timeFrame: 'vs last month' },
     totalCustomers: { value: '2,450', change: '+8.6%', isPositive: true, timeFrame: 'vs last month' },
-    grossProfit: { value: '$42,180', change: '+14.2%', isPositive: true, timeFrame: 'vs last month' }
+    grossProfit: { value: '₹42,180', change: '+14.2%', isPositive: true, timeFrame: 'vs last month' }
   },
   salesTrend: [
     { month: 'Jan', revenue: 68000, expenses: 42000, profit: 26000 },
@@ -56,17 +56,17 @@ export const MOCK_OWNER_DATA = {
     { name: 'Software Licenses', value: 12, color: '#f59e0b' }
   ],
   topProducts: [
-    { name: 'AI POS Terminal X1', sales: 420, revenue: '$63,000', growth: '+24%' },
-    { name: 'Wireless Thermal Printer', sales: 310, revenue: '$27,900', growth: '+18%' },
-    { name: 'Smart Barcode Scanner', sales: 280, revenue: '$22,400', growth: '+12%' },
-    { name: 'Cloud Retail Pro License', sales: 210, revenue: '$18,900', growth: '+30%' }
+    { name: 'AI POS Terminal X1', sales: 420, revenue: '₹63,000', growth: '+24%' },
+    { name: 'Wireless Thermal Printer', sales: 310, revenue: '₹27,900', growth: '+18%' },
+    { name: 'Smart Barcode Scanner', sales: 280, revenue: '₹22,400', growth: '+12%' },
+    { name: 'Cloud Retail Pro License', sales: 210, revenue: '₹18,900', growth: '+30%' }
   ],
   aiRecommendations: [
     {
       id: 1,
       title: 'Stock Reorder Recommendation',
       description: 'Predictive analytics forecast 35% higher demand for AI POS Terminal X1 next month due to holiday retail rush.',
-      impact: 'High Impact (+ $12.4k Est. Revenue)',
+      impact: 'High Impact (+ ₹12.4k Est. Revenue)',
       type: 'warning',
       actionLabel: 'Generate Supplier PO'
     },
@@ -74,7 +74,7 @@ export const MOCK_OWNER_DATA = {
       id: 2,
       title: 'Customer Retargeting Opportunity',
       description: '142 recurring business accounts have not ordered in 45 days. AI suggests automated promotional workflow.',
-      impact: 'Medium Impact ($6.8k Retention)',
+      impact: 'Medium Impact (₹6.8k Retention)',
       type: 'insight',
       actionLabel: 'Launch Email Campaign'
     },
@@ -82,7 +82,7 @@ export const MOCK_OWNER_DATA = {
       id: 3,
       title: 'Pricing Optimization Signal',
       description: 'Margin analysis indicates high price elasticity for Wireless Thermal Printer. A 4.5% price bump will maximize profit without reducing sales volume.',
-      impact: 'Immediate Margin Boost (+ $2.1k)',
+      impact: 'Immediate Margin Boost (+ ₹2.1k)',
       type: 'success',
       actionLabel: 'Apply Price Adjustment'
     }
@@ -103,13 +103,13 @@ export const MOCK_MANAGER_DATA = {
     { id: 'SKU-882', name: '10.5-inch Tablet Stand (Black)', currentStock: 3, minStock: 20, supplier: 'ErgoGear Co', leadTime: '5 Days' }
   ],
   inventoryItems: [
-    { id: 'SKU-902', name: 'Thermal Receipt Paper', category: 'Supplies', stock: 4, unitPrice: '$45.00', status: 'Low Stock', supplier: 'Papyrus Tech' },
-    { id: 'SKU-441', name: 'Bluetooth Barcode Scanner', category: 'Hardware', stock: 2, unitPrice: '$129.00', status: 'Critical', supplier: 'OptiScan' },
-    { id: 'SKU-108', name: 'Heavy Duty Cash Drawer', category: 'Hardware', stock: 1, unitPrice: '$189.00', status: 'Critical', supplier: 'SecureVault' },
-    { id: 'SKU-501', name: 'AI POS Terminal X1', category: 'Terminals', stock: 68, unitPrice: '$499.00', status: 'In Stock', supplier: 'NextGen POS' },
-    { id: 'SKU-312', name: 'Dual Screen Customer Display', category: 'Terminals', stock: 45, unitPrice: '$299.00', status: 'In Stock', supplier: 'NextGen POS' },
-    { id: 'SKU-774', name: 'Cloud Router Enterprise', category: 'Networking', stock: 32, unitPrice: '$149.00', status: 'In Stock', supplier: 'NetPulse Corp' },
-    { id: 'SKU-602', name: 'Label Roll Sticker Pack', category: 'Supplies', stock: 120, unitPrice: '$18.00', status: 'In Stock', supplier: 'Papyrus Tech' }
+    { id: 'SKU-902', name: 'Thermal Receipt Paper', category: 'Supplies', stock: 4, unitPrice: '₹45.00', status: 'Low Stock', supplier: 'Papyrus Tech' },
+    { id: 'SKU-441', name: 'Bluetooth Barcode Scanner', category: 'Hardware', stock: 2, unitPrice: '₹129.00', status: 'Critical', supplier: 'OptiScan' },
+    { id: 'SKU-108', name: 'Heavy Duty Cash Drawer', category: 'Hardware', stock: 1, unitPrice: '₹189.00', status: 'Critical', supplier: 'SecureVault' },
+    { id: 'SKU-501', name: 'AI POS Terminal X1', category: 'Terminals', stock: 68, unitPrice: '₹499.00', status: 'In Stock', supplier: 'NextGen POS' },
+    { id: 'SKU-312', name: 'Dual Screen Customer Display', category: 'Terminals', stock: 45, unitPrice: '₹299.00', status: 'In Stock', supplier: 'NextGen POS' },
+    { id: 'SKU-774', name: 'Cloud Router Enterprise', category: 'Networking', stock: 32, unitPrice: '₹149.00', status: 'In Stock', supplier: 'NetPulse Corp' },
+    { id: 'SKU-602', name: 'Label Roll Sticker Pack', category: 'Supplies', stock: 120, unitPrice: '₹18.00', status: 'In Stock', supplier: 'Papyrus Tech' }
   ],
   suppliers: [
     { name: 'NextGen POS Systems', itemsSupplied: 12, rating: '4.9 ★', deliveryStatus: 'On Time (98%)' },
@@ -120,23 +120,23 @@ export const MOCK_MANAGER_DATA = {
 
 export const MOCK_SALES_DATA = {
   kpis: {
-    monthlyTarget: { value: '$45,000 / $50,000', percentage: '90%', isPositive: true },
+    monthlyTarget: { value: '₹45,000 / ₹50,000', percentage: '90%', isPositive: true },
     closedDeals: { value: '34 Deals', change: '+6 this week', isPositive: true },
-    pipelineValue: { value: '$124,800', change: '18 Active Leads', isPositive: true },
+    pipelineValue: { value: '₹1,24,800', change: '18 Active Leads', isPositive: true },
     winRate: { value: '68.4%', change: '+4.2% vs avg', isPositive: true }
   },
   pipelineStages: [
-    { stage: 'New Prospect', count: 12, value: '$42,000', color: 'border-blue-500' },
-    { stage: 'Demo Scheduled', count: 8, value: '$34,500', color: 'border-indigo-500' },
-    { stage: 'Proposal Sent', count: 5, value: '$28,000', color: 'border-amber-500' },
-    { stage: 'Closing Stage', count: 3, value: '$20,300', color: 'border-emerald-500' }
+    { stage: 'New Prospect', count: 12, value: '₹42,000', color: 'border-blue-500' },
+    { stage: 'Demo Scheduled', count: 8, value: '₹34,500', color: 'border-indigo-500' },
+    { stage: 'Proposal Sent', count: 5, value: '₹28,000', color: 'border-amber-500' },
+    { stage: 'Closing Stage', count: 3, value: '₹20,300', color: 'border-emerald-500' }
   ],
   recentLeads: [
-    { name: 'Apex Logistics Inc', contact: 'Marcus Vance', amount: '$14,500', stage: 'Proposal Sent', aiProbability: '88% AI Win Score', priority: 'High' },
-    { name: 'BlueHorizon Cafe Chain', contact: 'Sarah Jenkins', amount: '$8,200', stage: 'Closing Stage', aiProbability: '94% AI Win Score', priority: 'High' },
-    { name: 'Urban Style Outlets', contact: 'David Kim', amount: '$18,000', stage: 'Demo Scheduled', aiProbability: '72% AI Win Score', priority: 'Medium' },
-    { name: 'Metro Health Pharmacy', contact: 'Dr. Elena Rostova', amount: '$22,500', stage: 'New Prospect', aiProbability: '65% AI Win Score', priority: 'Medium' },
-    { name: 'GreenBite Organics', contact: 'Liam O\'Connor', amount: '$6,400', stage: 'Proposal Sent', aiProbability: '82% AI Win Score', priority: 'High' }
+    { name: 'Apex Logistics Inc', contact: 'Marcus Vance', amount: '₹14,500', stage: 'Proposal Sent', aiProbability: '88% AI Win Score', priority: 'High' },
+    { name: 'BlueHorizon Cafe Chain', contact: 'Sarah Jenkins', amount: '₹8,200', stage: 'Closing Stage', aiProbability: '94% AI Win Score', priority: 'High' },
+    { name: 'Urban Style Outlets', contact: 'David Kim', amount: '₹18,000', stage: 'Demo Scheduled', aiProbability: '72% AI Win Score', priority: 'Medium' },
+    { name: 'Metro Health Pharmacy', contact: 'Dr. Elena Rostova', amount: '₹22,500', stage: 'New Prospect', aiProbability: '65% AI Win Score', priority: 'Medium' },
+    { name: 'GreenBite Organics', contact: 'Liam O\'Connor', amount: '₹6,400', stage: 'Proposal Sent', aiProbability: '82% AI Win Score', priority: 'High' }
   ],
   dailyAchievement: [
     { day: 'Mon', target: 2000, achieved: 2400 },
@@ -173,7 +173,7 @@ export const MOCK_ADMIN_DATA = {
   systemLogs: [
     { id: 'LOG-991', timestamp: '17:18:44', user: 'admin@system.com', action: 'ROLE_PERMISSION_UPDATE', level: 'INFO', details: 'Updated Store Manager stock reorder threshold' },
     { id: 'LOG-990', timestamp: '17:14:12', user: 'system_ai_engine', action: 'PREDICTIVE_MODEL_TRAIN', level: 'SUCCESS', details: 'Automated sales forecasting model re-indexed with +1,240 records' },
-    { id: 'LOG-989', timestamp: '16:55:01', user: 'sales@team.com', action: 'DEAL_STAGE_CHANGE', level: 'INFO', details: 'Moved BlueHorizon Cafe to Closing Stage ($8,200)' },
+    { id: 'LOG-989', timestamp: '16:55:01', user: 'sales@team.com', action: 'DEAL_STAGE_CHANGE', level: 'INFO', details: 'Moved BlueHorizon Cafe to Closing Stage (₹8,200)' },
     { id: 'LOG-988', timestamp: '16:30:22', user: 'manager@store.com', action: 'LOW_STOCK_TRIGGER', level: 'WARNING', details: 'Stock alert generated for SKU-902 (4 remaining)' },
     { id: 'LOG-987', timestamp: '15:10:05', user: 'unknown_ip_192.168.1.1', action: 'FAILED_AUTH_ATTEMPT', level: 'DANGER', details: 'Invalid password attempt for account admin@system.com' }
   ]
@@ -186,9 +186,9 @@ export const MOCK_NOTIFICATIONS = [
 ];
 
 export const MOCK_CUSTOMERS = [
-  { id: 'CUST-001', name: 'Apex Logistics Inc', tier: 'Enterprise Platinum', lifetimeValue: '$142,500', lastPurchase: '2026-07-24', status: 'Active', churnRisk: 'Low (12%)' },
-  { id: 'CUST-002', name: 'BlueHorizon Cafe Chain', tier: 'Gold Tier', lifetimeValue: '$68,400', lastPurchase: '2026-07-26', status: 'Active', churnRisk: 'Low (8%)' },
-  { id: 'CUST-003', name: 'Urban Style Outlets', tier: 'Gold Tier', lifetimeValue: '$52,100', lastPurchase: '2026-06-18', status: 'Needs Followup', churnRisk: 'Medium (42%)' },
-  { id: 'CUST-004', name: 'Metro Health Pharmacy', tier: 'Silver Tier', lifetimeValue: '$28,900', lastPurchase: '2026-07-10', status: 'Active', churnRisk: 'Low (15%)' },
-  { id: 'CUST-005', name: 'GreenBite Organics', tier: 'Silver Tier', lifetimeValue: '$19,800', lastPurchase: '2026-07-02', status: 'Active', churnRisk: 'Low (10%)' }
+  { id: 'CUST-001', name: 'Apex Logistics Inc', tier: 'Enterprise Platinum', lifetimeValue: '₹1,42,500', lastPurchase: '2026-07-24', status: 'Active', churnRisk: 'Low (12%)' },
+  { id: 'CUST-002', name: 'BlueHorizon Cafe Chain', tier: 'Gold Tier', lifetimeValue: '₹68,400', lastPurchase: '2026-07-26', status: 'Active', churnRisk: 'Low (8%)' },
+  { id: 'CUST-003', name: 'Urban Style Outlets', tier: 'Gold Tier', lifetimeValue: '₹52,100', lastPurchase: '2026-06-18', status: 'Needs Followup', churnRisk: 'Medium (42%)' },
+  { id: 'CUST-004', name: 'Metro Health Pharmacy', tier: 'Silver Tier', lifetimeValue: '₹28,900', lastPurchase: '2026-07-10', status: 'Active', churnRisk: 'Low (15%)' },
+  { id: 'CUST-005', name: 'GreenBite Organics', tier: 'Silver Tier', lifetimeValue: '₹19,800', lastPurchase: '2026-07-02', status: 'Active', churnRisk: 'Low (10%)' }
 ];

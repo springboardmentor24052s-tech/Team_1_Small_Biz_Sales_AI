@@ -12,7 +12,7 @@ export const AiAssistantModal = ({ isOpen, onClose }) => {
   const [chatHistory, setChatHistory] = useState([
     {
       sender: 'ai',
-      text: 'Hello! I am your MarketMind AI Intelligence Core. Ask me about sales forecasts, inventory reorder timing, or customer churn risks.'
+      text: 'AI forecasting is planned for Milestones 2 and 3. I can currently explain which analytics features are planned.'
     }
   ]);
 
@@ -35,11 +35,11 @@ export const AiAssistantModal = ({ isOpen, onClose }) => {
       setIsThinking(false);
       let aiResponse = 'Based on current POS transaction data, July sales exceed baseline by +18.4%. Reordering thermal receipt paper now prevents potential Q3 fulfillment bottlenecks.';
       if (textToSend.includes('August') || textToSend.includes('revenue')) {
-        aiResponse = 'Machine learning models project August 2026 gross revenue at $164,200 (+10.5% MoM), driven by holiday retail stock up demand.';
+        aiResponse = 'Planned for Milestone 2: revenue forecasting will use historical sales records and display predictions in INR.';
       } else if (textToSend.includes('SKU') || textToSend.includes('reorder')) {
         aiResponse = 'Urgent action: SKU-902 (Thermal Receipt Paper) is down to 4 units. Reordering 50 units today ensures 0 stockout days.';
       } else if (textToSend.includes('churn') || textToSend.includes('risk')) {
-        aiResponse = 'Urban Style Outlets (CLV $52,100) has a 42% churn risk score. Recommend issuing a 10% loyalty re-engagement discount.';
+        aiResponse = 'Planned for Milestone 3: churn scoring will identify retention risk after the model is trained and validated.';
       }
 
       setChatHistory(prev => [...prev, { sender: 'ai', text: aiResponse }]);
@@ -50,7 +50,7 @@ export const AiAssistantModal = ({ isOpen, onClose }) => {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="MarketMind AI Core Assistant"
+      title="MarketMind AI Assistant • Planned for Milestone 2/3"
       maxWidth="max-w-2xl"
     >
       <div className="space-y-4">
@@ -101,7 +101,7 @@ export const AiAssistantModal = ({ isOpen, onClose }) => {
           {isThinking && (
             <div className="flex items-center gap-2 text-xs text-indigo-500 font-medium animate-pulse">
               <Sparkles className="w-4 h-4 animate-spin" />
-              <span>AI Core analyzing store dataset...</span>
+              <span>Preparing milestone feature information...</span>
             </div>
           )}
         </div>
@@ -116,7 +116,7 @@ export const AiAssistantModal = ({ isOpen, onClose }) => {
         >
           <Input
             id="aiQueryInput"
-            placeholder="Ask AI anything about sales, stock, or risk..."
+            placeholder="Ask about planned AI analytics..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
