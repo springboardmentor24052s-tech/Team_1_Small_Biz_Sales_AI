@@ -15,16 +15,29 @@ import {
   ShieldCheck,
   Zap,
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  User,
+  Building2,
+  Store
 } from 'lucide-react';
 
 export const Login = () => {
-  const { login } = useAuth();
+  const {
+    login,
+    register,
+    verifyEmail,
+    requestPasswordReset,
+    confirmPasswordReset
+  } = useAuth();
   const { addToast } = useToast();
 
+  const [authMode, setAuthMode] = useState('login');
   const [selectedRole, setSelectedRole] = useState('owner');
   const [email, setEmail] = useState('owner.demo@marketmind.example.com');
   const [password, setPassword] = useState('MarketMindDemo123!');
+  const [fullName, setFullName] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [storeName, setStoreName] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -33,6 +46,21 @@ export const Login = () => {
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSubmitted, setForgotSubmitted] = useState(false);
+  const [resetToken, setResetToken] = useState('');
+  const [resetPassword, setResetPassword] = useState('');
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [verifyToken, setVerifyToken] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const passwordError = (value) => {
+    if (value.length < 12) return 'Password must contain at least 12 characters.';
+    if (!/[A-Z]/.test(value)) return 'Password must contain an uppercase letter.';
+    if (!/[a-z]/.test(value)) return 'Password must contain a lowercase letter.';
+    if (!/\d/.test(value)) return 'Password must contain a number.';
+    return '';
+  };
 
   const handleRoleChange = (roleId) => {
     setSelectedRole(roleId);
@@ -50,32 +78,56 @@ export const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
+    const trimmedEmail = email.trim();
 
-    if (!email || !password) {
+    if (!trimmedEmail || !password.trim()) {
       setErrorMessage('Please enter both email and password.');
       return;
     }
-
-    if (password.length < 12) {
-      setErrorMessage('Password must contain at least 12 characters.');
+    if (!emailPattern.test(trimmedEmail)) {
+      setErrorMessage('Please enter a valid email address.');
       return;
     }
-    if (selectedRole === 'admin' && !mfaCode) {
+    const invalidPassword = passwordError(password);
+    if (invalidPassword) {
+      setErrorMessage(invalidPassword);
+      return;
+    }
+    if (authMode === 'register' && (!fullName.trim() || !businessName.trim() || !storeName.trim())) {
+      setErrorMessage('Enter your name, business name and first store name.');
+      return;
+    }
+    if (authMode === 'login' && selectedRole === 'admin' && !mfaCode) {
       setErrorMessage('Enter the current administrator MFA code.');
       return;
     }
 
     setIsLoading(true);
     try {
-      const role = await login({
-        email,
-        password,
-        mfaCode,
-        rememberMe
-      });
-      addToast(`Welcome back! Logged in as ${role.name}`, 'success');
+      if (authMode === 'login') {
+        const role = await login({
+          email: trimmedEmail,
+          password,
+          mfaCode,
+          rememberMe
+        });
+        addToast(`Welcome back! Logged in as ${role.name}`, 'success');
+      } else {
+        const response = await register({
+          business_name: businessName.trim(),
+          store_name: storeName.trim(),
+          full_name: fullName.trim(),
+          email: trimmedEmail,
+          password,
+          currency: 'INR',
+          timezone: 'Asia/Kolkata'
+        });
+        setVerifyToken(response.token || '');
+        setIsVerifyModalOpen(true);
+        addToast(response.message, 'success');
+      }
     } catch (error) {
-      setErrorMessage(error.message || 'Unable to sign in.');
+      setErrorMessage(error.message || 'Unable to complete authentication.');
     } finally {
       setIsLoading(false);
     }
@@ -86,22 +138,47 @@ export const Login = () => {
     if (!forgotEmail) return;
     setForgotSubmitted(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api/v1'}/auth/password-reset/request`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: forgotEmail })
-        }
-      );
-      if (!response.ok) throw new Error('Password reset request failed');
-      addToast(`Password reset link sent to ${forgotEmail}`, 'info');
-      setIsForgotModalOpen(false);
-      setForgotEmail('');
+      if (!resetToken) {
+        const response = await requestPasswordReset(forgotEmail.trim());
+        setResetToken(response.token || '');
+        addToast(response.message, 'info');
+      } else {
+        const invalidPassword = passwordError(resetPassword);
+        if (invalidPassword) throw new Error(invalidPassword);
+        const response = await confirmPasswordReset({
+          token: resetToken,
+          newPassword: resetPassword
+        });
+        addToast(response.message, 'success');
+        setIsForgotModalOpen(false);
+        setForgotEmail('');
+        setResetToken('');
+        setResetPassword('');
+      }
     } catch (error) {
       addToast(error.message, 'danger');
     } finally {
       setForgotSubmitted(false);
+    }
+  };
+
+  const handleVerifySubmit = async (e) => {
+    e.preventDefault();
+    if (!verifyToken.trim()) return;
+    setIsVerifying(true);
+    try {
+      const response = await verifyEmail(verifyToken.trim());
+      addToast(response.message, 'success');
+      setIsVerifyModalOpen(false);
+      setAuthMode('login');
+      setVerifyToken('');
+      setFullName('');
+      setBusinessName('');
+      setStoreName('');
+    } catch (error) {
+      addToast(error.message, 'danger');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -179,12 +256,31 @@ export const Login = () => {
               </div>
               <span className="text-lg font-bold text-white">MarketMind AI</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Sign in to workspace</h2>
-            <p className="text-sm text-slate-400">Enter credentials or select a pre-configured demo role below.</p>
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                {authMode === 'login' ? 'Sign in to workspace' : 'Create business account'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode(authMode === 'login' ? 'register' : 'login');
+                  setErrorMessage('');
+                  setMfaCode('');
+                }}
+                className="text-xs font-semibold text-indigo-400 hover:text-indigo-300"
+              >
+                {authMode === 'login' ? 'Register' : 'Back to login'}
+              </button>
+            </div>
+            <p className="text-sm text-slate-400">
+              {authMode === 'login'
+                ? 'Enter credentials or select a pre-configured demo role below.'
+                : 'Set up the first Business Owner account and store for a new workspace.'}
+            </p>
           </div>
 
           {/* Quick Role Selector Demo Tabs */}
-          <div className="space-y-2">
+          {authMode === 'login' && <div className="space-y-2">
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Demo Access Role:
             </label>
@@ -207,7 +303,7 @@ export const Login = () => {
             <p className="text-[11px] text-indigo-400 text-right font-medium">
               Active Selection: {MOCK_ROLES.find(r => r.id === selectedRole)?.name}
             </p>
-          </div>
+          </div>}
 
           {/* Error Message Alert */}
           {errorMessage && (
@@ -219,6 +315,39 @@ export const Login = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+            {authMode === 'register' && (
+              <>
+                <Input
+                  id="fullName"
+                  label="Your Full Name"
+                  placeholder="Aarav Sharma"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  icon={User}
+                  required
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input
+                    id="businessName"
+                    label="Business Name"
+                    placeholder="Aravali Mart"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    icon={Building2}
+                    required
+                  />
+                  <Input
+                    id="storeName"
+                    label="First Store"
+                    placeholder="Main Store"
+                    value={storeName}
+                    onChange={(e) => setStoreName(e.target.value)}
+                    icon={Store}
+                    required
+                  />
+                </div>
+              </>
+            )}
             <Input
               id="email"
               label="Work Email Address"
@@ -230,7 +359,7 @@ export const Login = () => {
               required
             />
 
-            {selectedRole === 'admin' && (
+            {authMode === 'login' && selectedRole === 'admin' && (
               <Input
                 id="mfaCode"
                 label="Administrator MFA Code"
@@ -264,7 +393,7 @@ export const Login = () => {
             />
 
             {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between text-xs">
+            {authMode === 'login' && <div className="flex items-center justify-between text-xs">
               <label className="flex items-center gap-2 cursor-pointer text-slate-300">
                 <input
                   type="checkbox"
@@ -282,7 +411,7 @@ export const Login = () => {
               >
                 Forgot password?
               </button>
-            </div>
+            </div>}
 
             {/* Submit Button */}
             <Button
@@ -294,12 +423,12 @@ export const Login = () => {
               icon={ArrowRight}
               iconPosition="right"
             >
-              Sign In to Dashboard
+              {authMode === 'login' ? 'Sign In to Dashboard' : 'Create Business Workspace'}
             </Button>
           </form>
 
           {/* Social Logins */}
-          <div className="space-y-4 pt-2">
+          {authMode === 'login' && <div className="space-y-4 pt-2">
             <div className="relative flex items-center justify-center">
               <div className="border-t border-slate-800 w-full" />
               <span className="bg-slate-900 px-3 text-xs text-slate-500 uppercase tracking-wider font-medium">Or continue with</span>
@@ -334,7 +463,7 @@ export const Login = () => {
                 <span>Microsoft SSO</span>
               </button>
             </div>
-          </div>
+          </div>}
         </div>
       </div>
 
@@ -346,7 +475,9 @@ export const Login = () => {
       >
         <form onSubmit={handleForgotSubmit} className="space-y-4">
           <p className="text-sm text-slate-600 dark:text-slate-300">
-            Enter your work email address and we will send you a secure password reset link.
+            {resetToken
+              ? 'Enter the reset token and choose a new password.'
+              : 'Enter your work email address to request a secure reset token.'}
           </p>
           <Input
             id="forgotEmail"
@@ -358,12 +489,71 @@ export const Login = () => {
             icon={Mail}
             required
           />
+          {resetToken && (
+            <>
+              <Input
+                id="resetToken"
+                label="Reset Token"
+                value={resetToken}
+                onChange={(e) => setResetToken(e.target.value)}
+                icon={CheckCircle2}
+                required
+              />
+              <Input
+                id="resetPassword"
+                label="New Password"
+                type="password"
+                placeholder="At least 12 characters"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                icon={Lock}
+                required
+              />
+            </>
+          )}
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setIsForgotModalOpen(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setIsForgotModalOpen(false);
+                setResetToken('');
+                setResetPassword('');
+              }}
+            >
               Cancel
             </Button>
             <Button type="submit" variant="primary" isLoading={forgotSubmitted}>
-              Send Reset Link
+              {resetToken ? 'Set New Password' : 'Request Reset Token'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
+        title="Verify Email Address"
+      >
+        <form onSubmit={handleVerifySubmit} className="space-y-4">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Paste the verification token sent to the registered email address. In development,
+            MarketMind fills this field automatically.
+          </p>
+          <Input
+            id="verifyToken"
+            label="Verification Token"
+            value={verifyToken}
+            onChange={(e) => setVerifyToken(e.target.value)}
+            icon={CheckCircle2}
+            required
+          />
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" onClick={() => setIsVerifyModalOpen(false)}>
+              Verify Later
+            </Button>
+            <Button type="submit" variant="primary" isLoading={isVerifying}>
+              Confirm Email
             </Button>
           </div>
         </form>

@@ -14,6 +14,14 @@ class RoleResponse(ORMModel):
     permissions: list[str] = []
 
 
+class StoreResponse(ORMModel):
+    id: UUID
+    name: str
+    code: str
+    timezone: str
+    is_active: bool
+
+
 class UserResponse(ORMModel):
     id: UUID
     tenant_id: UUID

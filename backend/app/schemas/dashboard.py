@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -24,6 +24,12 @@ class KPIValue(BaseModel):
     definition: str
 
 
+class RevenueSeriesPoint(BaseModel):
+    date: date
+    revenue: Decimal
+    transaction_count: int
+
+
 class SalesDashboardResponse(BaseModel):
     scope: str
     tenant_id: UUID
@@ -38,5 +44,6 @@ class SalesDashboardResponse(BaseModel):
     transaction_count: KPIValue
     quantity: KPIValue
     average_order_value: KPIValue
+    revenue_series: list[RevenueSeriesPoint]
     state: str
     message: str | None = None

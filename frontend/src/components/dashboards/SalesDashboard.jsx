@@ -5,6 +5,7 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { useToast } from '../../context/ToastContext';
 import { useData } from '../../context/DataContext';
+import { DateRangeFilter } from '../common/DateRangeFilter';
 import {
   Target,
   CheckCircle2,
@@ -34,7 +35,6 @@ export const SalesDashboard = () => {
     kpis: mockKpis,
     pipelineStages,
     recentLeads,
-    dailyAchievement
   } = MOCK_SALES_DATA;
   const money = (value) =>
     new Intl.NumberFormat('en-IN', {
@@ -70,6 +70,13 @@ export const SalesDashboard = () => {
       change: salesDashboard ? 'Imported quantity' : mockKpis.winRate.change
     }
   };
+  const revenueTrend = (salesDashboard?.revenue_series || []).map((point) => ({
+    date: new Date(`${point.date}T00:00:00`).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short'
+    }),
+    revenue: Number(point.revenue)
+  }));
 
   const handleContactLead = (name, method) => {
     addToast(`Initiated ${method} to ${name}`, 'info');
@@ -82,43 +89,45 @@ export const SalesDashboard = () => {
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-200 text-xs font-semibold">
             <Award className="w-3.5 h-3.5 text-amber-400" />
-            <span>Monthly Target: 90% Completed</span>
+            <span>Sales Coaching • Planned for Milestone 2</span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight">Sales Executive Deal Workspace</h2>
           <p className="text-sm text-amber-200">
-            You need <strong className="text-white">$5,000 more in closed revenue</strong> by Friday to hit your Q3 quota bonus.
+            Personal sales KPIs below use your authorised database records. AI coaching will be added in Milestone 2.
           </p>
         </div>
 
         <Button
           variant="glass"
           size="sm"
-          onClick={() => addToast('Opening AI Call Assistant...', 'info')}
           icon={PhoneCall}
+          disabled
           className="shrink-0"
         >
-          Start AI Sales Calls
+          Available in Milestone 2
         </Button>
       </div>
+
+      <DateRangeFilter />
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <Card hoverEffect>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Monthly Quota Progress</span>
+            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Sales Revenue</span>
             <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
               <Target className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3">
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{kpis.monthlyTarget.value}</h3>
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{kpis.monthlyTarget.percentage} Target Reached</span>
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{kpis.monthlyTarget.percentage} selected period</span>
           </div>
         </Card>
 
         <Card hoverEffect>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Closed Won Deals</span>
+            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Completed Orders</span>
             <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="w-5 h-5" />
             </div>
@@ -131,7 +140,7 @@ export const SalesDashboard = () => {
 
         <Card hoverEffect>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Active Pipeline Value</span>
+            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Average Order Value</span>
             <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
               <Layers className="w-5 h-5" />
             </div>
@@ -144,7 +153,7 @@ export const SalesDashboard = () => {
 
         <Card hoverEffect>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Personal Win Rate</span>
+            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Items Sold</span>
             <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
               <TrendingUp className="w-5 h-5" />
             </div>
@@ -163,7 +172,7 @@ export const SalesDashboard = () => {
             <Layers className="w-4 h-4 text-indigo-500" />
             <span>Active Deal Funnel Pipeline</span>
           </h3>
-          <span className="text-xs text-slate-400">18 Opportunities Total</span>
+          <Badge variant="warning">Planned for Milestone 2</Badge>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -182,23 +191,25 @@ export const SalesDashboard = () => {
 
       {/* Daily Achievement Chart & Lead Pipeline */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Daily Target vs Achieved Chart */}
+        {/* Database-backed personal revenue chart */}
         <Card className="lg:col-span-1">
           <CardHeader>
             <div>
-              <CardTitle>Daily Target vs Achieved</CardTitle>
-              <CardDescription>Daily revenue quota fulfillment</CardDescription>
+              <CardTitle>Personal Revenue Trend</CardTitle>
+              <CardDescription>Completed sales for the selected period</CardDescription>
             </div>
           </CardHeader>
           <div className="h-64 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailyAchievement}>
+              <BarChart data={revenueTrend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} />
-                <XAxis dataKey="day" stroke="#94a3b8" fontSize={12} />
-                <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(v) => `$${v}`} />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', color: '#fff' }} />
-                <Bar dataKey="target" fill="#64748b" name="Target ($2,000)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="achieved" fill="#4f46e5" name="Achieved" radius={[4, 4, 0, 0]} />
+                <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} minTickGap={18} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(value) => `₹${Math.round(value / 1000)}k`} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', color: '#fff' }}
+                  formatter={(value) => [money(value), 'Revenue']}
+                />
+                <Bar dataKey="revenue" fill="#4f46e5" name="Revenue" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -211,9 +222,10 @@ export const SalesDashboard = () => {
               <Sparkles className="w-5 h-5 text-amber-500 animate-pulse" />
               <div>
                 <CardTitle>High-Probability AI Opportunities</CardTitle>
-                <CardDescription>Ranked by machine-learning win probability</CardDescription>
+                <CardDescription>Planned for Milestone 3 • sample opportunity layout</CardDescription>
               </div>
             </div>
+            <Badge variant="warning">Planned for Milestone 3</Badge>
           </CardHeader>
 
           <div className="space-y-3">
@@ -234,6 +246,7 @@ export const SalesDashboard = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleContactLead(lead.name, 'Phone Call')}
+                    disabled
                     className="p-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-indigo-600 hover:text-white transition-colors"
                     title="Call Lead"
                   >
@@ -241,6 +254,7 @@ export const SalesDashboard = () => {
                   </button>
                   <button
                     onClick={() => handleContactLead(lead.name, 'Email')}
+                    disabled
                     className="p-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-indigo-600 hover:text-white transition-colors"
                     title="Send Email"
                   >
@@ -249,11 +263,11 @@ export const SalesDashboard = () => {
                   <Button
                     variant="primary"
                     size="sm"
-                    onClick={() => addToast(`Moved ${lead.name} to Closing Stage`, 'success')}
+                    disabled
                     icon={ArrowRight}
                     iconPosition="right"
                   >
-                    Advance Deal
+                    Milestone 3
                   </Button>
                 </div>
               </div>

@@ -138,6 +138,13 @@ def test_import_is_repeatable_and_dashboard_uses_imported_sales(
     assert response.json()["revenue"]["value"] == "150.00"
     assert response.json()["transaction_count"]["value"] == 1
     assert response.json()["quantity"]["value"] == 3
+    assert response.json()["revenue_series"] == [
+        {
+            "date": "2022-04-10",
+            "revenue": "150.00",
+            "transaction_count": 1,
+        }
+    ]
 
 
 def test_rerun_updates_inventory_without_creating_duplicates(

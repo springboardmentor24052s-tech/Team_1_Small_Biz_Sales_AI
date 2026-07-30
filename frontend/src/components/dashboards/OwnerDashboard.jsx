@@ -3,8 +3,8 @@ import { MOCK_OWNER_DATA } from '../../data/mockData';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { useToast } from '../../context/ToastContext';
 import { useData } from '../../context/DataContext';
+import { DateRangeFilter } from '../common/DateRangeFilter';
 import {
   DollarSign,
   ShoppingCart,
@@ -34,11 +34,9 @@ import {
 } from 'recharts';
 
 export const OwnerDashboard = () => {
-  const { addToast } = useToast();
   const { salesDashboard, customerSummary } = useData();
   const {
     kpis: mockKpis,
-    salesTrend,
     categoryDistribution,
     topProducts,
     aiRecommendations
@@ -51,28 +49,36 @@ export const OwnerDashboard = () => {
     totalRevenue: {
       ...mockKpis.totalRevenue,
       value: salesDashboard ? money(salesDashboard.revenue.value) : mockKpis.totalRevenue.value,
-      change: salesDashboard ? 'Live database' : mockKpis.totalRevenue.change
+      change: salesDashboard ? 'Live database' : mockKpis.totalRevenue.change,
+      timeFrame: salesDashboard ? 'selected period' : mockKpis.totalRevenue.timeFrame
     },
     totalOrders: {
       ...mockKpis.totalOrders,
       value: salesDashboard?.transaction_count.value ?? mockKpis.totalOrders.value,
-      change: salesDashboard ? 'Imported orders' : mockKpis.totalOrders.change
+      change: salesDashboard ? 'Imported orders' : mockKpis.totalOrders.change,
+      timeFrame: salesDashboard ? 'selected period' : mockKpis.totalOrders.timeFrame
     },
     totalCustomers: {
       ...mockKpis.totalCustomers,
       value: customerSummary?.customer_count ?? mockKpis.totalCustomers.value,
-      change: customerSummary ? 'Cleaned customers' : mockKpis.totalCustomers.change
+      change: customerSummary ? 'Cleaned customers' : mockKpis.totalCustomers.change,
+      timeFrame: customerSummary ? 'all imported records' : mockKpis.totalCustomers.timeFrame
     },
     grossProfit: {
       ...mockKpis.grossProfit,
       value: salesDashboard ? 'Not available' : mockKpis.grossProfit.value,
-      change: salesDashboard ? 'Cost data required' : mockKpis.grossProfit.change
+      change: salesDashboard ? 'Cost data required' : mockKpis.grossProfit.change,
+      timeFrame: salesDashboard ? 'not calculated' : mockKpis.grossProfit.timeFrame
     }
   };
-
-  const handleAction = (title) => {
-    addToast(`Triggered AI Recommendation: ${title}`, 'success');
-  };
+  const revenueTrend = (salesDashboard?.revenue_series || []).map((point) => ({
+    date: new Date(`${point.date}T00:00:00`).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short'
+    }),
+    revenue: Number(point.revenue),
+    transactions: point.transaction_count
+  }));
 
   return (
     <div className="space-y-6">
@@ -81,11 +87,11 @@ export const OwnerDashboard = () => {
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
-            <span>AI Executive Briefing</span>
+            <span>AI Executive Briefing • Planned for Milestone 2</span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight">Business Owner Strategic Command</h2>
           <p className="text-sm text-indigo-200">
-            July gross revenue is tracking 18.4% ahead of target. AI recommends immediate inventory reorder for Q3 peak.
+            Current KPIs use imported database records. Predictive executive insights will be added in Milestone 2.
           </p>
         </div>
 
@@ -93,13 +99,15 @@ export const OwnerDashboard = () => {
           <Button
             variant="glass"
             size="sm"
-            onClick={() => addToast('Exporting Q3 Financial Strategy PDF...', 'info')}
             icon={Download}
+            disabled
           >
-            Export Strategy Report
+            Report Export Planned
           </Button>
         </div>
       </div>
+
+      <DateRangeFilter />
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -182,37 +190,32 @@ export const OwnerDashboard = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Line / Area Chart - Sales & Profit Trend */}
+        {/* Database-backed revenue trend */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <div>
-              <CardTitle>Revenue vs Profit Growth</CardTitle>
-              <CardDescription>Monthly financial performance analysis</CardDescription>
+              <CardTitle>Revenue Trend</CardTitle>
+              <CardDescription>Completed sales from the selected database period</CardDescription>
             </div>
-            <Badge variant="info">Real-time Stream</Badge>
+            <Badge variant="info">Live Database</Badge>
           </CardHeader>
           <div className="h-72 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={salesTrend}>
+              <AreaChart data={revenueTrend}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.4} />
                     <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} />
-                <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
-                <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(v) => `$${v / 1000}k`} />
+                <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} minTickGap={24} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(value) => `₹${Math.round(value / 1000)}k`} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px', color: '#fff' }}
-                  formatter={(value) => [`$${value.toLocaleString()}`, '']}
+                  formatter={(value) => [money(value), 'Revenue']}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" name="Revenue" />
-                <Area type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorProfit)" name="Gross Profit" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -223,7 +226,7 @@ export const OwnerDashboard = () => {
           <CardHeader>
             <div>
               <CardTitle>Sales Category Share</CardTitle>
-              <CardDescription>Revenue by merchandise sector</CardDescription>
+              <CardDescription>Planned for Milestone 2 • sample layout</CardDescription>
             </div>
           </CardHeader>
           <div className="h-56 w-full flex items-center justify-center">
@@ -271,10 +274,10 @@ export const OwnerDashboard = () => {
               </div>
               <div>
                 <CardTitle>AI Strategic Insights Engine</CardTitle>
-                <CardDescription>Automated growth and pricing opportunities</CardDescription>
+                <CardDescription>Predictive recommendations are planned for Milestone 3</CardDescription>
               </div>
             </div>
-            <Badge variant="success">3 Signals Active</Badge>
+            <Badge variant="warning">Planned for Milestone 3</Badge>
           </CardHeader>
 
           <div className="space-y-4">
@@ -295,10 +298,10 @@ export const OwnerDashboard = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleAction(rec.title)}
+                  disabled
                   className="shrink-0"
                 >
-                  {rec.actionLabel}
+                  Milestone 3
                 </Button>
               </div>
             ))}
@@ -310,7 +313,7 @@ export const OwnerDashboard = () => {
           <CardHeader>
             <div>
               <CardTitle>Top Revenue Products</CardTitle>
-              <CardDescription>Highest volume sales items</CardDescription>
+              <CardDescription>Planned live aggregation • sample layout</CardDescription>
             </div>
           </CardHeader>
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { MOCK_ADMIN_DATA } from '../../data/mockData';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Badge } from '../ui/Badge';
@@ -7,29 +7,27 @@ import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { useToast } from '../../context/ToastContext';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   ShieldCheck,
   Users,
   Activity,
   Cpu,
   HardDrive,
-  KeyRound,
   UserPlus,
-  Lock,
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  FileText
+  Copy
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
   const { addToast } = useToast();
-  const { users: liveUsers } = useData();
+  const { users: liveUsers, refresh } = useData();
+  const { api, profile, reauthenticate } = useAuth();
   const {
     systemMetrics: mockSystemMetrics,
-    users: initialUsers,
-    rbacMatrix,
-    systemLogs
+    users: initialUsers
   } = MOCK_ADMIN_DATA;
   const systemMetrics = {
     ...mockSystemMetrics,
@@ -39,55 +37,176 @@ export const AdminDashboard = () => {
   const [users, setUsers] = useState(initialUsers);
   const [activeTab, setActiveTab] = useState('users'); // 'users' | 'rbac' | 'logs'
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Sales Executive' });
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    role: 'sales_executive',
+    storeId: ''
+  });
+  const [roles, setRoles] = useState([]);
+  const [stores, setStores] = useState([]);
+  const [systemLogs, setSystemLogs] = useState([]);
+  const [pendingAction, setPendingAction] = useState(null);
+  const [reauthPassword, setReauthPassword] = useState('');
+  const [reauthMfa, setReauthMfa] = useState('');
+  const [invitationToken, setInvitationToken] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!liveUsers.length) return;
     setUsers(
       liveUsers.map((user) => ({
         id: user.id.slice(0, 8).toUpperCase(),
+        backendId: user.id,
+        storeId: user.store_id,
+        roleCode: user.role.code,
         name: user.full_name,
         email: user.email,
         role: user.role.name,
-        status: user.status === 'active' ? 'Active' : user.status,
+        status: user.status === 'active'
+          ? 'Active'
+          : user.status.charAt(0).toUpperCase() + user.status.slice(1),
         lastLogin: 'Backend account',
         mfa: user.mfa_enabled ? 'Enabled' : 'Disabled'
       }))
     );
   }, [liveUsers]);
 
-  const handleToggleStatus = (userId) => {
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id === userId) {
-          const newStatus = u.status === 'Active' ? 'Inactive' : 'Active';
-          addToast(`Updated user ${u.name} status to ${newStatus}`, 'info');
-          return { ...u, status: newStatus };
-        }
-        return u;
-      })
+  const loadAdminData = useCallback(async () => {
+    try {
+      const [roleCatalog, storeCatalog, auditEvents] = await Promise.all([
+        api('/users/roles/catalog'),
+        api('/users/stores/catalog'),
+        api('/audit?limit=100')
+      ]);
+      setRoles(roleCatalog);
+      setStores(storeCatalog);
+      setSystemLogs(
+        auditEvents.map((event) => {
+          const serializedDetails = Object.entries(event.details || {})
+            .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
+            .join(' · ');
+          const lowerType = event.event_type.toLowerCase();
+          return {
+            id: event.id,
+            timestamp: new Date(event.created_at).toLocaleString(),
+            user: event.actor_user_id ? event.actor_user_id.slice(0, 8).toUpperCase() : 'System',
+            action: event.event_type,
+            level: lowerType.includes('failed') || lowerType.includes('locked')
+              ? 'DANGER'
+              : lowerType.includes('disabled') || lowerType.includes('void')
+              ? 'WARNING'
+              : 'INFO',
+            details: serializedDetails || 'No additional details'
+          };
+        })
+      );
+    } catch (error) {
+      addToast(error.message, 'error');
+    }
+  }, [api, addToast]);
+
+  useEffect(() => {
+    loadAdminData();
+  }, [loadAdminData]);
+
+  const askForReauthentication = (description, run) => {
+    setReauthPassword('');
+    setReauthMfa('');
+    setPendingAction({ description, run });
+  };
+
+  const closeReauthentication = () => {
+    if (isSaving) return;
+    setPendingAction(null);
+    setReauthPassword('');
+    setReauthMfa('');
+  };
+
+  const confirmPrivilegedAction = async (e) => {
+    e.preventDefault();
+    if (!pendingAction) return;
+    setIsSaving(true);
+    try {
+      const result = await reauthenticate({
+        password: reauthPassword,
+        mfaCode: reauthMfa
+      });
+      await pendingAction.run(result.reauth_token);
+      setPendingAction(null);
+      await Promise.all([refresh(), loadAdminData()]);
+    } catch (error) {
+      addToast(error.message, 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleStatus = (user) => {
+    const enabled = user.status !== 'Active';
+    askForReauthentication(
+      `${enabled ? 'Activate' : 'Deactivate'} ${user.name}`,
+      async (reauthToken) => {
+        await api(`/users/${user.backendId}/state`, {
+          method: 'PATCH',
+          headers: { 'X-Reauth-Token': reauthToken },
+          body: JSON.stringify({ enabled })
+        });
+        addToast(`${user.name} was ${enabled ? 'activated' : 'deactivated'}`, 'success');
+      }
+    );
+  };
+
+  const handleRoleChange = (user, roleCode) => {
+    const storeId = ['store_manager', 'sales_executive'].includes(roleCode)
+      ? user.storeId || stores[0]?.id
+      : null;
+    if (['store_manager', 'sales_executive'].includes(roleCode) && !storeId) {
+      addToast('Create an active store before assigning this role', 'error');
+      return;
+    }
+    const roleName = roles.find((role) => role.code === roleCode)?.name || roleCode;
+    askForReauthentication(
+      `Change ${user.name}'s role to ${roleName}`,
+      async (reauthToken) => {
+        await api(`/users/${user.backendId}/role`, {
+          method: 'PATCH',
+          headers: { 'X-Reauth-Token': reauthToken },
+          body: JSON.stringify({ role_code: roleCode, store_id: storeId })
+        });
+        addToast(`${user.name}'s role was updated`, 'success');
+      }
     );
   };
 
   const handleAddUserSubmit = (e) => {
     e.preventDefault();
-    if (!newUser.name || !newUser.email) return;
-
-    const created = {
-      id: `USR-${100 + users.length + 1}`,
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      status: 'Active',
-      lastLogin: 'Never',
-      mfa: 'Enabled'
-    };
-
-    setUsers([created, ...users]);
-    addToast(`New user ${newUser.name} created as ${newUser.role}`, 'success');
-    setIsAddUserOpen(false);
-    setNewUser({ name: '', email: '', role: 'Sales Executive' });
+    const needsStore = ['store_manager', 'sales_executive'].includes(newUser.role);
+    if (!newUser.name.trim() || !newUser.email.trim() || (needsStore && !newUser.storeId)) return;
+    const selectedRole = roles.find((role) => role.code === newUser.role);
+    askForReauthentication(
+      `Invite ${newUser.name.trim()} as ${selectedRole?.name || newUser.role}`,
+      async (reauthToken) => {
+        const result = await api('/users/invite', {
+          method: 'POST',
+          headers: { 'X-Reauth-Token': reauthToken },
+          body: JSON.stringify({
+            full_name: newUser.name.trim(),
+            email: newUser.email.trim().toLowerCase(),
+            role_code: newUser.role,
+            store_id: needsStore ? newUser.storeId : null
+          })
+        });
+        setInvitationToken(result.token || '');
+        setIsAddUserOpen(false);
+        setNewUser({ name: '', email: '', role: 'sales_executive', storeId: '' });
+        addToast(`Invitation created for ${newUser.email.trim()}`, 'success');
+      }
+    );
   };
+
+  const permissionCodes = [...new Set(roles.flatMap((role) => role.permissions))].sort();
+  const roleByCode = Object.fromEntries(roles.map((role) => [role.code, role]));
 
   return (
     <div className="space-y-6">
@@ -96,7 +215,7 @@ export const AdminDashboard = () => {
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200 text-xs font-semibold">
             <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
-            <span>Platform Status: Healthy (99.99% Uptime)</span>
+            <span>Core API Connected • Monitoring Integration Planned</span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight">System Administration & RBAC</h2>
           <p className="text-sm text-purple-200">
@@ -116,6 +235,10 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Health Metrics Bar */}
+      <div className="flex items-center gap-2 text-xs text-slate-500">
+        <Badge variant="warning">Demo monitoring metrics</Badge>
+        <span>CPU, memory, latency and uptime will become live after monitoring integration.</span>
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <Card hoverEffect className="p-4">
           <div className="flex items-center gap-3">
@@ -123,7 +246,7 @@ export const AdminDashboard = () => {
               <Activity className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-slate-500 uppercase">API Latency</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase">Demo API Latency</p>
               <p className="text-base font-bold text-slate-900 dark:text-slate-100">{systemMetrics.apiLatency}</p>
             </div>
           </div>
@@ -135,7 +258,7 @@ export const AdminDashboard = () => {
               <Cpu className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-slate-500 uppercase">CPU Load</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase">Demo CPU Load</p>
               <p className="text-base font-bold text-slate-900 dark:text-slate-100">{systemMetrics.cpuUsage}</p>
             </div>
           </div>
@@ -147,7 +270,7 @@ export const AdminDashboard = () => {
               <HardDrive className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-slate-500 uppercase">Memory RAM</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase">Demo Memory RAM</p>
               <p className="text-base font-bold text-slate-900 dark:text-slate-100">{systemMetrics.memoryUsage}</p>
             </div>
           </div>
@@ -159,7 +282,7 @@ export const AdminDashboard = () => {
               <CheckCircle2 className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-slate-500 uppercase">Sys Uptime</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase">Demo Uptime</p>
               <p className="text-base font-bold text-slate-900 dark:text-slate-100">{systemMetrics.uptime}</p>
             </div>
           </div>
@@ -171,7 +294,7 @@ export const AdminDashboard = () => {
               <Users className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-slate-500 uppercase">Active Sessions</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase">Tenant Accounts</p>
               <p className="text-base font-bold text-slate-900 dark:text-slate-100">{systemMetrics.activeSessions}</p>
             </div>
           </div>
@@ -249,7 +372,17 @@ export const AdminDashboard = () => {
                     <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">{usr.name}</td>
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{usr.email}</td>
                     <td className="py-3 px-4">
-                      <span className="font-semibold text-indigo-600 dark:text-indigo-400">{usr.role}</span>
+                      <select
+                        aria-label={`Role for ${usr.name}`}
+                        value={usr.roleCode}
+                        onChange={(event) => handleRoleChange(usr, event.target.value)}
+                        disabled={usr.backendId === profile?.id}
+                        className="max-w-40 bg-transparent border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 font-semibold text-indigo-600 dark:text-indigo-400 disabled:opacity-60"
+                      >
+                        {roles.map((role) => (
+                          <option key={role.code} value={role.code}>{role.name}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="py-3 px-4">
                       <Badge variant={usr.mfa === 'Enabled' ? 'success' : 'warning'}>{usr.mfa}</Badge>
@@ -261,7 +394,8 @@ export const AdminDashboard = () => {
                       <Button
                         variant={usr.status === 'Active' ? 'ghost' : 'outline'}
                         size="sm"
-                        onClick={() => handleToggleStatus(usr.id)}
+                        onClick={() => handleToggleStatus(usr)}
+                        disabled={usr.backendId === profile?.id}
                       >
                         {usr.status === 'Active' ? 'Deactivate' : 'Activate'}
                       </Button>
@@ -296,20 +430,20 @@ export const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                {rbacMatrix.map((row) => (
-                  <tr key={row.feature} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">{row.feature}</td>
+                {permissionCodes.map((permission) => (
+                  <tr key={permission} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-slate-100">{permission}</td>
                     <td className="py-3 px-4 text-center">
-                      {row.owner ? <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /> : <XCircle className="w-5 h-5 text-slate-300 dark:text-slate-700 mx-auto" />}
+                      {roleByCode.business_owner?.permissions.includes(permission) ? <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /> : <XCircle className="w-5 h-5 text-slate-300 dark:text-slate-700 mx-auto" />}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      {row.manager ? <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /> : <XCircle className="w-5 h-5 text-slate-300 dark:text-slate-700 mx-auto" />}
+                      {roleByCode.store_manager?.permissions.includes(permission) ? <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /> : <XCircle className="w-5 h-5 text-slate-300 dark:text-slate-700 mx-auto" />}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      {row.sales ? <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /> : <XCircle className="w-5 h-5 text-slate-300 dark:text-slate-700 mx-auto" />}
+                      {roleByCode.sales_executive?.permissions.includes(permission) ? <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /> : <XCircle className="w-5 h-5 text-slate-300 dark:text-slate-700 mx-auto" />}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      {row.admin ? <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /> : <XCircle className="w-5 h-5 text-slate-300 dark:text-slate-700 mx-auto" />}
+                      {roleByCode.administrator?.permissions.includes(permission) ? <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" /> : <XCircle className="w-5 h-5 text-slate-300 dark:text-slate-700 mx-auto" />}
                     </td>
                   </tr>
                 ))}
@@ -395,25 +529,109 @@ export const AdminDashboard = () => {
             </label>
             <select
               value={newUser.role}
-              onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+              onChange={(e) => setNewUser({ ...newUser, role: e.target.value, storeId: '' })}
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
             >
-              <option value="Business Owner">Business Owner</option>
-              <option value="Store Manager">Store Manager</option>
-              <option value="Sales Executive">Sales Executive</option>
-              <option value="System Admin">System Admin</option>
+              {roles.map((role) => (
+                <option key={role.code} value={role.code}>{role.name}</option>
+              ))}
             </select>
           </div>
+
+          {['store_manager', 'sales_executive'].includes(newUser.role) && (
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                Assigned Store
+              </label>
+              <select
+                value={newUser.storeId}
+                onChange={(e) => setNewUser({ ...newUser, storeId: e.target.value })}
+                required
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+              >
+                <option value="">Select a store</option>
+                {stores.map((store) => (
+                  <option key={store.id} value={store.id}>{store.name} ({store.code})</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setIsAddUserOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" variant="primary" className="bg-purple-600 hover:bg-purple-700">
-              Create User Account
+              Send Invitation
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(pendingAction)}
+        onClose={closeReauthentication}
+        title="Confirm Sensitive Change"
+      >
+        <form onSubmit={confirmPrivilegedAction} className="space-y-4">
+          <div className="flex gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 text-sm">
+            <AlertTriangle className="w-5 h-5 shrink-0" />
+            <p>{pendingAction?.description}. Enter your credentials to continue.</p>
+          </div>
+          <Input
+            id="reauthPassword"
+            label="Admin Password"
+            type="password"
+            value={reauthPassword}
+            onChange={(event) => setReauthPassword(event.target.value)}
+            required
+          />
+          {profile?.mfa_enabled && (
+            <Input
+              id="reauthMfa"
+              label="MFA Code"
+              inputMode="numeric"
+              value={reauthMfa}
+              onChange={(event) => setReauthMfa(event.target.value)}
+              required
+            />
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={closeReauthentication}>Cancel</Button>
+            <Button type="submit" variant="primary" disabled={isSaving}>
+              {isSaving ? 'Confirming...' : 'Confirm Change'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(invitationToken)}
+        onClose={() => setInvitationToken('')}
+        title="Invitation Ready"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Share this one-time development token securely with the invited teammate.
+          </p>
+          <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 break-all font-mono text-xs">
+            {invitationToken}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              icon={Copy}
+              onClick={() => {
+                navigator.clipboard.writeText(invitationToken);
+                addToast('Invitation token copied', 'success');
+              }}
+            >
+              Copy Token
+            </Button>
+            <Button type="button" variant="primary" onClick={() => setInvitationToken('')}>Done</Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

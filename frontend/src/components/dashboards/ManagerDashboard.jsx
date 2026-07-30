@@ -3,8 +3,6 @@ import { MOCK_MANAGER_DATA } from '../../data/mockData';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { Modal } from '../ui/Modal';
-import { Input } from '../ui/Input';
 import { useToast } from '../../context/ToastContext';
 import { useData } from '../../context/DataContext';
 import {
@@ -22,7 +20,7 @@ import {
 
 export const ManagerDashboard = () => {
   const { addToast } = useToast();
-  const { inventorySummary, inventoryItems: liveInventoryItems } = useData();
+  const { inventorySummary, inventoryItems: liveInventoryItems, refresh } = useData();
   const {
     kpis: mockKpis,
     lowStockAlerts: mockLowStockAlerts,
@@ -71,27 +69,15 @@ export const ManagerDashboard = () => {
   };
 
   const [searchFilter, setSearchFilter] = useState('');
-  const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [reorderQty, setReorderQty] = useState('50');
-
   const filteredItems = inventoryItems.filter(item =>
     item.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
     item.category.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
-  const handleOpenReorder = (item) => {
-    setSelectedItem(item);
-    setReorderQty('50');
-    setIsReorderModalOpen(true);
-  };
-
-  const handleConfirmReorder = (e) => {
-    e.preventDefault();
-    if (!selectedItem) return;
-    addToast(`Purchase Order generated for ${reorderQty} units of ${selectedItem.name}!`, 'success');
-    setIsReorderModalOpen(false);
-  };
+  const alertCount = inventorySummary
+    ? inventorySummary.low_stock_count + inventorySummary.out_of_stock_count
+    : lowStockAlerts.length;
+  const alertNames = lowStockAlerts.slice(0, 2).map((item) => item.name).join(' and ');
 
   return (
     <div className="space-y-6">
@@ -101,12 +87,12 @@ export const ManagerDashboard = () => {
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold uppercase tracking-wider flex items-center gap-1">
               <AlertTriangle className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-              Critical Stock Alert (14 SKUs)
+              Stock Alert ({alertCount} SKUs)
             </span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight">Store Manager Operations Dashboard</h2>
           <p className="text-sm text-rose-200">
-            Thermal Receipt Paper and Bluetooth Barcode Scanner have hit critical minimum safety stock threshold.
+            {alertNames || 'No products'} are currently below the configured safety stock threshold.
           </p>
         </div>
 
@@ -114,10 +100,10 @@ export const ManagerDashboard = () => {
           variant="danger"
           size="md"
           icon={PlusCircle}
-          onClick={() => handleOpenReorder(lowStockAlerts[0])}
+          disabled
           className="shrink-0 font-bold"
         >
-          Quick Bulk Reorder
+          Purchase Orders Planned
         </Button>
       </div>
 
@@ -170,8 +156,8 @@ export const ManagerDashboard = () => {
             </div>
           </div>
           <div className="mt-3">
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{kpis.pendingOrders.value}</h3>
-            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{kpis.pendingOrders.change}</span>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Not connected</h3>
+            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Planned operational integration</span>
           </div>
         </Card>
       </div>
@@ -208,10 +194,10 @@ export const ManagerDashboard = () => {
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => handleOpenReorder(alert)}
+                disabled
                 className="shrink-0"
               >
-                Reorder
+                PO Planned
               </Button>
             </div>
           ))}
@@ -242,7 +228,10 @@ export const ManagerDashboard = () => {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => addToast('Stock database refreshed', 'info')}
+                onClick={async () => {
+                  await refresh();
+                  addToast('Stock database refreshed', 'info');
+                }}
                 icon={RefreshCw}
               >
                 Refresh
@@ -298,9 +287,9 @@ export const ManagerDashboard = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleOpenReorder(item)}
+                      disabled
                     >
-                      Reorder Stock
+                      PO Planned
                     </Button>
                   </td>
                 </tr>
@@ -317,7 +306,7 @@ export const ManagerDashboard = () => {
             <Building2 className="w-5 h-5 text-indigo-500" />
             <div>
               <CardTitle>Hardware Suppliers & Logistics Performance</CardTitle>
-              <CardDescription>Verified vendor SLA fulfillment rates</CardDescription>
+              <CardDescription>Sample layout • supplier integration planned</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -339,38 +328,6 @@ export const ManagerDashboard = () => {
         </div>
       </Card>
 
-      {/* Reorder Modal */}
-      <Modal
-        isOpen={isReorderModalOpen}
-        onClose={() => setIsReorderModalOpen(false)}
-        title={`Reorder Stock: ${selectedItem?.name || ''}`}
-      >
-        <form onSubmit={handleConfirmReorder} className="space-y-4">
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs space-y-1">
-            <p><strong>SKU ID:</strong> {selectedItem?.id}</p>
-            <p><strong>Current Warehouse Stock:</strong> {selectedItem?.stock || selectedItem?.currentStock} units</p>
-            <p><strong>Preferred Supplier:</strong> {selectedItem?.supplier || 'Default Vendor'}</p>
-          </div>
-
-          <Input
-            id="reorderQty"
-            label="Reorder Quantity (Units)"
-            type="number"
-            value={reorderQty}
-            onChange={(e) => setReorderQty(e.target.value)}
-            required
-          />
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setIsReorderModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary">
-              Confirm Purchase Order
-            </Button>
-          </div>
-        </form>
-      </Modal>
     </div>
   );
 };
