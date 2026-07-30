@@ -1,16 +1,73 @@
-# React + Vite
+# MarketMind Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The MarketMind frontend is a React and Vite application for small-business sales and inventory
+operations. It connects to the FastAPI service in `../backend` and presents a different workspace
+for each authorized role.
 
-Currently, two official plugins are available:
+## Milestone 1 features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Login and session handling through the backend API
+- Separate dashboards for Business Owners, Store Managers, Sales Executives, and Administrators
+- Role-aware navigation and access restrictions
+- Database-backed sales KPIs and revenue trends
+- Sales date filtering and role-scoped global search
+- Sales transaction create, update, and void workflows
+- Inventory stock levels and low-stock alerts
+- Administrator user and access management
+- Indian rupee formatting throughout the application
+- Clear labels for sample layouts and features planned for later milestones
 
-## React Compiler
+## Run locally
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Install the frontend dependencies:
 
-## Expanding the Oxlint configuration
+```powershell
+cd frontend
+npm install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Set the API address in `frontend/.env` when the backend is not using the default local URL:
+
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8001/api/v1
+```
+
+Start the development server:
+
+```powershell
+npm run dev
+```
+
+Open `http://127.0.0.1:5173` in a browser. The FastAPI service must also be running for login,
+dashboard data, search, inventory, and transaction actions to work.
+
+## Checks
+
+```powershell
+npm run lint
+npm run build
+```
+
+## Main folders
+
+```text
+frontend/src/
+|-- components/
+|   |-- auth/         Login and registration screens
+|   |-- common/       Navigation, search, filters, and shared UI
+|   |-- dashboards/   Role-specific dashboards
+|   `-- modules/      Sales, inventory, reports, and settings views
+|-- context/          Authentication and API data state
+|-- data/             UI fixtures used only for labelled sample sections
+`-- App.jsx           Application shell and role-based routing
+```
+
+## Frontend contributors
+
+The frontend design and feature work was contributed by:
+
+- Divyanka (`divyanka-0525`)
+- Tejananda (`Tejananda`)
+
+Their branch work was retained while connecting the user interface to the Milestone 1 backend and
+database services.

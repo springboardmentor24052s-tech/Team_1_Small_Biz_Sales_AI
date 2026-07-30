@@ -39,3 +39,9 @@ service is running.
 
 For the current local setup, the backend is running on port `8001`. Start the frontend from its
 directory with `npm run dev`, then open `http://127.0.0.1:5173`.
+
+## Team contributions
+
+- Backend and Milestone 1 integration: Garvit (`Garvitk001`)
+- Frontend design and features: Divyanka (`divyanka-0525`) and Tejananda (`Tejananda`)
+- Dataset selection and preprocessing: Komal (`komal283`)

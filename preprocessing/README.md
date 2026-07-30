@@ -19,3 +19,7 @@ python -m preprocessing.milestone1 `
 The command recreates the committed samples with a fixed random seed and calculates the quality
 report from the complete source files. Forecasting, price mapping and Parquet feature preparation
 are intentionally deferred to later milestones.
+
+## Contribution
+
+The Milestone 1 dataset selection and preprocessing work was contributed by Komal (`komal283`).
