@@ -35,6 +35,17 @@ import joblib
 model = joblib.load("backend/sales_model.pkl")
 
 app = FastAPI()
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 db = SessionLocal()
 
 class SalesInput(BaseModel):
@@ -472,3 +483,5 @@ def delete_inventory(
     return {
         "message": "Inventory item deleted successfully"
     }
+
+    

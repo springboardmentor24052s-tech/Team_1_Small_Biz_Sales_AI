@@ -1,0 +1,95 @@
+.mm-auth-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.mm-auth-side {
+  background: var(--mm-ink);
+  color: var(--mm-text-on-ink);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px;
+}
+
+.mm-auth-side .mark {
+  font-family: var(--mm-font-display);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.mm-auth-side .pitch {
+  max-width: 380px;
+}
+
+.mm-auth-side .pitch h1 {
+  color: var(--mm-text-on-ink);
+  font-size: 34px;
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+.mm-auth-side .pitch p {
+  color: var(--mm-text-on-ink-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.mm-auth-side .ledger-line {
+  font-family: var(--mm-font-mono);
+  font-size: 12px;
+  color: var(--mm-gold);
+}
+
+.mm-auth-form-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.mm-auth-card {
+  width: 100%;
+  max-width: 380px;
+}
+
+.mm-auth-card h2 {
+  font-size: 24px;
+  margin-bottom: 6px;
+}
+
+.mm-auth-card .sub {
+  color: var(--mm-text-muted);
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+
+.mm-auth-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+.mm-auth-card .mm-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+}
+
+.mm-auth-switch {
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--mm-text-muted);
+  text-align: center;
+}
+
+.mm-auth-switch a {
+  color: var(--mm-brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (max-width: 860px) {
+  .mm-auth-shell { grid-template-columns: 1fr; }
+  .mm-auth-side { display: none; }
+}
