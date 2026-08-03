@@ -8,8 +8,6 @@ print(df.head(5))
 
 print(df.shape)
 
-import pandas as pd
-
 # Load dataset
 df = pd.read_csv(
     r"C:\Users\Komal kumari\OneDrive\Desktop\Sale Report.csv",
