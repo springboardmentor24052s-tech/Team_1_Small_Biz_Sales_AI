@@ -53,6 +53,9 @@ datasets, models and completion checks. The detailed
 [customer segmentation notes](docs/milestone-2/customer-segmentation.md) contain the feature
 definitions, evaluation metrics, commands and API routes.
 
+The [Milestone 2 status PDF](docs/milestone-2/marketmind-milestone-2-status-and-remaining-work.pdf)
+summarizes completed work, remaining priorities, execution order and final acceptance checks.
+
 ## Frontend connection
 
 The backend exposes versioned routes under `/api/v1` and permits configured React development
