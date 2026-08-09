@@ -17,8 +17,7 @@ python -m preprocessing.milestone1 `
 ```
 
 The command recreates the committed samples with a fixed random seed and calculates the quality
-report from the complete source files. Forecasting, price mapping and Parquet feature preparation
-are intentionally deferred to later milestones.
+report from the complete source files.
 
 ## Milestone 2 customer segmentation
 
@@ -51,6 +50,22 @@ Run the preprocessing tests with:
 ```powershell
 .\preprocessing\.venv\Scripts\python.exe -m unittest discover -s preprocessing\tests -v
 ```
+
+## Milestone 2 forecasting
+
+Run the full Amazon revenue and Parquet demand datasets through chronological model comparison:
+
+```powershell
+.\preprocessing\.venv\Scripts\python.exe -m preprocessing.forecasting `
+  --amazon "D:\MarketMind\Dataset\archive (9)\Amazon Sale Report.csv" `
+  --demand-train "D:\MarketMind\Dataset\train.parquet" `
+  --demand-eval "D:\MarketMind\Dataset\eval.parquet" `
+  --output data\generated\forecasting
+```
+
+Revenue compares Seasonal Naive, Prophet, XGBoost and Random Forest. Demand compares Seasonal
+Naive, XGBoost and Random Forest using lag, calendar, promotion, stock and weather features. The
+selected models generate 7, 14 and 30-day-compatible predictions with lower and upper bounds.
 
 ## Contribution
 

@@ -44,7 +44,9 @@ Current status:
 - Model results can be imported repeatedly without creating duplicates.
 - Database-backed segment APIs and the customer dashboard follow the four-role access rules.
 - Automated preprocessing, import, API and role tests are included.
-- Sales and revenue forecasting is the next Milestone 2 module and is not presented as complete.
+- Revenue, personal-sales and store/product demand forecasting are implemented with versioned,
+  repeatable database imports and four role-scoped APIs.
+- The Administrator forecasting view reports real model versions, metrics and import-job status.
 
 Read the [Milestone 2 workflow](docs/milestone-2/milestone-2-workflow.md) for the agreed task order,
 datasets, models and completion checks. The detailed

@@ -5,6 +5,7 @@ __pycache__/
 *.py[cod]
 *.db
 *.sqlite3
+*.log
 
 data/raw/*
 !data/raw/*.csv

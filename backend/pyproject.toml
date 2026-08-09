@@ -32,6 +32,7 @@ dev = [
 [project.scripts]
 marketmind-import = "app.commands.import_data:main"
 marketmind-import-segments = "app.commands.import_segments:main"
+marketmind-import-forecasts = "app.commands.import_forecasts:main"
 marketmind-seed-demo = "app.commands.seed_demo:main"
 
 [tool.hatch.build.targets.wheel]
