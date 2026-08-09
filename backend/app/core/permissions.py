@@ -10,6 +10,8 @@ class Permissions:
     DASHBOARD_INVENTORY_VIEW = "dashboard.inventory.view"
     DASHBOARD_INVENTORY_MANAGE = "dashboard.inventory.manage"
     DASHBOARD_FORECASTS_VIEW = "dashboard.forecasts.view"
+    DASHBOARD_FORECASTS_PERSONAL = "dashboard.forecasts.personal"
+    DASHBOARD_FORECASTS_MONITOR = "dashboard.forecasts.monitor"
     DASHBOARD_FORECASTS_CONFIGURE = "dashboard.forecasts.configure"
     DASHBOARD_CHURN_VIEW = "dashboard.churn.view"
     DASHBOARD_CHURN_CONFIGURE = "dashboard.churn.configure"
@@ -104,6 +106,7 @@ ROLE_DEFINITIONS: dict[RoleCode, dict[str, object]] = {
         "description": "Personal sales, invoices, assigned customers, and recommendations",
         "permissions": {
             Permissions.DASHBOARD_SALES_PERSONAL,
+            Permissions.DASHBOARD_FORECASTS_PERSONAL,
             Permissions.DASHBOARD_RECOMMENDATIONS_ASSIGNED,
             Permissions.DASHBOARD_SEGMENTS_ASSIGNED,
             Permissions.SALES_READ_OWN,

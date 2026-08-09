@@ -1,8 +1,7 @@
 # MarketMind Backend
 
-FastAPI backend for the first MarketMind milestone. It provides authentication, tenant-aware
-role-based access control, user administration, role-scoped dashboard access, and a working
-sales transaction flow.
+FastAPI backend for MarketMind. It provides authentication, tenant-aware role-based access,
+database-backed dashboards, customer segmentation, and sales and demand forecasting.
 
 Backend development and Milestone 1 integration are maintained on the `Garvitk001` branch.
 
@@ -21,6 +20,8 @@ Backend development and Milestone 1 integration are maintained on the `Garvitk00
 - Sales transaction create, list, update, and void workflow
 - Repeatable cleaned sales and inventory import with stable upsert keys
 - Tenant- and store-scoped product and inventory APIs
+- Versioned revenue and product-demand forecasts with model metrics and prediction ranges
+- Owner, Manager, Sales Executive and MFA-protected Admin forecasting views
 - PostgreSQL migrations, Docker Compose, health checks, OpenAPI, linting, and tests
 
 ## Project layout
@@ -160,6 +161,61 @@ Business Owners and MFA-verified Administrators receive business-wide results. S
 only read their assigned-store summary. Sales Executives can list or open their assigned customers.
 The summary includes segment distribution, revenue contribution, repeat-customer rate, average
 order value, recency, engagement, return behavior, and the model's Silhouette Score.
+
+## Train and import Milestone 2 forecasts
+
+From the repository root, train both forecasting tasks on the full source datasets:
+
+```powershell
+.\preprocessing\.venv\Scripts\python.exe -m preprocessing.forecasting `
+  --amazon "D:\MarketMind\Dataset\archive (9)\Amazon Sale Report.csv" `
+  --demand-train "D:\MarketMind\Dataset\train.parquet" `
+  --demand-eval "D:\MarketMind\Dataset\eval.parquet" `
+  --output data\generated\forecasting
+```
+
+The pipeline uses chronological validation. Revenue compares Seasonal Naive, Prophet, XGBoost
+and Random Forest. Store/product demand compares Seasonal Naive, XGBoost and Random Forest.
+Candidate metrics are saved with the selected model; full generated files remain ignored by Git.
+
+Apply the migration and synchronize role permissions before importing:
+
+```powershell
+alembic upgrade head
+python -m app.bootstrap
+```
+
+Import the generated output from `backend/`:
+
+```powershell
+python -m app.commands.import_forecasts --tenant hello --scope business `
+  --predictions ..\data\generated\forecasting\revenue_forecasts.csv `
+  --report ..\data\generated\forecasting\revenue_report.json
+
+python -m app.commands.import_forecasts --tenant hello --scope personal `
+  --seller sales.demo@marketmind.example.com `
+  --predictions ..\data\generated\forecasting\revenue_forecasts.csv `
+  --report ..\data\generated\forecasting\revenue_report.json
+
+python -m app.commands.import_forecasts --tenant hello --scope store --store MAIN `
+  --source-store-id 1 `
+  --predictions ..\data\generated\forecasting\demand_forecasts.csv `
+  --report ..\data\generated\forecasting\demand_report.json
+```
+
+The commands are idempotent: importing the same model version and scope again updates changed
+values and does not duplicate predictions.
+
+Forecasting endpoints:
+
+- `GET /api/v1/forecasts/revenue` — Business Owner; business-wide INR revenue
+- `GET /api/v1/forecasts/personal` — Sales Executive; only the signed-in seller
+- `GET /api/v1/forecasts/demand` — Store Manager; only the assigned store
+- `GET /api/v1/forecasts/monitoring` — Administrator; MFA-protected model and job status
+
+The forecast routes accept only 7, 14 or 30-day horizons. Revenue supports category filtering;
+demand supports category and product filtering and adds inventory risk when the source product is
+mapped to an inventory SKU.
 
 For local UI testing, create the four demo accounts with:
 
