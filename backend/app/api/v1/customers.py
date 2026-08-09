@@ -54,6 +54,14 @@ def list_customers(
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
 ):
+    if (
+        Permissions.CUSTOMERS_READ_ALL not in user.permission_codes
+        and Permissions.CUSTOMERS_READ_ASSIGNED not in user.permission_codes
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Store Managers can access customer summaries only",
+        )
     query, _ = scoped_customer_query(select(Customer), user)
     if search:
         query = query.where(Customer.external_customer_id.ilike(f"%{search.strip()}%"))
@@ -70,6 +78,14 @@ def get_customer(
     db: DBSession,
     user: User = Depends(customer_reader),
 ):
+    if (
+        Permissions.CUSTOMERS_READ_ALL not in user.permission_codes
+        and Permissions.CUSTOMERS_READ_ASSIGNED not in user.permission_codes
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Store Managers can access customer summaries only",
+        )
     query, _ = scoped_customer_query(
         select(Customer).where(Customer.id == customer_id),
         user,

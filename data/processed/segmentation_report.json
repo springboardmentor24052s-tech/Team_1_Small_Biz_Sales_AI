@@ -1,0 +1,190 @@
+{
+  "data_quality": {
+    "source_rows": 1067371,
+    "output_rows": 797885,
+    "customer_summary_rows": 5881,
+    "duplicates_removed": 34335,
+    "missing_customer_rows": 235151,
+    "invalid_rows_removed": 235151,
+    "return_rows": 18390
+  },
+  "model_version": "customer-segmentation-v1",
+  "algorithm": "kmeans",
+  "generated_at": "2026-08-06T17:51:14.046657+00:00",
+  "customer_count": 5878,
+  "feature_names": [
+    "recency_days",
+    "order_count",
+    "total_revenue",
+    "active_months",
+    "product_variety",
+    "return_rate"
+  ],
+  "transform": "log1p selected skewed features followed by RobustScaler",
+  "selected_cluster_count": 3,
+  "selected_metrics": {
+    "algorithm": "kmeans",
+    "cluster_count": 3,
+    "silhouette_score": 0.363917,
+    "davies_bouldin_score": 1.052492,
+    "calinski_harabasz_score": 3643.936581
+  },
+  "candidate_metrics": [
+    {
+      "algorithm": "kmeans",
+      "cluster_count": 2,
+      "silhouette_score": 0.353616,
+      "davies_bouldin_score": 1.100031,
+      "calinski_harabasz_score": 4084.782493
+    },
+    {
+      "algorithm": "kmeans",
+      "cluster_count": 3,
+      "silhouette_score": 0.363917,
+      "davies_bouldin_score": 1.052492,
+      "calinski_harabasz_score": 3643.936581
+    },
+    {
+      "algorithm": "kmeans",
+      "cluster_count": 4,
+      "silhouette_score": 0.307563,
+      "davies_bouldin_score": 1.102555,
+      "calinski_harabasz_score": 3457.928859
+    },
+    {
+      "algorithm": "kmeans",
+      "cluster_count": 5,
+      "silhouette_score": 0.245884,
+      "davies_bouldin_score": 1.245591,
+      "calinski_harabasz_score": 3045.396666
+    },
+    {
+      "algorithm": "kmeans",
+      "cluster_count": 6,
+      "silhouette_score": 0.24536,
+      "davies_bouldin_score": 1.25066,
+      "calinski_harabasz_score": 2834.138216
+    },
+    {
+      "algorithm": "kmeans",
+      "cluster_count": 7,
+      "silhouette_score": 0.239289,
+      "davies_bouldin_score": 1.25553,
+      "calinski_harabasz_score": 2627.699809
+    },
+    {
+      "algorithm": "kmeans",
+      "cluster_count": 8,
+      "silhouette_score": 0.229074,
+      "davies_bouldin_score": 1.293934,
+      "calinski_harabasz_score": 2463.226475
+    },
+    {
+      "algorithm": "hierarchical",
+      "cluster_count": 2,
+      "evaluation_sample_size": 2000,
+      "silhouette_score": 0.264596,
+      "davies_bouldin_score": 1.135161,
+      "calinski_harabasz_score": 869.775526
+    },
+    {
+      "algorithm": "hierarchical",
+      "cluster_count": 3,
+      "evaluation_sample_size": 2000,
+      "silhouette_score": 0.223504,
+      "davies_bouldin_score": 1.290739,
+      "calinski_harabasz_score": 884.508491
+    },
+    {
+      "algorithm": "hierarchical",
+      "cluster_count": 4,
+      "evaluation_sample_size": 2000,
+      "silhouette_score": 0.267142,
+      "davies_bouldin_score": 1.184968,
+      "calinski_harabasz_score": 972.972152
+    },
+    {
+      "algorithm": "hierarchical",
+      "cluster_count": 5,
+      "evaluation_sample_size": 2000,
+      "silhouette_score": 0.26501,
+      "davies_bouldin_score": 1.23671,
+      "calinski_harabasz_score": 873.456062
+    },
+    {
+      "algorithm": "hierarchical",
+      "cluster_count": 6,
+      "evaluation_sample_size": 2000,
+      "silhouette_score": 0.223102,
+      "davies_bouldin_score": 1.246712,
+      "calinski_harabasz_score": 833.471989
+    },
+    {
+      "algorithm": "hierarchical",
+      "cluster_count": 7,
+      "evaluation_sample_size": 2000,
+      "silhouette_score": 0.21184,
+      "davies_bouldin_score": 1.23502,
+      "calinski_harabasz_score": 793.533427
+    },
+    {
+      "algorithm": "hierarchical",
+      "cluster_count": 8,
+      "evaluation_sample_size": 2000,
+      "silhouette_score": 0.193304,
+      "davies_bouldin_score": 1.382919,
+      "calinski_harabasz_score": 727.601309
+    }
+  ],
+  "segment_profiles": [
+    {
+      "cluster_id": 0,
+      "customer_count": 2113,
+      "total_revenue": 14601378.6,
+      "average_revenue": 6910.259631,
+      "order_count": 13.577851,
+      "recency_days": 63.265973,
+      "active_months": 8.594889,
+      "product_variety": 167.360625,
+      "return_rate": 0.132665,
+      "engagement_score": 72.786749,
+      "segment_code": "SEG-01",
+      "segment_name": "Champions",
+      "customer_share": 0.359476,
+      "revenue_share": 0.840377
+    },
+    {
+      "cluster_id": 1,
+      "customer_count": 1058,
+      "total_revenue": 1397745.43,
+      "average_revenue": 1321.120444,
+      "order_count": 2.949905,
+      "recency_days": 253.476371,
+      "active_months": 2.585066,
+      "product_variety": 45.267486,
+      "return_rate": 0.385296,
+      "engagement_score": 39.051418,
+      "segment_code": "SEG-02",
+      "segment_name": "Needs Attention",
+      "customer_share": 0.179993,
+      "revenue_share": 0.080447
+    },
+    {
+      "cluster_id": 2,
+      "customer_count": 2707,
+      "total_revenue": 1375680.22,
+      "average_revenue": 508.193653,
+      "order_count": 1.90543,
+      "recency_days": 287.711858,
+      "active_months": 1.73587,
+      "product_variety": 29.697451,
+      "return_rate": 0.001061,
+      "engagement_score": 36.510602,
+      "segment_code": "SEG-03",
+      "segment_name": "Hibernating",
+      "customer_share": 0.460531,
+      "revenue_share": 0.079177
+    }
+  ],
+  "engagement_definition": "Transaction engagement score: 35% recency, 25% order frequency, 20% active months, 10% product variety, and 10% inverse return rate."
+}

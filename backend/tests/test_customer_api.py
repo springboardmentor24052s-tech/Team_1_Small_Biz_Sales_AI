@@ -86,6 +86,12 @@ def test_customer_access_is_business_summary_or_assigned(
     assert manager_summary.json()["scope"] == "summary"
     assert manager_summary.json()["customer_count"] == 2
 
+    manager_list = client.get(
+        "/api/v1/customers",
+        headers=auth_header(login(client, manager.email)),
+    )
+    assert manager_list.status_code == 403
+
     assigned_response = client.get(
         "/api/v1/customers",
         headers=auth_header(login(client, assigned_sales.email)),

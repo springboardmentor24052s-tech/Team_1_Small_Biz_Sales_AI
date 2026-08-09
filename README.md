@@ -25,6 +25,32 @@ The first backend milestone is available in [`backend/`](backend/). It includes:
 
 See [`backend/README.md`](backend/README.md) for installation and startup instructions.
 
+## Milestone 2: customer intelligence
+
+Milestone 2 covers customer intelligence and forecasting. The completed customer-intelligence
+module turns the complete Online Retail II transaction history into reusable behaviour features
+and data-driven segments. It evaluates K-Means and Hierarchical Clustering, selects the K-Means
+cluster count using Silhouette Score, and stores versioned segment assignments in the application
+database.
+
+The current full-data run selected three useful groups: Champions, Needs Attention, and
+Hibernating. The FastAPI endpoints apply the existing role rules so owners and administrators can
+see business-wide results, store managers receive store summaries, and sales executives only see
+their assigned customers.
+
+Current status:
+
+- Customer feature engineering, engagement analysis and segmentation are implemented.
+- Model results can be imported repeatedly without creating duplicates.
+- Database-backed segment APIs and the customer dashboard follow the four-role access rules.
+- Automated preprocessing, import, API and role tests are included.
+- Sales and revenue forecasting is the next Milestone 2 module and is not presented as complete.
+
+Read the [Milestone 2 workflow](docs/milestone-2/milestone-2-workflow.md) for the agreed task order,
+datasets, models and completion checks. The detailed
+[customer segmentation notes](docs/milestone-2/customer-segmentation.md) contain the feature
+definitions, evaluation metrics, commands and API routes.
+
 ## Frontend connection
 
 The backend exposes versioned routes under `/api/v1` and permits configured React development
