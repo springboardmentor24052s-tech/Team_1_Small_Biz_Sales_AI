@@ -22,9 +22,15 @@ redistribution conditions.
 | `processed/customer_transactions_cleaned_sample.csv` | Valid customer-linked transaction rows |
 | `processed/customer_summary_sample.csv` | Customer order, quantity, revenue and recency summary |
 | `processed/quality_report.json` | Full-source cleaning and validation counts |
+| `processed/customer_segments_sample.csv` | Reviewed Milestone 2 behavior features and segment assignments |
+| `processed/segmentation_report.json` | Full-data cluster evaluation metrics and aggregate profiles |
 
 These samples are development fixtures, not model-training datasets. Recreate them with the command
 in `preprocessing/README.md`.
+
+Complete Milestone 2 outputs are written under `data/generated/customer-segmentation/` and remain
+outside version control. This keeps the repository small while preserving a repeatable path from
+the original workbook to the trained model and database import files.
 
 ## Contribution
 

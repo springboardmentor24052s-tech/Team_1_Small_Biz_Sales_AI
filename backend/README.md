@@ -133,6 +133,34 @@ Customer endpoints:
 Business Owners and Administrators can view tenant customer records. Store Managers receive the
 customer summary, while Sales Executives only receive customers assigned to them.
 
+## Import and serve Milestone 2 customer segments
+
+Run the customer segmentation pipeline first, then apply the latest migration and import its full
+assignment file:
+
+```powershell
+alembic upgrade head
+python -m app.commands.import_segments `
+  --tenant hello `
+  --seller sales.demo@marketmind.example.com `
+  --assignments ..\data\generated\customer-segmentation\customer_segments.csv `
+  --report ..\data\generated\customer-segmentation\segmentation_report.json
+```
+
+The command creates or updates the full customer summaries, records the model version and quality
+metrics, and upserts each segment assignment. Running it twice does not create duplicates.
+
+Customer-segmentation endpoints:
+
+- `GET /api/v1/customer-segments/summary`
+- `GET /api/v1/customer-segments`
+- `GET /api/v1/customer-segments/{customer_id}`
+
+Business Owners and MFA-verified Administrators receive business-wide results. Store Managers can
+only read their assigned-store summary. Sales Executives can list or open their assigned customers.
+The summary includes segment distribution, revenue contribution, repeat-customer rate, average
+order value, recency, engagement, return behavior, and the model's Silhouette Score.
+
 For local UI testing, create the four demo accounts with:
 
 ```powershell

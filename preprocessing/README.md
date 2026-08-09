@@ -1,4 +1,4 @@
-# Milestone 1 data preparation
+# MarketMind data preparation
 
 This folder prepares the three datasets needed for the first MarketMind milestone:
 
@@ -19,6 +19,38 @@ python -m preprocessing.milestone1 `
 The command recreates the committed samples with a fixed random seed and calculates the quality
 report from the complete source files. Forecasting, price mapping and Parquet feature preparation
 are intentionally deferred to later milestones.
+
+## Milestone 2 customer segmentation
+
+Install the separate preprocessing dependencies from the repository root:
+
+```powershell
+python -m venv preprocessing\.venv
+.\preprocessing\.venv\Scripts\python.exe -m pip install -r preprocessing\requirements.txt
+```
+
+Run the complete Online Retail II workbook through feature engineering and model selection:
+
+```powershell
+.\preprocessing\.venv\Scripts\python.exe -m preprocessing.customer_segmentation `
+  --customers "D:\MarketMind\Dataset\online+retail+ii\online_retail_II.xlsx" `
+  --output "data\generated\customer-segmentation" `
+  --review-output "data\processed"
+```
+
+The generated directory contains the complete customer feature table, segment assignments,
+evaluation report, and trained model. It is ignored by Git. The review output contains only a
+small deterministic sample and aggregate model metrics that are safe to keep in the repository.
+
+The pipeline evaluates K-Means and Hierarchical Clustering for multiple cluster counts. K-Means is
+used for persisted assignments because it can consistently classify later customer feature rows;
+hierarchical clustering is retained as an evaluation comparison.
+
+Run the preprocessing tests with:
+
+```powershell
+.\preprocessing\.venv\Scripts\python.exe -m unittest discover -s preprocessing\tests -v
+```
 
 ## Contribution
 

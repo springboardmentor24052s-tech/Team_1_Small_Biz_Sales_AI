@@ -19,6 +19,8 @@ export const DataProvider = ({ children }) => {
     inventoryItems: [],
     customerSummary: null,
     customers: [],
+    customerSegmentSummary: null,
+    customerSegments: [],
     users: [],
     apiError: null,
     isLoading: false
@@ -50,8 +52,25 @@ export const DataProvider = ({ children }) => {
       requests.push(api('/inventory?limit=200').then((value) => { assign.inventoryItems = value.items; }));
     }
     if (modules.has('customer_segments')) {
+      const segmentModule = (access.modules || []).find((module) => module.code === 'customer_segments');
       requests.push(api('/customers/summary').then((value) => { assign.customerSummary = value; }));
-      requests.push(api('/customers?limit=200').then((value) => { assign.customers = value.items; }));
+      requests.push(
+        api('/customer-segments/summary')
+          .then((value) => { assign.customerSegmentSummary = value; })
+          .catch((error) => {
+            if (error.status !== 404) throw error;
+          })
+      );
+      if (segmentModule?.access !== 'summary') {
+        requests.push(api('/customers?limit=200').then((value) => { assign.customers = value.items; }));
+        requests.push(
+          api('/customer-segments?limit=200')
+            .then((value) => { assign.customerSegments = value.items; })
+            .catch((error) => {
+              if (error.status !== 404) throw error;
+            })
+        );
+      }
     }
     if (modules.has('administration')) {
       requests.push(api('/users?limit=200').then((value) => { assign.users = value.items || value; }));
