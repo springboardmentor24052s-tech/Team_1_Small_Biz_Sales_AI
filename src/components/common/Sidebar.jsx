@@ -7,6 +7,7 @@ import {
   Users,
   BarChart3,
   Sparkles,
+  Brain,
   Settings,
   Layers,
   ChevronLeft,
@@ -17,16 +18,27 @@ import {
 } from 'lucide-react';
 
 export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }) => {
-  const { currentRole, logout, switchRole } = useAuth();
+  const { currentRole, access, logout } = useAuth();
 
+  const allowedModules = new Set((access?.modules || []).map((module) => module.code));
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: null },
-    { id: 'sales', label: 'Sales Deals', icon: ShoppingBag, badge: '18 Active' },
-    { id: 'inventory', label: 'Inventory', icon: PackageCheck, badge: currentRole.id === 'manager' ? '14 Alert' : null, badgeColor: 'bg-rose-500 text-white' },
-    { id: 'customers', label: 'Customers', icon: Users, badge: null },
-    { id: 'reports', label: 'Reports', icon: BarChart3, badge: null },
-    { id: 'components', label: 'UI Components', icon: Layers, badge: 'Design System', badgeColor: 'bg-indigo-500/20 text-indigo-300' },
-    { id: 'settings', label: 'Settings', icon: Settings, badge: null }
+    ...(allowedModules.has('sales') ? [{ id: 'sales', label: 'Sales Deals', icon: ShoppingBag, badge: null }] : []),
+    ...(allowedModules.has('inventory') ? [{ id: 'inventory', label: 'Inventory', icon: PackageCheck, badge: currentRole.id === 'manager' ? 'Stock Alerts' : null, badgeColor: 'bg-rose-500 text-white' }] : []),
+    ...(allowedModules.has('customer_segments') ? [{ id: 'customers', label: 'Customers', icon: Users, badge: null }] : []),
+    ...(currentRole.id === 'owner'
+  ? [
+      { id: 'reports', label: 'Reports', icon: BarChart3, badge: null },
+      { id: 'ai-forecasting', label: 'AI Forecasting', icon: Brain, badge: null }
+    ]
+  : currentRole.id === 'admin'
+    ? [{ id: 'reports', label: 'Reports', icon: BarChart3, badge: null }]
+    : []),
+    ...(currentRole.id === 'owner'
+  ? [{ id: 'settings', label: 'Settings', icon: Settings, badge: null }]
+  : allowedModules.has('administration')
+    ? [{ id: 'settings', label: 'Settings', icon: Settings, badge: null }]
+    : [])
   ];
 
   return (
