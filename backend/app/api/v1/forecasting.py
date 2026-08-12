@@ -14,7 +14,9 @@ from app.schemas.forecasting import (
     ForecastJobStatus,
     ForecastModelStatus,
     ForecastMonitoringResponse,
+    ForecastOptionsResponse,
     ForecastPoint,
+    ForecastProductOption,
     ForecastResponse,
     ModelMetric,
     ProductDemandForecast,
@@ -26,6 +28,12 @@ router = APIRouter(prefix="/forecasts", tags=["AI Forecasting"])
 forecast_reader = require_permissions(Permissions.DASHBOARD_FORECASTS_VIEW)
 personal_reader = require_permissions(Permissions.DASHBOARD_FORECASTS_PERSONAL)
 monitor_reader = require_permissions(Permissions.DASHBOARD_FORECASTS_MONITOR)
+forecast_options_reader = require_permissions(
+    Permissions.DASHBOARD_FORECASTS_VIEW,
+    Permissions.DASHBOARD_FORECASTS_PERSONAL,
+    Permissions.DASHBOARD_FORECASTS_MONITOR,
+    require_all=False,
+)
 
 
 def _metric(item: dict) -> ModelMetric:
@@ -53,7 +61,7 @@ def _forecast_response(
 ) -> ForecastResponse:
     predicted_total = sum((row.predicted for row in rows), Decimal("0"))
     series_model = rows[0] if rows else None
-    direction = "increase" if rows and rows[-1].predicted >= rows[0].predicted else "decrease"
+    direction = "an increase" if rows and rows[-1].predicted >= rows[0].predicted else "a decrease"
     return ForecastResponse(
         model_version=model_run.model_version,
         generated_at=model_run.trained_at,
@@ -74,7 +82,7 @@ def _forecast_response(
         ],
         series=[_point(row) for row in rows],
         insights=[
-            f"The selected model expects a {direction} over the next {horizon} days.",
+            f"The selected model expects {direction} over the next {horizon} days.",
             f"Predicted total for the selected period is {predicted_total:.2f} {model_run.unit}.",
         ],
     )
@@ -88,6 +96,79 @@ def _role_required(user: User, allowed: set[RoleCode]) -> None:
 def _validate_horizon(horizon: int) -> None:
     if horizon not in {7, 14, 30}:
         raise HTTPException(status_code=422, detail="horizon must be 7, 14 or 30 days")
+
+
+@router.get("/options", response_model=ForecastOptionsResponse)
+def forecast_options(
+    db: DBSession,
+    forecast_type: str = Query(pattern="^(revenue|demand|personal)$"),
+    store_id: UUID | None = Query(default=None),
+    seller_id: UUID | None = Query(default=None),
+    user: User = Depends(forecast_options_reader),
+):
+    if forecast_type == "revenue":
+        _role_required(user, {RoleCode.BUSINESS_OWNER, RoleCode.ADMINISTRATOR})
+        scope = "business"
+        scope_id = None
+        model_run = latest_forecast_run(
+            db, tenant_id=user.tenant_id, forecast_type="revenue", scope_type=scope
+        )
+    elif forecast_type == "personal":
+        _role_required(user, {RoleCode.SALES_EXECUTIVE, RoleCode.ADMINISTRATOR})
+        scope = "personal"
+        scope_id = seller_id if user.role.code == RoleCode.ADMINISTRATOR else user.id
+        if scope_id is None:
+            raise HTTPException(status_code=422, detail="seller_id is required for administrators")
+        model_run = latest_forecast_run(
+            db,
+            tenant_id=user.tenant_id,
+            forecast_type="revenue",
+            scope_type=scope,
+            seller_id=scope_id,
+        )
+    else:
+        _role_required(user, {RoleCode.STORE_MANAGER, RoleCode.ADMINISTRATOR})
+        scope = "store"
+        scope_id = store_id if user.role.code == RoleCode.ADMINISTRATOR else user.store_id
+        if scope_id is None:
+            raise HTTPException(status_code=422, detail="store_id is required")
+        model_run = latest_forecast_run(
+            db,
+            tenant_id=user.tenant_id,
+            forecast_type="demand",
+            scope_type=scope,
+            store_id=scope_id,
+        )
+
+    if model_run is None:
+        raise HTTPException(status_code=404, detail="No forecast options are available")
+
+    rows = db.execute(
+        select(
+            ForecastPrediction.source_product_id,
+            ForecastPrediction.source_category_id,
+        )
+        .where(ForecastPrediction.model_run_id == model_run.id)
+        .distinct()
+        .order_by(
+            ForecastPrediction.source_category_id,
+            ForecastPrediction.source_product_id,
+        )
+    ).all()
+    categories = sorted({category for _, category in rows if category and category != "ALL"})
+    products = [
+        ForecastProductOption(product=product, category=category)
+        for product, category in rows
+        if product and product != "ALL"
+    ]
+    return ForecastOptionsResponse(
+        forecast_type=forecast_type,
+        scope=scope,
+        scope_id=scope_id,
+        supported_horizons=model_run.horizons,
+        categories=categories,
+        products=products,
+    )
 
 
 @router.get("/revenue", response_model=ForecastResponse)
@@ -176,6 +257,8 @@ def demand_forecast(
     increasing = sum(1 for item in groups if item["rows"][-1].predicted > item["rows"][0].predicted)
     decreasing = sum(1 for item in groups if item["rows"][-1].predicted < item["rows"][0].predicted)
     risks = sum(1 for item in groups if item["stock_risk"] in {"high", "medium"})
+    mapped = sum(1 for item in groups if item["mapping_status"] == "mapped")
+    unmapped = len(groups) - mapped
     return DemandForecastResponse(
         model_version=model_run.model_version,
         generated_at=model_run.trained_at,
@@ -197,6 +280,7 @@ def demand_forecast(
         insights=[
             f"Demand was forecast for {len(products)} products over {horizon} days.",
             f"{risks} mapped products need inventory attention.",
+            f"Inventory mapping is available for {mapped} products; {unmapped} remain unmapped.",
         ],
     )
 

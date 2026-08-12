@@ -18,8 +18,9 @@ versioned database imports, scoped APIs and automated role tests.
 
 ## Work order
 
-1. **Confirm data definitions** - agree on currency, timezone, forecast target, forecast horizon and
-   the meaning of `sale_amount` before training.
+1. **Confirm data definitions** - revenue uses INR and daily granularity. Parquet `sale_amount` is
+   provisionally a demand measure in `source_unit`; it must not be called quantity or revenue until
+   the provider supplies its final definition.
 2. **Prepare the datasets** - clean identifiers, dates, quantities, revenue, returns, missing days
    and duplicates. Keep full generated files outside Git and commit only samples and reports.
 3. **Build customer features** - calculate recency, order frequency, revenue, average order value,
@@ -28,12 +29,25 @@ versioned database imports, scoped APIs and automated role tests.
    count using Silhouette, Davies-Bouldin and business interpretation, then create clear segment
    names and actions.
 5. **Build forecasting models** - create time-based and lag features, establish a Seasonal Naive
-   baseline, and compare Prophet, XGBoost and Random Forest with chronological backtesting.
+   baseline, and compare Prophet, Linear Trend, XGBoost and Random Forest with chronological
+   backtesting.
 6. **Integrate with the application** - store versioned model runs, customer assignments,
    forecasts and metrics in the database; expose scoped FastAPI endpoints; connect the React
    customer and forecast views.
 7. **Validate and document** - test repeatable imports, model metrics, leakage, APIs, role access,
    frontend states and report generation.
+
+## Role and mapping decisions
+
+- Sales Executives receive only a personal forecast trained from authorised seller records. This is
+  a reviewed extension to the original proposal's restriction on general forecast reports.
+- Administrators can open business revenue, store demand, seller-personal and monitoring reports;
+  store and seller identifiers are mandatory for the scoped reports.
+- A demand series is linked to inventory only through an exact SKU match or an explicit mapping CSV
+  validated against tenant store and product records. Unmapped series remain visible with
+  `mapping_status=unmapped` and `stock_risk=unknown`.
+- Revenue forecasting now includes a weekday-aware linear trend candidate. It improves the current
+  short-history baseline, but negative R2 or high error must still be disclosed rather than hidden.
 
 ## Dataset and model map
 
@@ -41,7 +55,7 @@ versioned database imports, scoped APIs and automated role tests.
 | --- | --- | --- | --- | --- |
 | Customer segmentation | `online_retail_II.xlsx` | Two years of customer, invoice, product, quantity, price and return history | RFM and behaviour features; K-Means primary; Hierarchical comparator | Segment assignment, profile and model metrics |
 | Purchasing behaviour | Cleaned Online Retail II transactions | Supports order value, basket size, purchase gaps, variety, returns and activity | Aggregation, percentile scoring and cohort summaries | Customer feature table and engagement score |
-| INR revenue forecast | Full Amazon sales data | Contains order dates and INR order amounts used by the current dashboard | Seasonal Naive, Prophet, XGBoost and Random Forest | 7-day and 14-day revenue forecast |
+| INR revenue forecast | Full Amazon sales data | Contains order dates and INR order amounts used by the current dashboard | Seasonal Naive, Prophet, Linear Trend, XGBoost and Random Forest | 7-day, 14-day and 30-day revenue forecast |
 | Store/product demand forecast | `train.parquet` and `eval.parquet` | Large store-product history with category, discount, promotion, stock, holiday and weather fields | Seasonal Naive baseline plus XGBoost/Random Forest; Prophet for aggregate series | 7-day, 14-day and 30-day demand forecast |
 | Stock-aware analysis | Inventory dataset and stock fields | Separates low demand from unavailable stock and supports future alerts | Stock flags and forecast residual rules | Stock-risk context for forecasts |
 | Dashboard reports | Database model outputs | Keeps the UI traceable, role-scoped and free of hard-coded AI values | FastAPI, SQLAlchemy and React charts | Segment, behaviour and forecast reports |
@@ -77,9 +91,9 @@ versioned database imports, scoped APIs and automated role tests.
 
 - Demand selected XGBoost on the real evaluation parquet: MAE 2.152, RMSE 2.945 and R² 0.918
   across 250 high-volume store/product series.
-- Revenue selected XGBoost by MAE, but its aggregate R² is negative on the short Amazon date
-  window. It is usable for Milestone 2 integration and model monitoring, but it must not be shown
-  as a high-accuracy production forecast until more dated revenue history is available.
+- Revenue selected the weekday-aware Linear Trend model: MAE 77,902.286, RMSE 107,281.902 and
+  R2 -0.845. This reduces MAE by about 25% from the earlier XGBoost result, but the short Amazon
+  date window still prevents a production-accuracy claim.
 
 ## Confirmed forecasting contract
 
@@ -101,14 +115,22 @@ The contract below is implemented in the backend and ready for frontend integrat
 - Horizons: 7, 14 and 30 days.
 - `sale_amount` is treated as demand, not revenue, until its exact business unit is approved.
 
+### Personal sales forecasting
+
+- Dataset: the reviewed cleaned sales sample imported for the demo Sales Executive.
+- Source target: valid INR `amount` values, including valid returns as negative revenue.
+- API target: `daily_net_revenue_inr` under the authenticated seller scope.
+- The personal artifact is trained separately and does not reuse the business-wide predictions.
+
 ### API routes
 
 - `GET /api/v1/forecasts/revenue`
 - `GET /api/v1/forecasts/personal`
 - `GET /api/v1/forecasts/demand`
 - `GET /api/v1/forecasts/monitoring`
+- `GET /api/v1/forecasts/options`
 
-Every forecast response will include `model_version`, `generated_at`, `forecast_type`, `target`,
+Every forecast response includes `model_version`, `generated_at`, `forecast_type`, `target`,
 `unit`, `granularity`, `horizon_days`, `scope`, evaluation `metrics`, and a `series`. Each series
 item contains `date`, `actual`, `predicted`, `lower_bound`, and `upper_bound`.
 
@@ -122,7 +144,7 @@ filters, confidence ranges, metric/model labels, and loading, empty and error st
 | Business Owner | Business-wide summary and permitted customer membership | Business-wide forecasts and exports |
 | Store Manager | Assigned-store segment summary | Assigned-store forecast summary |
 | Sales Executive | Assigned customers only | Personal sales forecast only |
-| Administrator | Full access with MFA | Model and import-job monitoring with MFA |
+| Administrator | Full access with MFA | Business, store, personal and monitoring views with MFA |
 
 ## Implementation priority
 
@@ -131,8 +153,8 @@ filters, confidence ranges, metric/model labels, and loading, empty and error st
 | 1 | Dataset | Confirm definitions, clean full data and produce quality reports | Complete for segmentation and forecasting |
 | 2 | Models | Build features, baseline, candidates and evaluation report | Complete for segmentation and forecasting |
 | 3 | Backend | Add migrations, imports, model services, APIs and RBAC | Complete for all four forecasting roles |
-| 4 | Frontend | Connect real APIs, charts, filters, exports and error states | Next: replace mockup values with API responses |
-| 5 | Integration | Run clean-install, repeat-import, role, model and UI tests | Backend complete; repeat after frontend connection |
+| 4 | Frontend | Connect real APIs, charts, filters, exports and error states | Complete for all four forecast roles and customer segments |
+| 5 | Integration | Run clean-install, repeat-import, role, model and UI tests | Complete on the local Milestone 2 database |
 
 ## Milestone 2 completion checklist
 

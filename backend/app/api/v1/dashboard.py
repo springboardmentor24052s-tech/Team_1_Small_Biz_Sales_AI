@@ -44,8 +44,18 @@ def dashboard_access(user: CurrentUser):
 
     if Permissions.DASHBOARD_FORECASTS_CONFIGURE in permissions:
         modules.append(module("forecasts", "configure", "view", "export", "configure"))
+    elif Permissions.DASHBOARD_FORECASTS_MONITOR in permissions:
+        modules.append(module("forecasts", "monitor", "view"))
     elif Permissions.DASHBOARD_FORECASTS_VIEW in permissions:
-        modules.append(module("forecasts", "view", "view"))
+        actions = ["view"]
+        if {
+            Permissions.REPORTS_EXPORT_BUSINESS,
+            Permissions.REPORTS_EXPORT_OPERATIONAL,
+        } & permissions:
+            actions.append("export")
+        modules.append(module("forecasts", "view", *actions))
+    elif Permissions.DASHBOARD_FORECASTS_PERSONAL in permissions:
+        modules.append(module("forecasts", "personal", "view"))
 
     if Permissions.DASHBOARD_CHURN_CONFIGURE in permissions:
         modules.append(module("churn", "configure", "view", "export", "configure"))
@@ -60,11 +70,14 @@ def dashboard_access(user: CurrentUser):
         modules.append(module("recommendations", "assigned", "view"))
 
     if Permissions.DASHBOARD_SEGMENTS_VIEW in permissions:
-        modules.append(module("customer_segments", "business", "view"))
+        actions = ["view", "filter", "drill_down"]
+        if Permissions.REPORTS_EXPORT_BUSINESS in permissions:
+            actions.append("export")
+        modules.append(module("customer_segments", "business", *actions))
     elif Permissions.DASHBOARD_SEGMENTS_SUMMARY in permissions:
         modules.append(module("customer_segments", "summary", "view"))
     elif Permissions.DASHBOARD_SEGMENTS_ASSIGNED in permissions:
-        modules.append(module("customer_segments", "assigned", "view"))
+        modules.append(module("customer_segments", "assigned", "view", "filter", "drill_down"))
 
     if Permissions.USERS_MANAGE in permissions:
         modules.append(module("administration", "manage", "users", "roles", "security", "audit"))

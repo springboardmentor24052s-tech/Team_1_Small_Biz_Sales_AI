@@ -11,10 +11,7 @@ import {
   Moon,
   Sparkles,
   ChevronDown,
-  LogOut,
-  User,
-  Shield,
-  X
+  LogOut
 } from 'lucide-react';
 
 export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {

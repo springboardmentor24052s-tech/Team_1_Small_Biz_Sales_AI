@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.forecasting import ForecastModelRun, ForecastPrediction
-from app.models.inventory import Inventory
+from app.models.inventory import Inventory, Product
 
 
 def latest_forecast_run(
@@ -71,10 +71,19 @@ def demand_groups(
     )
     if source_product_id:
         rows = [row for row in rows if row.source_product_id == source_product_id]
-    inventory = {
-        item.product_id: item.stock_quantity
-        for item in db.scalars(select(Inventory).where(Inventory.store_id == store_id)).all()
-    }
+    inventory_rows = list(db.scalars(select(Inventory).where(Inventory.store_id == store_id)).all())
+    inventory = {item.product_id: item.stock_quantity for item in inventory_rows}
+    products = {item.product_id: item.product for item in inventory_rows}
+    mapped_product_ids = {row.product_id for row in rows if row.product_id is not None}
+    if mapped_product_ids:
+        products.update(
+            {
+                product.id: product
+                for product in db.scalars(
+                    select(Product).where(Product.id.in_(mapped_product_ids))
+                ).all()
+            }
+        )
     grouped: dict[tuple[str, str, str, UUID | None], list[ForecastPrediction]] = defaultdict(list)
     for row in rows:
         grouped[
@@ -89,6 +98,7 @@ def demand_groups(
     for key, series in grouped.items():
         predicted = sum((item.predicted for item in series), Decimal("0"))
         available = inventory.get(key[3]) if key[3] else None
+        product = products.get(key[3]) if key[3] else None
         if available is None:
             risk = "unknown"
         elif predicted > available:
@@ -103,6 +113,9 @@ def demand_groups(
                 "source_product_id": key[1],
                 "source_category_id": key[2],
                 "product_id": key[3],
+                "product_sku": product.sku if product else None,
+                "product_name": product.name if product else None,
+                "mapping_status": "mapped" if product else "unmapped",
                 "predicted_demand": predicted,
                 "available_stock": available,
                 "stock_risk": risk,

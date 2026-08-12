@@ -215,7 +215,7 @@ export const AdminDashboard = () => {
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200 text-xs font-semibold">
             <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
-            <span>Core API Connected • Monitoring Integration Planned</span>
+            <span>Core API & Forecast Monitoring Connected</span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight">System Administration & RBAC</h2>
           <p className="text-sm text-purple-200">
@@ -236,8 +236,8 @@ export const AdminDashboard = () => {
 
       {/* Health Metrics Bar */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
-        <Badge variant="warning">Demo monitoring metrics</Badge>
-        <span>CPU, memory, latency and uptime will become live after monitoring integration.</span>
+        <Badge variant="warning">Infrastructure telemetry planned for Milestone 3</Badge>
+        <span>Live model versions, metrics and forecast jobs are available under Reports & Forecasts.</span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <Card hoverEffect className="p-4">

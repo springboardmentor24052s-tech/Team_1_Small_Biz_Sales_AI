@@ -14,7 +14,6 @@ import {
   Sparkles,
   PhoneCall,
   Mail,
-  Calendar,
   Layers,
   ArrowRight
 } from 'lucide-react';
@@ -28,7 +27,7 @@ import {
   CartesianGrid
 } from 'recharts';
 
-export const SalesDashboard = () => {
+export const SalesDashboard = ({ onNavigate }) => {
   const { addToast } = useToast();
   const { salesDashboard } = useData();
   const {
@@ -89,11 +88,11 @@ export const SalesDashboard = () => {
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-200 text-xs font-semibold">
             <Award className="w-3.5 h-3.5 text-amber-400" />
-            <span>Sales Coaching • Planned for Milestone 2</span>
+            <span>Personal Sales Forecast • Live</span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight">Sales Executive Deal Workspace</h2>
           <p className="text-sm text-amber-200">
-            Personal sales KPIs below use your authorised database records. AI coaching will be added in Milestone 2.
+            Personal KPIs use authorised database records. Your 7, 14 and 30-day forecast is available under Reports & Forecasts.
           </p>
         </div>
 
@@ -101,10 +100,10 @@ export const SalesDashboard = () => {
           variant="glass"
           size="sm"
           icon={PhoneCall}
-          disabled
+          onClick={() => onNavigate('reports')}
           className="shrink-0"
         >
-          Available in Milestone 2
+          Open My Forecast
         </Button>
       </div>
 
@@ -172,7 +171,7 @@ export const SalesDashboard = () => {
             <Layers className="w-4 h-4 text-indigo-500" />
             <span>Active Deal Funnel Pipeline</span>
           </h3>
-          <Badge variant="warning">Planned for Milestone 2</Badge>
+          <Badge variant="warning">Pipeline scoring planned for Milestone 3</Badge>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

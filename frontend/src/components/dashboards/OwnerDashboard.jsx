@@ -12,18 +12,13 @@ import {
   TrendingUp,
   Sparkles,
   ArrowUpRight,
-  ArrowDownRight,
   Zap,
-  BarChart2,
-  PieChart as PieIcon,
   Download
 } from 'lucide-react';
 import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
@@ -33,7 +28,7 @@ import {
   CartesianGrid
 } from 'recharts';
 
-export const OwnerDashboard = () => {
+export const OwnerDashboard = ({ onNavigate }) => {
   const { salesDashboard, customerSummary } = useData();
   const {
     kpis: mockKpis,
@@ -87,11 +82,11 @@ export const OwnerDashboard = () => {
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
-            <span>AI Executive Briefing • Planned for Milestone 2</span>
+            <span>Milestone 2 Forecasting • Live</span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight">Business Owner Strategic Command</h2>
           <p className="text-sm text-indigo-200">
-            Current KPIs use imported database records. Predictive executive insights will be added in Milestone 2.
+            Current KPIs use imported records. Revenue forecasts, confidence ranges and model metrics are available under Reports & Forecasts.
           </p>
         </div>
 
@@ -100,9 +95,9 @@ export const OwnerDashboard = () => {
             variant="glass"
             size="sm"
             icon={Download}
-            disabled
+            onClick={() => onNavigate('reports')}
           >
-            Report Export Planned
+            Open Reports & Exports
           </Button>
         </div>
       </div>
@@ -226,7 +221,7 @@ export const OwnerDashboard = () => {
           <CardHeader>
             <div>
               <CardTitle>Sales Category Share</CardTitle>
-              <CardDescription>Planned for Milestone 2 • sample layout</CardDescription>
+              <CardDescription>Sample category layout • live category aggregation is planned for Milestone 3</CardDescription>
             </div>
           </CardHeader>
           <div className="h-56 w-full flex items-center justify-center">

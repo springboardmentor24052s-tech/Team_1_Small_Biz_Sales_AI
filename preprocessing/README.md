@@ -1,5 +1,9 @@
 # MarketMind data preparation
 
+The preprocessing package contains repeatable pipelines for both completed milestones. Milestone 1
+creates reviewed sales, inventory and customer samples. Milestone 2 trains customer segmentation,
+business/personal revenue forecasting and store-product demand forecasting artifacts.
+
 This folder prepares the three datasets needed for the first MarketMind milestone:
 
 - marketplace sales for the initial dashboard;
@@ -58,14 +62,27 @@ Run the full Amazon revenue and Parquet demand datasets through chronological mo
 ```powershell
 .\preprocessing\.venv\Scripts\python.exe -m preprocessing.forecasting `
   --amazon "D:\MarketMind\Dataset\archive (9)\Amazon Sale Report.csv" `
+  --personal-sales data\processed\sales_cleaned_sample.csv `
   --demand-train "D:\MarketMind\Dataset\train.parquet" `
   --demand-eval "D:\MarketMind\Dataset\eval.parquet" `
   --output data\generated\forecasting
 ```
 
-Revenue compares Seasonal Naive, Prophet, XGBoost and Random Forest. Demand compares Seasonal
-Naive, XGBoost and Random Forest using lag, calendar, promotion, stock and weather features. The
-selected models generate 7, 14 and 30-day-compatible predictions with lower and upper bounds.
+Revenue compares Seasonal Naive, Prophet, a 56-day weekday-aware Linear Trend candidate, XGBoost
+and Random Forest. Demand compares Seasonal Naive, XGBoost and Random Forest using lag, calendar,
+promotion, stock and weather features. The selected models generate 7, 14 and 30-day-compatible
+predictions with lower and upper bounds.
+When `--personal-sales` is provided, the pipeline also creates a separate seller-scale revenue
+model from valid INR sales and returns in the cleaned application dataset.
+
+`sale_amount` is the source field used for demand modelling. Its dataset documentation does not
+confirm whether it is a quantity, monetary value or index. Forecast files therefore use the unit
+`source_unit`, and downstream screens must not rename it to units sold. Source product IDs are not
+assumed to match inventory SKUs; a separately reviewed mapping CSV is applied during backend import.
+
+Full model artifacts are written to `data/generated/` and ignored by Git. Only deterministic review
+samples, quality reports, code and documentation are versioned. This keeps the repository small and
+prevents local training artifacts from being mistaken for source data.
 
 ## Contribution
 

@@ -88,6 +88,8 @@ export const DataProvider = ({ children }) => {
 
   useEffect(() => {
     refresh();
+    // Refresh is intentionally keyed to the authenticated role; date changes call refresh directly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, access?.role]);
 
   const applySalesDateRange = async (nextRange) => {

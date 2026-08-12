@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useToast } from '../../context/ToastContext';
-import { Settings, Shield, Bell, Key, Save } from 'lucide-react';
+import { Settings, Shield, Key, Save } from 'lucide-react';
 
 export const SettingsModule = () => {
   const { addToast } = useToast();

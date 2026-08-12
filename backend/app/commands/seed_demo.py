@@ -32,7 +32,14 @@ def main() -> None:
         seed_authorization(db)
         tenant = db.scalar(select(Tenant).where(Tenant.slug == args.tenant))
         if not tenant:
-            raise SystemExit(f"Tenant not found: {args.tenant}")
+            tenant = Tenant(
+                name="MarketMind Demo Business",
+                slug=args.tenant,
+                currency="INR",
+                timezone="Asia/Kolkata",
+            )
+            db.add(tenant)
+            db.flush()
         store = db.scalar(
             select(Store).where(
                 Store.tenant_id == tenant.id,
@@ -40,7 +47,14 @@ def main() -> None:
             )
         )
         if not store:
-            raise SystemExit(f"Store not found for tenant: {args.store}")
+            store = Store(
+                tenant_id=tenant.id,
+                name="Main Demo Store",
+                code=args.store,
+                timezone="Asia/Kolkata",
+            )
+            db.add(store)
+            db.flush()
         roles = {role.code: role for role in db.scalars(select(Role)).all()}
         created = []
         for role_code, email in DEMO_ACCOUNTS.items():

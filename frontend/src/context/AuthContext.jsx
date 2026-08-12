@@ -81,6 +81,8 @@ export const AuthProvider = ({ children }) => {
       }
     };
     restore();
+    // Session restoration runs once using the token captured during provider initialization.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async ({ email, password, mfaCode, rememberMe }) => {

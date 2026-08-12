@@ -52,7 +52,13 @@ def test_role_dashboard_access_matrix(
         "modules"
     ]
     sales_codes = {module["code"] for module in sales_modules}
-    assert "forecasts" not in sales_codes
+    assert "forecasts" in sales_codes
+    sales_forecast = next(module for module in sales_modules if module["code"] == "forecasts")
+    assert sales_forecast == {
+        "code": "forecasts",
+        "access": "personal",
+        "actions": ["view"],
+    }
     assert "churn" not in sales_codes
     assert "inventory" not in sales_codes
     assert "administration" not in sales_codes

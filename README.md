@@ -4,10 +4,17 @@ MarketMind is a sales intelligence platform for small businesses. The project is
 monorepo so the FastAPI service and the frontend can evolve together without mixing their
 dependencies.
 
+The current `Garvitk001` implementation covers Milestone 1 and the functional Milestone 2 scope:
+authentication and RBAC, database-backed sales and inventory, customer segmentation and behaviour
+analysis, and role-scoped revenue, personal-sales and product-demand forecasting.
+
 ```text
 Team_1_Small_Biz_Sales_AI/
-├── backend/   FastAPI, PostgreSQL, authentication, RBAC, dashboards and sales APIs
-└── frontend/  React/Vite authentication and role-aware dashboard application
+|-- backend/       FastAPI, database models, RBAC, imports and APIs
+|-- frontend/      React/Vite role-aware dashboards and reports
+|-- preprocessing/ Dataset cleaning, segmentation and forecasting pipelines
+|-- data/          Reviewed samples, quality reports and ignored generated artifacts
+`-- docs/          Milestone workflows and model documentation
 ```
 
 ## Backend
@@ -24,6 +31,33 @@ The first backend milestone is available in [`backend/`](backend/). It includes:
 - Alembic migrations, tests, Docker Compose and OpenAPI documentation
 
 See [`backend/README.md`](backend/README.md) for installation and startup instructions.
+
+## Local quick start
+
+Use two PowerShell terminals from the repository root.
+
+Backend:
+
+```powershell
+cd backend
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.\.venv\Scripts\alembic.exe upgrade head
+.\.venv\Scripts\python.exe -m app.commands.seed_demo
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8001
+```
+
+Frontend:
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+Open the frontend at `http://127.0.0.1:5173` and Swagger UI at
+`http://127.0.0.1:8001/api/v1/docs`. Generated datasets and local database files are intentionally
+excluded from Git.
 
 ## Milestone 2: customer intelligence
 
@@ -46,7 +80,24 @@ Current status:
 - Automated preprocessing, import, API and role tests are included.
 - Revenue, personal-sales and store/product demand forecasting are implemented with versioned,
   repeatable database imports and four role-scoped APIs.
-- The Administrator forecasting view reports real model versions, metrics and import-job status.
+- Administrators can open business revenue, store demand, seller-personal and model-monitoring
+  reports after MFA. Store and seller selectors preserve the requested data scope.
+- The React reports workspace now uses those APIs for 7/14/30-day charts, confidence ranges,
+  category/product filters, role-controlled exports, loading/error states and model comparison.
+- The customer workspace provides segment profiles, purchasing-behaviour KPIs, search, filtering,
+  pagination, drill-down details and scope-aware exports.
+- Personal forecasts are trained separately from the cleaned sales records instead of reusing the
+  business-wide Amazon forecast.
+- Revenue model comparison includes a weekday-aware linear trend candidate in addition to the
+  Seasonal Naive, Prophet, XGBoost and Random Forest candidates.
+- Demand-to-inventory linking uses an explicit validated source ID to store/SKU mapping. Unknown
+  source IDs remain visibly unmapped instead of receiving a guessed inventory product.
+
+The Sales Executive forecast is an approved project extension to the original access matrix. It
+contains only the signed-in seller's authorised sales history and does not grant access to business
+or store forecasting. The supplied Parquet field `sale_amount` is used as the demand target, but its
+business unit has not been confirmed by the provider. The UI and API therefore label it
+`source_unit`, not units sold or revenue.
 
 Read the [Milestone 2 workflow](docs/milestone-2/milestone-2-workflow.md) for the agreed task order,
 datasets, models and completion checks. The detailed
@@ -65,15 +116,12 @@ origins through CORS. A Vite frontend can use:
 VITE_API_BASE_URL=http://localhost:8000/api/v1
 ```
 
-Interactive API documentation is available at `http://localhost:8000/api/v1/docs` while the
-service is running.
-
-For the current local setup, the backend is running on port `8001`. Start the frontend from its
-directory with `npm run dev`, then open `http://127.0.0.1:5173`.
+The Vite client defaults to port `8001` for local API requests. Docker Compose exposes the backend
+on port `8000`; set `VITE_API_BASE_URL=http://localhost:8000/api/v1` when using Docker.
 
 ## Team contributions
 
 - Backend and Milestone 1 integration: Garvit (`Garvitk001`)
 - Frontend design and features: Divyanka (`divyanka-0525`) and Tejananda (`Tejananda`)
 - Dataset selection and preprocessing: Komal (`komal283`)
-- Documentation(`Akshaya29`)
+- Milestone 2 report interface and documentation: Akshaya (`Akshaya29`)

@@ -19,6 +19,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--store", help="Store code for store scope")
     parser.add_argument("--seller", help="Seller email for personal scope")
     parser.add_argument("--source-store-id", help="Optional source store filter")
+    parser.add_argument(
+        "--product-mapping",
+        type=Path,
+        help=(
+            "Optional validated CSV mapping source_store_id/source_product_id to "
+            "store_code/product_sku"
+        ),
+    )
     return parser.parse_args()
 
 
@@ -55,6 +63,7 @@ def main() -> None:
                 store_id=store.id if store else None,
                 seller_id=seller.id if seller else None,
                 source_store_id=args.source_store_id,
+                product_mapping_path=args.product_mapping,
             )
             db.commit()
         except Exception:

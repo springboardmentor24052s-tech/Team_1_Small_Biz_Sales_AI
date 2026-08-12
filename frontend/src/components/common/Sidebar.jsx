@@ -8,11 +8,8 @@ import {
   BarChart3,
   Sparkles,
   Settings,
-  Layers,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck,
-  UserCheck,
   LogOut
 } from 'lucide-react';
 
@@ -25,7 +22,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
     ...(allowedModules.has('sales') ? [{ id: 'sales', label: 'Sales Deals', icon: ShoppingBag, badge: null }] : []),
     ...(allowedModules.has('inventory') ? [{ id: 'inventory', label: 'Inventory', icon: PackageCheck, badge: currentRole.id === 'manager' ? 'Stock Alerts' : null, badgeColor: 'bg-rose-500 text-white' }] : []),
     ...(allowedModules.has('customer_segments') ? [{ id: 'customers', label: 'Customers', icon: Users, badge: null }] : []),
-    ...(currentRole.id === 'owner' || currentRole.id === 'admin' ? [{ id: 'reports', label: 'Reports', icon: BarChart3, badge: null }] : []),
+    ...(allowedModules.has('forecasts') ? [{ id: 'reports', label: 'Reports & Forecasts', icon: BarChart3, badge: 'Live', badgeColor: 'bg-emerald-500/15 text-emerald-300' }] : []),
     ...(allowedModules.has('administration') ? [{ id: 'settings', label: 'Settings', icon: Settings, badge: null }] : [])
   ];
 

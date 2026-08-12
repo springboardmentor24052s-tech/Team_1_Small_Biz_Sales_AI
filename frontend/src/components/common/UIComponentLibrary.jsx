@@ -6,7 +6,7 @@ import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { Skeleton, CardSkeleton } from '../ui/Skeleton';
 import { useToast } from '../../context/ToastContext';
-import { Layers, Sparkles, AlertTriangle, Check, Mail, Heart, Lock } from 'lucide-react';
+import { Layers, Sparkles, Mail, Heart, Lock } from 'lucide-react';
 
 export const UIComponentLibrary = () => {
   const { addToast } = useToast();

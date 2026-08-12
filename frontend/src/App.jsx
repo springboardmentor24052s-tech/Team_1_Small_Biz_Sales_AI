@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
@@ -28,6 +28,10 @@ const MainAppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
+  useEffect(() => {
+    setActiveTab('dashboard');
+  }, [currentRole.id]);
+
   if (isInitializing) {
     return (
       <div className="min-h-screen bg-slate-900 text-indigo-300 flex items-center justify-center font-semibold">
@@ -44,15 +48,15 @@ const MainAppContent = () => {
   const renderDashboardView = () => {
     switch (currentRole.id) {
       case 'owner':
-        return <OwnerDashboard />;
+        return <OwnerDashboard onNavigate={setActiveTab} />;
       case 'manager':
         return <ManagerDashboard />;
       case 'sales':
-        return <SalesDashboard />;
+        return <SalesDashboard onNavigate={setActiveTab} />;
       case 'admin':
         return <AdminDashboard />;
       default:
-        return <OwnerDashboard />;
+        return <OwnerDashboard onNavigate={setActiveTab} />;
     }
   };
 

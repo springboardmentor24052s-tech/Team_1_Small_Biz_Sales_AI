@@ -46,7 +46,7 @@ def _forecast_files(tmp_path, name: str, forecast_type: str):
                     "unit": unit,
                     "granularity": "day",
                     "source_store_id": "12" if forecast_type == "demand" else "ALL",
-                    "source_product_id": "SKU-101" if forecast_type == "demand" else "ALL",
+                    "source_product_id": "117" if forecast_type == "demand" else "ALL",
                     "source_category_id": "10" if forecast_type == "demand" else "ALL",
                     "forecast_date": (date(2026, 8, 10) + timedelta(days=horizon)).isoformat(),
                     "horizon_day": horizon,
@@ -138,6 +138,25 @@ def test_forecast_import_is_repeatable(db: Session, tenant: Tenant, tmp_path):
     assert db.scalar(select(func.count(ForecastModelRun.id))) == 1
     assert db.scalar(select(func.count(ForecastPrediction.id))) == 30
 
+    next_report = json.loads(report.read_text(encoding="utf-8"))
+    next_report["model_version"] = "forecast-v2"
+    next_report["generated_at"] = "2026-08-10T12:00:00+00:00"
+    report.write_text(json.dumps(next_report), encoding="utf-8")
+    replacement = import_forecasts(
+        db,
+        tenant_id=tenant.id,
+        predictions_path=predictions,
+        report_path=report,
+        scope_type="business",
+    )
+    db.commit()
+    runs = list(db.scalars(select(ForecastModelRun).order_by(ForecastModelRun.model_version)).all())
+    assert replacement.model_run_created is True
+    assert [(run.model_version, run.status) for run in runs] == [
+        ("forecast-v1", "superseded"),
+        ("forecast-v2", "active"),
+    ]
+
 
 def test_four_forecast_views_follow_role_scope(
     client: TestClient,
@@ -176,6 +195,11 @@ def test_four_forecast_views_follow_role_scope(
     )
     revenue_csv, revenue_report = _forecast_files(tmp_path, "revenue", "revenue")
     demand_csv, demand_report = _forecast_files(tmp_path, "demand", "demand")
+    product_mapping = tmp_path / "forecast_product_mapping.csv"
+    product_mapping.write_text(
+        "source_store_id,source_product_id,store_code,product_sku\n12,117,JAI-01,SKU-101\n",
+        encoding="utf-8",
+    )
     import_forecasts(
         db,
         tenant_id=tenant.id,
@@ -191,7 +215,7 @@ def test_four_forecast_views_follow_role_scope(
         scope_type="personal",
         seller_id=seller.id,
     )
-    import_forecasts(
+    demand_import = import_forecasts(
         db,
         tenant_id=tenant.id,
         predictions_path=demand_csv,
@@ -199,8 +223,11 @@ def test_four_forecast_views_follow_role_scope(
         scope_type="store",
         store_id=store.id,
         source_store_id="12",
+        product_mapping_path=product_mapping,
     )
     db.commit()
+    assert demand_import.mapped_series == 1
+    assert demand_import.unmapped_series == 0
 
     owner_headers = auth_header(login(client, owner.email))
     manager_headers = auth_header(login(client, manager.email))
@@ -217,6 +244,8 @@ def test_four_forecast_views_follow_role_scope(
     assert demand.status_code == 200, demand.text
     assert demand.json()["scope_id"] == str(store.id)
     assert demand.json()["products"][0]["stock_risk"] == "high"
+    assert demand.json()["products"][0]["mapping_status"] == "mapped"
+    assert demand.json()["products"][0]["product_sku"] == "SKU-101"
     assert client.get("/api/v1/forecasts/revenue", headers=manager_headers).status_code == 403
 
     personal = client.get("/api/v1/forecasts/personal?horizon=30", headers=seller_headers)
@@ -224,6 +253,41 @@ def test_four_forecast_views_follow_role_scope(
     assert personal.json()["scope_id"] == str(seller.id)
     assert len(personal.json()["series"]) == 30
     assert client.get("/api/v1/forecasts/revenue", headers=seller_headers).status_code == 403
+
+    sales_access = client.get("/api/v1/dashboard/access", headers=seller_headers)
+    assert sales_access.status_code == 200
+    assert next(item for item in sales_access.json()["modules"] if item["code"] == "forecasts") == {
+        "code": "forecasts",
+        "access": "personal",
+        "actions": ["view"],
+    }
+
+    revenue_options = client.get(
+        "/api/v1/forecasts/options?forecast_type=revenue", headers=owner_headers
+    )
+    assert revenue_options.status_code == 200
+    assert revenue_options.json()["supported_horizons"] == [7, 14, 30]
+
+    demand_options = client.get(
+        "/api/v1/forecasts/options?forecast_type=demand", headers=manager_headers
+    )
+    assert demand_options.status_code == 200
+    assert demand_options.json()["categories"] == ["10"]
+    assert demand_options.json()["products"] == [{"product": "117", "category": "10"}]
+
+    assert client.get("/api/v1/forecasts/revenue", headers=admin_headers).status_code == 200
+    assert (
+        client.get(
+            f"/api/v1/forecasts/demand?store_id={store.id}", headers=admin_headers
+        ).status_code
+        == 200
+    )
+    assert (
+        client.get(
+            f"/api/v1/forecasts/personal?seller_id={seller.id}", headers=admin_headers
+        ).status_code
+        == 200
+    )
 
     monitoring = client.get("/api/v1/forecasts/monitoring", headers=admin_headers)
     assert monitoring.status_code == 200, monitoring.text

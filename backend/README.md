@@ -22,6 +22,8 @@ Backend development and Milestone 1 integration are maintained on the `Garvitk00
 - Tenant- and store-scoped product and inventory APIs
 - Versioned revenue and product-demand forecasts with model metrics and prediction ranges
 - Owner, Manager, Sales Executive and MFA-protected Admin forecasting views
+- Administrator selectors for business, store and seller forecasting scopes
+- Validated source-store/product to application-store/SKU forecast mapping
 - PostgreSQL migrations, Docker Compose, health checks, OpenAPI, linting, and tests
 
 ## Project layout
@@ -92,13 +94,18 @@ python -m app.bootstrap
 uvicorn app.main:app --reload
 ```
 
+The repository frontend defaults to `http://127.0.0.1:8001/api/v1`. For the normal two-terminal
+local setup, start Uvicorn with `--port 8001`. The command without that flag uses Uvicorn's port
+8000 and is suitable when the frontend API URL is overridden accordingly.
+
 SQLite is the default when no database URL is configured and is intended only for local
 development. PostgreSQL is the supported production database.
 
 ## Import Milestone 1 data
 
-Run migrations and authorization bootstrap before importing. The tenant, store and seller must
-already exist. From `backend/`, import the reviewed repository samples with:
+Run migrations and create the four demo roles before importing. On an empty local database,
+`python -m app.commands.seed_demo` creates the `hello` tenant, `MAIN` store and demo accounts.
+From `backend/`, import the reviewed repository samples with:
 
 ```powershell
 python -m app.commands.import_data `
@@ -169,13 +176,15 @@ From the repository root, train both forecasting tasks on the full source datase
 ```powershell
 .\preprocessing\.venv\Scripts\python.exe -m preprocessing.forecasting `
   --amazon "D:\MarketMind\Dataset\archive (9)\Amazon Sale Report.csv" `
+  --personal-sales data\processed\sales_cleaned_sample.csv `
   --demand-train "D:\MarketMind\Dataset\train.parquet" `
   --demand-eval "D:\MarketMind\Dataset\eval.parquet" `
   --output data\generated\forecasting
 ```
 
-The pipeline uses chronological validation. Revenue compares Seasonal Naive, Prophet, XGBoost
-and Random Forest. Store/product demand compares Seasonal Naive, XGBoost and Random Forest.
+The pipeline uses chronological validation. Revenue compares Seasonal Naive, Prophet, a
+weekday-aware Linear Trend model, XGBoost and Random Forest. Store/product demand compares
+Seasonal Naive, XGBoost and Random Forest.
 Candidate metrics are saved with the selected model; full generated files remain ignored by Git.
 
 Apply the migration and synchronize role permissions before importing:
@@ -194,14 +203,30 @@ python -m app.commands.import_forecasts --tenant hello --scope business `
 
 python -m app.commands.import_forecasts --tenant hello --scope personal `
   --seller sales.demo@marketmind.example.com `
-  --predictions ..\data\generated\forecasting\revenue_forecasts.csv `
-  --report ..\data\generated\forecasting\revenue_report.json
+  --predictions ..\data\generated\forecasting\personal_revenue_forecasts.csv `
+  --report ..\data\generated\forecasting\personal_revenue_report.json
 
 python -m app.commands.import_forecasts --tenant hello --scope store --store MAIN `
   --source-store-id 1 `
   --predictions ..\data\generated\forecasting\demand_forecasts.csv `
   --report ..\data\generated\forecasting\demand_report.json
 ```
+
+The optional mapping CSV has this contract:
+
+```csv
+source_store_id,source_product_id,store_code,product_sku
+1,117,MAIN,REVIEWED-INVENTORY-SKU
+```
+
+When an approved crosswalk is available, append
+`--product-mapping <path-to-mapping.csv>` to the store import command.
+
+Every store code and product SKU is validated against the tenant. Conflicting, unknown or
+cross-store mappings are rejected. Without a reviewed mapping, a demand series remains unmapped and
+its stock risk is returned as `unknown`; the importer never guesses a product relationship. The
+`--source-store-id 1 --store MAIN` arguments are the explicit source-store to application-store
+mapping for the imported run.
 
 The commands are idempotent: importing the same model version and scope again updates changed
 values and does not duplicate predictions.
@@ -212,10 +237,29 @@ Forecasting endpoints:
 - `GET /api/v1/forecasts/personal` — Sales Executive; only the signed-in seller
 - `GET /api/v1/forecasts/demand` — Store Manager; only the assigned store
 - `GET /api/v1/forecasts/monitoring` — Administrator; MFA-protected model and job status
+- `GET /api/v1/forecasts/options` — role-scoped category, product and horizon filter metadata
 
 The forecast routes accept only 7, 14 or 30-day horizons. Revenue supports category filtering;
 demand supports category and product filtering and adds inventory risk when the source product is
 mapped to an inventory SKU.
+
+Administrators may call all four endpoints. Store demand requires `store_id`, and a personal
+forecast requires `seller_id`; the frontend obtains both choices from protected catalog APIs.
+Sales Executive personal forecasting is intentionally seller-scoped. It is a documented extension
+to the original proposal, which denied general forecasting access to that role.
+
+The demand source target is the Parquet `sale_amount` field. Because its provider has not supplied
+a signed definition confirming quantity, money or index semantics, MarketMind reports the unit as
+`source_unit` and does not label the value as physical units sold.
+
+Current full-data model evidence:
+
+- Customer segmentation: 5,878 customers, three K-Means segments, Silhouette Score `0.363917`.
+- Business revenue: `forecast-v2`, Linear Trend, MAE `77,902.286`, RMSE `107,281.902`,
+  R2 `-0.845`; functional baseline only because the dated source history is short.
+- Store demand: `forecast-v1`, XGBoost, MAE `2.152`, RMSE `2.945`, R2 `0.918` across the selected
+  high-volume series.
+- Personal sales: `personal-forecast-v2`, trained separately from authorised cleaned sales data.
 
 For local UI testing, create the four demo accounts with:
 

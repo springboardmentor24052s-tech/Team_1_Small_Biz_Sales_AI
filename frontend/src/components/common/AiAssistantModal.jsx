@@ -2,17 +2,15 @@ import React, { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { useToast } from '../../context/ToastContext';
-import { Sparkles, Send, Bot, User, Zap, RefreshCw } from 'lucide-react';
+import { Sparkles, Send, Bot, User } from 'lucide-react';
 
 export const AiAssistantModal = ({ isOpen, onClose }) => {
-  const { addToast } = useToast();
   const [query, setQuery] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [chatHistory, setChatHistory] = useState([
     {
       sender: 'ai',
-      text: 'AI forecasting is planned for Milestones 2 and 3. I can currently explain which analytics features are planned.'
+      text: 'Milestone 2 forecasting and customer segmentation are now connected. I can explain the live analytics and the features planned for Milestone 3.'
     }
   ]);
 
@@ -35,7 +33,7 @@ export const AiAssistantModal = ({ isOpen, onClose }) => {
       setIsThinking(false);
       let aiResponse = 'Based on current POS transaction data, July sales exceed baseline by +18.4%. Reordering thermal receipt paper now prevents potential Q3 fulfillment bottlenecks.';
       if (textToSend.includes('August') || textToSend.includes('revenue')) {
-        aiResponse = 'Planned for Milestone 2: revenue forecasting will use historical sales records and display predictions in INR.';
+        aiResponse = 'Revenue forecasting is live in Reports & Forecasts. It uses historical INR sales and provides 7, 14 and 30-day predictions with confidence ranges.';
       } else if (textToSend.includes('SKU') || textToSend.includes('reorder')) {
         aiResponse = 'Urgent action: SKU-902 (Thermal Receipt Paper) is down to 4 units. Reordering 50 units today ensures 0 stockout days.';
       } else if (textToSend.includes('churn') || textToSend.includes('risk')) {
