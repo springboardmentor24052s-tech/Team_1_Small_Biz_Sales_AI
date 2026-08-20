@@ -4,6 +4,8 @@ FastAPI backend for MarketMind. It provides authentication, tenant-aware role-ba
 database-backed dashboards, customer segmentation, and sales and demand forecasting.
 
 Backend development and Milestone 1 integration are maintained on the `Garvitk001` branch.
+Milestones 1 and 2 are implemented. Churn prediction, recommendations, formal ML anomaly detection
+and production hardening remain planned under the Milestone 3 and 4 workflow.
 
 ## What is included
 
@@ -54,7 +56,8 @@ backend/
 │   ├── db/                  SQLAlchemy base and session management
 │   ├── models/              Identity, audit, session, and sales tables
 │   ├── schemas/             API request and response contracts
-│   ├── services/            Authentication, audit, identity, and scope rules
+│   ├── services/            Auth, scope, onboarding, imports and intelligence workflows
+│   ├── commands/            Demo seeding and repeatable model/data imports
 │   ├── bootstrap.py         Role/permission and initial admin setup
 │   └── main.py              FastAPI application
 ├── tests/                   API, security, RBAC, and isolation tests
@@ -159,6 +162,14 @@ Customer endpoints:
 - `GET /api/v1/customers/summary`
 - `GET /api/v1/customers/{customer_id}`
 - `GET /api/v1/customers/{customer_id}/insights` — role-scoped Customer 360 timeline and purchasing evidence
+
+Operational endpoint groups added in the latest integrated build:
+
+- `/api/v1/onboarding` — store creation, CSV templates, previews, imports and readiness
+- `/api/v1/intelligence` — tenant readiness and quality-gated intelligence refresh
+- `/api/v1/team` — employee access, targets and role-scoped performance
+- `/api/v1/notifications` — preference-controlled operational alerts from database evidence
+- `/api/v1/sales` — sales catalog, transaction workflow, daily line-item entry and voiding
 
 Profile and preference endpoints:
 
@@ -345,3 +356,16 @@ alembic check
 In development, registration, invitation, and password reset endpoints return their one-time
 token in the response so the backend can be tested without an email provider. Production
 configuration suppresses these values. Connect an approved email service before deployment.
+
+## Planned Milestone 3 and 4 backend work
+
+The next modules will extend the current service instead of creating a separate AI backend:
+
+- churn model runs and customer risk predictions with documented label windows;
+- stock-aware product recommendations and explicit user feedback;
+- anomaly model runs, evidence-backed alert records and resolution actions;
+- monitoring, model approval/rollback, backups, security testing and staged deployment.
+
+All future endpoints must keep the existing tenant/store/seller scope, Administrator MFA,
+deny-by-default permissions, model versioning and honest `not_ready` behavior. See the
+[Milestone 3 and 4 workflow](../docs/milestone-3-4/milestone-3-4-workflow.md).

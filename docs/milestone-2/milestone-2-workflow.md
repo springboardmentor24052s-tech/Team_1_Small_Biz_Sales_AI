@@ -174,3 +174,13 @@ filters, confidence ranges, metric/model labels, and loading, empty and error st
 - Invoice-product baskets support recommendation and cross-sell models.
 - Forecast residuals and stock signals support anomaly detection.
 - Versioned model runs, APIs and monitoring are reused during deployment and hardening.
+
+## Handoff to Milestones 3 and 4
+
+Milestone 2 is the approved baseline for future intelligence work. New tenants must continue using
+the Business Setup readiness check and explicit **Train & Refresh Intelligence** action; demo model
+outputs must never be copied into a real tenant. New models will reuse the current tenant/store/
+seller scopes, versioned model-run records, chronological validation and `not_ready` responses.
+
+The follow-on sequence, additional dataset contracts, proposed APIs and release gates are recorded
+in the [Milestone 3 and 4 workflow](../milestone-3-4/milestone-3-4-workflow.md).

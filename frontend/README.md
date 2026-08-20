@@ -4,6 +4,10 @@ The MarketMind frontend is a React and Vite application for small-business sales
 operations. It connects to the FastAPI service in `../backend` and presents a different workspace
 for each authorized role.
 
+The current interface implements Milestones 1 and 2. Milestone 3 recommendation, churn and formal
+ML anomaly screens are planned and must not display fabricated predictions before their APIs and
+quality gates are implemented.
+
 ## Milestone 1 features
 
 - Login and session handling through the backend API
@@ -29,6 +33,9 @@ for each authorized role.
   payment method, line/order discounts and tax
 - Indian rupee formatting throughout the application
 - Clear labels for sample layouts and features planned for later milestones
+- Public Indian small-business landing page with English/Hindi content, responsive typography,
+  light/dark themes, services, outcomes, role explanations, security, FAQ and sign-in actions
+- Email-based forgotten-password entry and invitation-token activation for employees
 
 ## Milestone 2 features
 
@@ -94,7 +101,8 @@ frontend/src/
 |   |-- auth/         Login and registration screens
 |   |-- common/       Navigation, search, filters, and shared UI
 |   |-- dashboards/   Role-specific dashboards
-|   `-- modules/      Sales, inventory, reports, and settings views
+|   |-- landing/      Public bilingual landing-page sections and styles
+|   `-- modules/      Sales, inventory, customers, reports, setup, team and settings
 |-- context/          Authentication and API data state
 |-- data/             UI fixtures used only for labelled sample sections
 `-- App.jsx           Application shell and role-based routing
@@ -110,3 +118,11 @@ The frontend design and feature work was contributed by:
 
 Their branch work was retained while connecting the user interface to the Milestone 1 backend and
 database services.
+
+## Planned Milestone 3 and 4 interface work
+
+Future role screens will consume backend-scoped churn, recommendation, anomaly and monitoring APIs.
+Every screen must include loading, empty, low-data, error and permission-denied states; model name,
+version and generated time; and a plain-language reason for each recommendation or alert. The
+approved sequence is documented in the
+[Milestone 3 and 4 workflow](../docs/milestone-3-4/milestone-3-4-workflow.md).

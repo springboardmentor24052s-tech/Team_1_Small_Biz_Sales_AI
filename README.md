@@ -10,6 +10,10 @@ analysis, and role-scoped revenue, personal-sales and product-demand forecasting
 also includes guided business onboarding, employee activation, profile and preference settings,
 operational alerts, daily sales entry and team-performance views.
 
+Milestone 3 and Milestone 4 are documented as the next delivery stages. Their churn,
+recommendation, anomaly-detection and production-release features are planned work and are not
+presented as completed functionality.
+
 ```text
 Team_1_Small_Biz_Sales_AI/
 |-- backend/       FastAPI, database models, RBAC, imports and APIs
@@ -24,6 +28,11 @@ Team_1_Small_Biz_Sales_AI/
 The [Software Requirements Specification v1.1](docs/srs/MarketMind_AI_Detailed_SRS_v1.1.docx)
 records the implemented Milestone 1 and Milestone 2 scope. It also keeps Milestone 3 and Milestone 4
 requirements separate as planned work, so future features are not presented as complete.
+
+- [Milestone 2 workflow](docs/milestone-2/milestone-2-workflow.md)
+- [Customer segmentation design](docs/milestone-2/customer-segmentation.md)
+- [Milestone 3 and 4 workflow](docs/milestone-3-4/milestone-3-4-workflow.md)
+- [Milestone 3 and 4 workflow PDF](docs/milestone-3-4/marketmind-milestone-3-4-workflow.pdf)
 
 ## Backend
 
@@ -167,6 +176,11 @@ permissions, audit and model monitoring.
   supported by approved labels, interaction data and offline model evaluation.
 - **Milestone 4:** production deployment hardening, accessibility, load and security testing,
   observability, backup and restore, UAT evidence and rollback procedures.
+
+The implementation order, dataset contracts, compatible models, proposed APIs, role access and
+release gates are maintained in the
+[Milestone 3 and 4 workflow](docs/milestone-3-4/milestone-3-4-workflow.md). The plan deliberately
+reuses the existing tenant isolation, model-run versioning, FastAPI, React and PostgreSQL patterns.
 
 ## Team contributions
 

@@ -38,6 +38,28 @@ quantity, value or index. Parquet store/product IDs do not match the Amazon inve
 Any inventory link must therefore be supplied through a reviewed mapping CSV; generated or guessed
 cross-dataset mappings must not be committed.
 
+## Milestone 3 and 4 data plan
+
+Milestone 3 continues using the cleaned Online Retail II transactions, customer summaries,
+segment assignments, application sales lines, product/inventory records and forecast
+actual-versus-predicted history. It also requires governed application data that the current public
+datasets do not provide:
+
+- dated customer engagement events with channel, outcome and consent;
+- recommendation impressions, clicks, acceptance, rejection and later purchase feedback;
+- inventory movements and reviewed anomaly-resolution actions.
+
+These fields will be collected per tenant through the application. Cross-business records must
+never be combined. If history, consent or identifier mappings are insufficient, the API must return
+`not_ready` instead of generating a score.
+
+Milestone 4 adds operational telemetry rather than another training dataset: API latency and
+errors, audit events, model runs, drift summaries and scheduled-job status. Raw customer PII,
+secrets, complete licensed datasets and generated model artifacts remain outside Git.
+
+See the [Milestone 3 and 4 workflow](../docs/milestone-3-4/milestone-3-4-workflow.md) for the complete
+dataset-to-model mapping.
+
 ## Contribution
 
 Dataset collection and preparation work for Milestone 1 was contributed by Komal (`komal283`).
