@@ -208,9 +208,7 @@ def import_customer_segments(
                 "active_months": _integer(row["active_months"]),
                 "product_variety": _integer(row["product_variety"]),
                 "tenure_days": _integer(row["tenure_days"]),
-                "average_days_between_orders": _decimal(
-                    row["average_days_between_orders"]
-                ),
+                "average_days_between_orders": _decimal(row["average_days_between_orders"]),
                 "return_order_count": _integer(row["return_order_count"]),
                 "returned_value": _decimal(row["returned_value"], "0.01"),
                 "return_rate": _decimal(row["return_rate"], "0.000001"),

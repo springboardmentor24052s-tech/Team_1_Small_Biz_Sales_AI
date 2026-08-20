@@ -80,7 +80,38 @@ def dashboard_access(user: CurrentUser):
         modules.append(module("customer_segments", "assigned", "view", "filter", "drill_down"))
 
     if Permissions.USERS_MANAGE in permissions:
-        modules.append(module("administration", "manage", "users", "roles", "security", "audit"))
+        modules.append(
+            module("business_setup", "business", "view", "stores", "preview", "import", "sample")
+        )
+        modules.append(
+            module(
+                "team_management",
+                "business",
+                "view",
+                "analyse",
+                "targets",
+                "invite",
+                "assign",
+                "disable",
+            )
+        )
+    elif Permissions.DASHBOARD_SALES_STORE in permissions:
+        modules.append(module("team_performance", "store", "view", "analyse"))
+    elif Permissions.DASHBOARD_SALES_PERSONAL in permissions:
+        modules.append(module("team_performance", "personal", "view"))
+
+    if Permissions.SECURITY_MANAGE in permissions:
+        modules.append(
+            module(
+                "administration",
+                "manage",
+                "roles",
+                "security",
+                "audit",
+                "datasets",
+                "models",
+            )
+        )
 
     return DashboardAccessResponse(
         role=user.role.code,
@@ -103,16 +134,46 @@ def sales_dashboard(
     ),
     date_from: datetime | None = Query(default=None),
     date_to: datetime | None = Query(default=None),
+    days: int = Query(default=30, ge=1, le=90),
 ):
-    end = date_to or utcnow()
-    start = date_from or end - timedelta(days=30)
+    if bool(date_from) != bool(date_to):
+        raise HTTPException(status_code=422, detail="Provide both date_from and date_to")
+    permissions = user.permission_codes
+    scope = "business"
+    store_id = None
+    seller_id = None
+    scope_conditions = [SalesTransaction.tenant_id == user.tenant_id]
+    if Permissions.DASHBOARD_SALES_ALL not in permissions:
+        if Permissions.DASHBOARD_SALES_STORE in permissions and user.store_id:
+            scope_conditions.append(SalesTransaction.store_id == user.store_id)
+            scope = "store"
+            store_id = user.store_id
+        elif Permissions.DASHBOARD_SALES_PERSONAL in permissions:
+            scope_conditions.append(SalesTransaction.seller_id == user.id)
+            scope = "personal"
+            store_id = user.store_id
+            seller_id = user.id
+        else:
+            raise HTTPException(status_code=403, detail="No dashboard scope is assigned")
+
+    if date_from and date_to:
+        start, end = date_from, date_to
+    else:
+        latest = db.scalar(
+            select(func.max(SalesTransaction.occurred_at)).where(
+                *scope_conditions,
+                SalesTransaction.status == TransactionStatus.COMPLETED,
+            )
+        )
+        end = (latest or utcnow()) + timedelta(microseconds=1)
+        start = end - timedelta(days=days)
     if start >= end:
         raise HTTPException(status_code=422, detail="date_from must be earlier than date_to")
     if (end - start).days > 366:
         raise HTTPException(status_code=422, detail="Dashboard range cannot exceed 366 days")
 
     conditions = [
-        SalesTransaction.tenant_id == user.tenant_id,
+        *scope_conditions,
         SalesTransaction.status == TransactionStatus.COMPLETED,
         SalesTransaction.occurred_at >= start,
         SalesTransaction.occurred_at < end,
@@ -124,24 +185,6 @@ def sales_dashboard(
         func.max(SalesTransaction.updated_at),
     ).where(*conditions)
 
-    permissions = user.permission_codes
-    scope = "business"
-    store_id = None
-    seller_id = None
-    if Permissions.DASHBOARD_SALES_ALL not in permissions:
-        if Permissions.DASHBOARD_SALES_STORE in permissions and user.store_id:
-            conditions.append(SalesTransaction.store_id == user.store_id)
-            scope = "store"
-            store_id = user.store_id
-        elif Permissions.DASHBOARD_SALES_PERSONAL in permissions:
-            conditions.append(SalesTransaction.seller_id == user.id)
-            scope = "personal"
-            store_id = user.store_id
-            seller_id = user.id
-        else:
-            raise HTTPException(status_code=403, detail="No dashboard scope is assigned")
-
-    query = query.where(*conditions[4:])
     revenue, count, quantity, freshness = db.execute(query).one()
     revenue = Decimal(revenue or 0)
     average = revenue / count if count else Decimal("0")

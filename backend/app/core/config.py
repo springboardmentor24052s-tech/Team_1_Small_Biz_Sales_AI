@@ -33,6 +33,12 @@ class Settings(BaseSettings):
         ]
     )
     expose_development_tokens: bool = True
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_username: str | None = None
+    smtp_password: SecretStr | None = None
+    smtp_from_email: str | None = None
+    smtp_starttls: bool = True
     initial_admin_email: str | None = None
     initial_admin_password: SecretStr | None = None
 

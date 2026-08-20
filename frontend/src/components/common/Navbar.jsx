@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../context/ToastContext';
-import { MOCK_NOTIFICATIONS } from '../../data/mockData';
+import { ProfileAvatar } from './ProfileAvatar';
 import {
   Search,
   Bell,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
-  const { currentRole, userEmail, logout } = useAuth();
+  const { currentRole, userEmail, profile, logout, api } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const { addToast } = useToast();
   const { salesTransactions, inventoryItems, customers } = useData();
@@ -25,9 +25,10 @@ export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
   const searchInputRef = useRef(null);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
+  const [readNotificationIds, setReadNotificationIds] = useState(new Set());
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const unreadCount = notifications.filter((notification) => !readNotificationIds.has(notification.id)).length;
   const searchResults = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (query.length < 2) return [];
@@ -71,6 +72,24 @@ export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
     return () => window.removeEventListener('keydown', focusSearch);
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    const loadNotifications = async () => {
+      try {
+        const response = await api('/notifications');
+        if (active) setNotifications(response.items || []);
+      } catch {
+        if (active) setNotifications([]);
+      }
+    };
+    loadNotifications();
+    const seconds = currentRole.id === 'admin'
+      ? Number(profile?.role_preferences?.monitoring_refresh || 60)
+      : 60;
+    const timer = window.setInterval(loadNotifications, seconds * 1000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [api, currentRole.id, profile?.role_preferences]);
+
   const openSearchResult = (result) => {
     onNavigate(result.tab);
     setSearchQuery('');
@@ -78,8 +97,14 @@ export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
   };
 
   const handleMarkAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+    setReadNotificationIds(new Set(notifications.map((notification) => notification.id)));
     addToast('All notifications marked as read', 'info');
+  };
+
+  const openNotification = (notification) => {
+    setReadNotificationIds((current) => new Set([...current, notification.id]));
+    setIsNotifOpen(false);
+    onNavigate(notification.destination || 'dashboard');
   };
 
   return (
@@ -175,10 +200,10 @@ export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
             <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-scale-up">
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
                 <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Demo Notifications</h4>
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Live Notifications</h4>
                   {unreadCount > 0 && (
                     <span className="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400 rounded-full">
-                      Sample data
+                      {unreadCount} new
                     </span>
                   )}
                 </div>
@@ -191,12 +216,14 @@ export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
               </div>
 
               <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-                {notifications.map((n) => (
-                  <div
+                {notifications.length ? notifications.map((n) => (
+                  <button
                     key={n.id}
+                    type="button"
+                    onClick={() => openNotification(n)}
                     className={`p-3.5 transition-colors flex items-start gap-3 ${
-                      n.unread ? 'bg-indigo-50/30 dark:bg-indigo-950/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
-                    }`}
+                      !readNotificationIds.has(n.id) ? 'bg-indigo-50/30 dark:bg-indigo-950/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                    } w-full text-left`}
                   >
                     <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shrink-0">
                       <Bell className="w-4 h-4" />
@@ -204,12 +231,12 @@ export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-bold text-slate-900 dark:text-slate-100">{n.title}</p>
-                        <span className="text-[10px] text-slate-400">{n.time}</span>
+                        <span className="text-[10px] text-slate-400">{new Date(n.created_at).toLocaleDateString('en-IN')}</span>
                       </div>
                       <p className="text-xs text-slate-600 dark:text-slate-400">{n.message}</p>
                     </div>
-                  </div>
-                ))}
+                  </button>
+                )) : <p className="px-4 py-8 text-center text-xs text-slate-500">No enabled alerts need your attention.</p>}
               </div>
             </div>
           )}
@@ -221,13 +248,9 @@ export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <img
-              src={currentRole.avatar}
-              alt={currentRole.name}
-              className="w-8 h-8 rounded-full object-cover border-2 border-indigo-500"
-            />
+            <ProfileAvatar profile={profile} fallbackImage={currentRole.avatar} className="w-9 h-9 rounded-full border-2 border-indigo-500 text-lg" />
             <div className="hidden sm:block text-left">
-              <p className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">{currentRole.name}</p>
+              <p className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">{profile?.full_name || currentRole.name}</p>
               <p className="text-[10px] text-slate-500 dark:text-slate-400">{currentRole.badge}</p>
             </div>
             <ChevronDown className="w-4 h-4 text-slate-400 hidden sm:block" />
@@ -242,8 +265,15 @@ export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
 
               <div className="px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300">
                 <p className="text-xs font-bold">{currentRole.name}</p>
-                <p className="text-[11px] mt-1">Role changes require an administrator.</p>
+                <p className="text-[11px] mt-1">{currentRole.id === 'admin' ? 'Internal platform access.' : currentRole.id === 'owner' ? 'Business and team owner.' : 'Role and store are managed by your Business Owner.'}</p>
               </div>
+
+              <button
+                onClick={() => { onNavigate('settings'); setIsProfileOpen(false); }}
+                className="mt-2 w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
+              >
+                Profile & Settings
+              </button>
 
               <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button

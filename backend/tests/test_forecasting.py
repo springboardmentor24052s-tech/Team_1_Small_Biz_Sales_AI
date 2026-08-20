@@ -238,6 +238,8 @@ def test_four_forecast_views_follow_role_scope(
     assert revenue.status_code == 200, revenue.text
     assert revenue.json()["scope"] == "business"
     assert len(revenue.json()["series"]) == 7
+    assert len(revenue.json()["history"]) == 30
+    assert "actual" in revenue.json()["history"][0]
     assert client.get("/api/v1/forecasts/demand", headers=owner_headers).status_code == 403
 
     demand = client.get("/api/v1/forecasts/demand?horizon=14", headers=manager_headers)
@@ -246,12 +248,14 @@ def test_four_forecast_views_follow_role_scope(
     assert demand.json()["products"][0]["stock_risk"] == "high"
     assert demand.json()["products"][0]["mapping_status"] == "mapped"
     assert demand.json()["products"][0]["product_sku"] == "SKU-101"
+    assert len(demand.json()["products"][0]["history"]) == 30
     assert client.get("/api/v1/forecasts/revenue", headers=manager_headers).status_code == 403
 
     personal = client.get("/api/v1/forecasts/personal?horizon=30", headers=seller_headers)
     assert personal.status_code == 200, personal.text
     assert personal.json()["scope_id"] == str(seller.id)
     assert len(personal.json()["series"]) == 30
+    assert len(personal.json()["history"]) == 30
     assert client.get("/api/v1/forecasts/revenue", headers=seller_headers).status_code == 403
 
     sales_access = client.get("/api/v1/dashboard/access", headers=seller_headers)

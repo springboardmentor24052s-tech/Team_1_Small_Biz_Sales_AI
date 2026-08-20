@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useData } from '../../context/DataContext';
@@ -8,6 +8,8 @@ export const DateRangeFilter = () => {
   const { salesDateRange, applySalesDateRange, isLoading } = useData();
   const { addToast } = useToast();
   const [draft, setDraft] = useState(salesDateRange);
+
+  useEffect(() => setDraft(salesDateRange), [salesDateRange]);
 
   const applyFilter = async (event) => {
     event.preventDefault();

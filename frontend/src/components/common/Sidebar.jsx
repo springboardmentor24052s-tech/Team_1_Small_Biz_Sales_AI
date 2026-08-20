@@ -1,10 +1,13 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { ProfileAvatar } from './ProfileAvatar';
 import {
   LayoutDashboard,
   ShoppingBag,
   PackageCheck,
   Users,
+  Activity,
+  ClipboardCheck,
   BarChart3,
   Sparkles,
   Settings,
@@ -14,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }) => {
-  const { currentRole, access, logout } = useAuth();
+  const { currentRole, access, profile, logout } = useAuth();
 
   const allowedModules = new Set((access?.modules || []).map((module) => module.code));
   const navItems = [
@@ -22,8 +25,11 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
     ...(allowedModules.has('sales') ? [{ id: 'sales', label: 'Sales Deals', icon: ShoppingBag, badge: null }] : []),
     ...(allowedModules.has('inventory') ? [{ id: 'inventory', label: 'Inventory', icon: PackageCheck, badge: currentRole.id === 'manager' ? 'Stock Alerts' : null, badgeColor: 'bg-rose-500 text-white' }] : []),
     ...(allowedModules.has('customer_segments') ? [{ id: 'customers', label: 'Customers', icon: Users, badge: null }] : []),
+    ...(allowedModules.has('business_setup') ? [{ id: 'setup', label: 'Business Setup', icon: ClipboardCheck, badge: 'Start', badgeColor: 'bg-amber-500/15 text-amber-300' }] : []),
+    ...(allowedModules.has('team_management') ? [{ id: 'team', label: 'Team & Performance', icon: Users, badge: 'Owner', badgeColor: 'bg-indigo-500/20 text-indigo-300' }] : []),
+    ...(allowedModules.has('team_performance') ? [{ id: 'team', label: currentRole.id === 'sales' ? 'My Performance' : 'Team Performance', icon: Activity, badge: currentRole.id === 'manager' ? 'Store' : 'Personal', badgeColor: 'bg-emerald-500/15 text-emerald-300' }] : []),
     ...(allowedModules.has('forecasts') ? [{ id: 'reports', label: 'Reports & Forecasts', icon: BarChart3, badge: 'Live', badgeColor: 'bg-emerald-500/15 text-emerald-300' }] : []),
-    ...(allowedModules.has('administration') ? [{ id: 'settings', label: 'Settings', icon: Settings, badge: null }] : [])
+    { id: 'settings', label: 'Settings', icon: Settings, badge: null }
   ];
 
   return (
@@ -66,13 +72,9 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <img
-                src={currentRole.avatar}
-                alt={currentRole.name}
-                className="w-7 h-7 rounded-full object-cover border border-indigo-400/30"
-              />
+              <ProfileAvatar profile={profile} fallbackImage={currentRole.avatar} className="w-8 h-8 rounded-full border border-indigo-400/30 text-base" />
               <div className="truncate">
-                <p className="text-xs font-bold text-white truncate">{currentRole.name}</p>
+                <p className="text-xs font-bold text-white truncate">{profile?.full_name || currentRole.name}</p>
               </div>
             </div>
           </div>

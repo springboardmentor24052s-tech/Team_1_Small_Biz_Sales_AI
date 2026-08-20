@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MOCK_MANAGER_DATA } from '../../data/mockData';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { useToast } from '../../context/ToastContext';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   AlertTriangle,
   XCircle,
@@ -14,31 +15,29 @@ import {
   Search,
   Building2,
   CheckCircle2,
-  Boxes
+  Boxes,
+  PackageCheck
 } from 'lucide-react';
 
 export const ManagerDashboard = () => {
+  const { profile } = useAuth();
   const { addToast } = useToast();
   const { inventorySummary, inventoryItems: liveInventoryItems, refresh } = useData();
   const {
     kpis: mockKpis,
-    lowStockAlerts: mockLowStockAlerts,
-    inventoryItems: mockInventoryItems,
     suppliers
   } = MOCK_MANAGER_DATA;
-  const inventoryItems = liveInventoryItems.length
-    ? liveInventoryItems.map((item) => ({
+  const inventoryItems = liveInventoryItems.map((item) => ({
         id: item.product.sku,
         name: item.product.name,
         category: item.product.category || 'Uncategorized',
         stock: item.stock_quantity,
         unitPrice: '—',
         status: item.stock_status.replaceAll('_', ' '),
+        rawStatus: item.stock_status,
         supplier: 'Dataset import'
-      }))
-    : mockInventoryItems;
-  const lowStockAlerts = liveInventoryItems.length
-    ? liveInventoryItems
+      }));
+  const lowStockAlerts = liveInventoryItems
         .filter((item) => item.stock_status !== 'in_stock')
         .slice(0, 8)
         .map((item) => ({
@@ -48,8 +47,7 @@ export const ManagerDashboard = () => {
           minStock: item.reorder_level,
           supplier: 'Dataset import',
           leadTime: 'Not provided'
-        }))
-    : mockLowStockAlerts;
+        }));
   const kpis = {
     ...mockKpis,
     totalSKUs: {
@@ -68,10 +66,15 @@ export const ManagerDashboard = () => {
   };
 
   const [searchFilter, setSearchFilter] = useState('');
-  const filteredItems = inventoryItems.filter(item =>
-    item.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchFilter.toLowerCase())
-  );
+  const preferredInventoryView = profile?.role_preferences?.inventory_view || 'all';
+  const [inventoryView, setInventoryView] = useState(preferredInventoryView);
+  const stockAlertsEnabled = profile?.role_preferences?.stock_alerts ?? true;
+  useEffect(() => setInventoryView(preferredInventoryView), [preferredInventoryView]);
+  const filteredItems = inventoryItems.filter((item) => {
+    const matchesSearch = item.name.toLowerCase().includes(searchFilter.toLowerCase()) || item.category.toLowerCase().includes(searchFilter.toLowerCase());
+    const matchesView = inventoryView === 'all' || item.rawStatus === inventoryView;
+    return matchesSearch && matchesView;
+  });
 
   const alertCount = inventorySummary
     ? inventorySummary.low_stock_count + inventorySummary.out_of_stock_count
@@ -81,17 +84,17 @@ export const ManagerDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Top Banner Callout - Critical Stock Warning */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-rose-950 via-rose-900 to-slate-900 border border-rose-800/80 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={`p-6 rounded-2xl ${stockAlertsEnabled ? 'bg-gradient-to-r from-rose-950 via-rose-900 to-slate-900 border-rose-800/80' : 'bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 border-emerald-800/60'} border text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4`}>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold uppercase tracking-wider flex items-center gap-1">
               <AlertTriangle className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-              Stock Alert ({alertCount} SKUs)
+              {stockAlertsEnabled ? `Stock Alert (${alertCount} SKUs)` : 'Stock alerts paused'}
             </span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight">Store Manager Operations Dashboard</h2>
           <p className="text-sm text-rose-200">
-            {alertNames || 'No products'} are currently below the configured safety stock threshold.
+            {stockAlertsEnabled ? `${alertNames || 'No products'} are currently below the configured safety stock threshold.` : 'Stock risk notifications and the priority queue are hidden by your saved preference.'}
           </p>
         </div>
 
@@ -162,7 +165,7 @@ export const ManagerDashboard = () => {
       </div>
 
       {/* Low Stock Urgent Callout Cards */}
-      <Card className="border-amber-200 dark:border-amber-900/50 bg-amber-50/20 dark:bg-amber-950/10">
+      {stockAlertsEnabled && <Card className="border-amber-200 dark:border-amber-900/50 bg-amber-50/20 dark:bg-amber-950/10">
         <CardHeader>
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-amber-500" />
@@ -201,7 +204,7 @@ export const ManagerDashboard = () => {
             </div>
           ))}
         </div>
-      </Card>
+      </Card>}
 
       {/* Main Inventory Management Table */}
       <Card>
@@ -213,6 +216,11 @@ export const ManagerDashboard = () => {
             </div>
 
             <div className="flex items-center gap-3">
+              <select aria-label="Inventory view" value={inventoryView} onChange={(event) => setInventoryView(event.target.value)} className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800">
+                <option value="all">All inventory</option>
+                <option value="low_stock">Low stock only</option>
+                <option value="out_of_stock">Out of stock only</option>
+              </select>
               <div className="relative w-64">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
@@ -293,6 +301,7 @@ export const ManagerDashboard = () => {
                   </td>
                 </tr>
               ))}
+              {!filteredItems.length && <tr><td colSpan="7" className="px-4 py-12 text-center"><PackageCheck className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 font-semibold text-slate-600 dark:text-slate-300">No inventory records available</p><p className="mt-1 text-xs text-slate-500">Ask the Business Owner to import the product catalog and opening inventory in Business Setup.</p></td></tr>}
             </tbody>
           </table>
         </div>

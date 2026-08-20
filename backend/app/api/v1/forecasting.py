@@ -1,4 +1,5 @@
 from collections import Counter
+from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from uuid import UUID
 
@@ -9,7 +10,10 @@ from app.api.dependencies import DBSession, require_permissions
 from app.core.permissions import Permissions
 from app.models.forecasting import ForecastJob, ForecastModelRun, ForecastPrediction
 from app.models.identity import RoleCode, User
+from app.models.inventory import Product
+from app.models.sales import SalesLineItem, SalesTransaction, TransactionStatus
 from app.schemas.forecasting import (
+    ActualPoint,
     DemandForecastResponse,
     ForecastJobStatus,
     ForecastModelStatus,
@@ -58,6 +62,7 @@ def _forecast_response(
     model_run: ForecastModelRun,
     rows: list[ForecastPrediction],
     horizon: int,
+    history: list[ActualPoint],
 ) -> ForecastResponse:
     predicted_total = sum((row.predicted for row in rows), Decimal("0"))
     series_model = rows[0] if rows else None
@@ -73,6 +78,10 @@ def _forecast_response(
         scope=model_run.scope_type,
         scope_id=model_run.seller_id or model_run.store_id,
         algorithm=series_model.algorithm if series_model else model_run.algorithm,
+        data_source=model_run.source_system,
+        quality_status="verified" if model_run.status == "active" else model_run.status,
+        training_start=model_run.training_start,
+        training_end=model_run.training_end,
         metrics=_metric(series_model.metrics if series_model else model_run.metrics),
         model_comparison=[
             _metric(item)
@@ -80,12 +89,112 @@ def _forecast_response(
                 series_model.candidate_metrics if series_model else model_run.candidate_metrics
             )
         ],
+        history=history,
         series=[_point(row) for row in rows],
         insights=[
             f"The selected model expects {direction} over the next {horizon} days.",
             f"Predicted total for the selected period is {predicted_total:.2f} {model_run.unit}.",
         ],
     )
+
+
+def _date_window(end_date: date, days: int = 30) -> tuple[datetime, datetime]:
+    start_date = end_date - timedelta(days=days - 1)
+    return (
+        datetime.combine(start_date, time.min, tzinfo=UTC),
+        datetime.combine(end_date + timedelta(days=1), time.min, tzinfo=UTC),
+    )
+
+
+def _actual_history(
+    db: DBSession,
+    *,
+    tenant_id: UUID,
+    end_date: date,
+    seller_id: UUID | None = None,
+    store_id: UUID | None = None,
+    category: str | None = None,
+) -> list[ActualPoint]:
+    start_at, end_at = _date_window(end_date)
+    if category and category != "ALL":
+        records = db.execute(
+            select(SalesTransaction.occurred_at, SalesLineItem.line_amount)
+            .join(SalesLineItem, SalesLineItem.transaction_id == SalesTransaction.id)
+            .join(Product, Product.id == SalesLineItem.product_id)
+            .where(
+                SalesTransaction.tenant_id == tenant_id,
+                SalesTransaction.status == TransactionStatus.COMPLETED,
+                SalesTransaction.occurred_at >= start_at,
+                SalesTransaction.occurred_at < end_at,
+                Product.category == category,
+            )
+        ).all()
+    else:
+        statement = select(SalesTransaction.occurred_at, SalesTransaction.total_amount).where(
+            SalesTransaction.tenant_id == tenant_id,
+            SalesTransaction.status == TransactionStatus.COMPLETED,
+            SalesTransaction.occurred_at >= start_at,
+            SalesTransaction.occurred_at < end_at,
+        )
+        if seller_id is not None:
+            statement = statement.where(SalesTransaction.seller_id == seller_id)
+        if store_id is not None:
+            statement = statement.where(SalesTransaction.store_id == store_id)
+        records = db.execute(statement).all()
+    totals: dict[date, Decimal] = {}
+    for occurred_at, amount in records:
+        day = occurred_at.date()
+        totals[day] = totals.get(day, Decimal("0")) + Decimal(amount)
+    return [
+        ActualPoint(
+            date=start_at.date() + timedelta(days=index),
+            actual=totals.get(start_at.date() + timedelta(days=index), Decimal("0")),
+        )
+        for index in range(30)
+    ]
+
+
+def _demand_history(
+    db: DBSession,
+    *,
+    tenant_id: UUID,
+    store_id: UUID,
+    end_date: date,
+    product_ids: set[UUID],
+) -> dict[UUID, list[ActualPoint]]:
+    if not product_ids:
+        return {}
+    start_at, end_at = _date_window(end_date)
+    records = db.execute(
+        select(SalesLineItem.product_id, SalesTransaction.occurred_at, SalesLineItem.quantity)
+        .join(SalesTransaction, SalesTransaction.id == SalesLineItem.transaction_id)
+        .where(
+            SalesTransaction.tenant_id == tenant_id,
+            SalesTransaction.store_id == store_id,
+            SalesTransaction.status == TransactionStatus.COMPLETED,
+            SalesTransaction.occurred_at >= start_at,
+            SalesTransaction.occurred_at < end_at,
+            SalesLineItem.product_id.in_(product_ids),
+        )
+    ).all()
+    totals: dict[UUID, dict[date, Decimal]] = {}
+    for product_id, occurred_at, quantity in records:
+        product_totals = totals.setdefault(product_id, {})
+        product_totals[occurred_at.date()] = product_totals.get(
+            occurred_at.date(), Decimal("0")
+        ) + Decimal(quantity)
+    return {
+        product_id: [
+            ActualPoint(
+                date=start_at.date() + timedelta(days=index),
+                actual=totals.get(product_id, {}).get(
+                    start_at.date() + timedelta(days=index), Decimal("0")
+                ),
+            )
+            for index in range(30)
+        ]
+        for product_id in product_ids
+    }
 
 
 def _role_required(user: User, allowed: set[RoleCode]) -> None:
@@ -188,7 +297,13 @@ def revenue_forecast(
     rows = prediction_rows(db, model_run_id=model_run.id, horizon=horizon, category=category)
     if not rows:
         raise HTTPException(status_code=404, detail="No forecast matches the selected category")
-    return _forecast_response(model_run, rows, horizon)
+    history = _actual_history(
+        db,
+        tenant_id=user.tenant_id,
+        end_date=model_run.training_end,
+        category=category,
+    )
+    return _forecast_response(model_run, rows, horizon, history)
 
 
 @router.get("/personal", response_model=ForecastResponse)
@@ -213,7 +328,13 @@ def personal_forecast(
     if model_run is None:
         raise HTTPException(status_code=404, detail="No personal forecast is available")
     rows = prediction_rows(db, model_run_id=model_run.id, horizon=horizon, category="ALL")
-    return _forecast_response(model_run, rows, horizon)
+    history = _actual_history(
+        db,
+        tenant_id=user.tenant_id,
+        end_date=model_run.training_end,
+        seller_id=target_seller,
+    )
+    return _forecast_response(model_run, rows, horizon, history)
 
 
 @router.get("/demand", response_model=DemandForecastResponse)
@@ -247,9 +368,18 @@ def demand_forecast(
         category=category,
         source_product_id=product,
     )
+    mapped_product_ids = {item["product_id"] for item in groups if item["product_id"] is not None}
+    histories = _demand_history(
+        db,
+        tenant_id=user.tenant_id,
+        store_id=target_store,
+        end_date=model_run.training_end,
+        product_ids=mapped_product_ids,
+    )
     products = [
         ProductDemandForecast(
             **{key: value for key, value in item.items() if key != "rows"},
+            history=histories.get(item["product_id"], []),
             series=[_point(row) for row in item["rows"]],
         )
         for item in groups
@@ -270,6 +400,10 @@ def demand_forecast(
         scope=model_run.scope_type,
         scope_id=target_store,
         algorithm=model_run.algorithm,
+        data_source=model_run.source_system,
+        quality_status="verified" if model_run.status == "active" else model_run.status,
+        training_start=model_run.training_start,
+        training_end=model_run.training_end,
         metrics=_metric(model_run.metrics),
         model_comparison=_comparison(model_run),
         total_products=len(products),

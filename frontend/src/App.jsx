@@ -3,8 +3,10 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 import { DataProvider } from './context/DataContext';
+import { useTheme } from './context/ThemeContext';
 
 import { Login } from './components/auth/Login';
+import { BusinessLandingPage } from './components/landing/BusinessLandingPage';
 import { Sidebar } from './components/common/Sidebar';
 import { Navbar } from './components/common/Navbar';
 import { ToastContainer } from './components/common/ToastContainer';
@@ -21,9 +23,13 @@ import { InventoryModule } from './components/modules/InventoryModule';
 import { CustomersModule } from './components/modules/CustomersModule';
 import { ReportsModule } from './components/modules/ReportsModule';
 import { SettingsModule } from './components/modules/SettingsModule';
+import { TeamManagementModule } from './components/modules/TeamManagementModule';
+import { BusinessSetupModule } from './components/modules/BusinessSetupModule';
 
 const MainAppContent = () => {
-  const { isAuthenticated, isInitializing, currentRole } = useAuth();
+  const { isAuthenticated, isInitializing, currentRole, profile } = useAuth();
+  const { setThemePreference } = useTheme();
+  const [publicView, setPublicView] = useState('landing');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -31,6 +37,10 @@ const MainAppContent = () => {
   useEffect(() => {
     setActiveTab('dashboard');
   }, [currentRole.id]);
+
+  useEffect(() => {
+    if (profile?.theme_preference) setThemePreference(profile.theme_preference);
+  }, [profile?.theme_preference, setThemePreference]);
 
   if (isInitializing) {
     return (
@@ -41,7 +51,21 @@ const MainAppContent = () => {
   }
 
   if (!isAuthenticated) {
-    return <Login />;
+    if (publicView === 'login' || publicView === 'register') {
+      return (
+        <Login
+          initialMode={publicView}
+          onBack={() => setPublicView('landing')}
+        />
+      );
+    }
+
+    return (
+      <BusinessLandingPage
+        onSignIn={() => setPublicView('login')}
+        onRegister={() => setPublicView('register')}
+      />
+    );
   }
 
   // Render role-specific dashboard when activeTab is 'dashboard'
@@ -76,14 +100,18 @@ const MainAppContent = () => {
       case 'components':
         return <UIComponentLibrary />;
       case 'settings':
-        return <SettingsModule />;
+        return <SettingsModule onNavigate={setActiveTab} />;
+      case 'team':
+        return <TeamManagementModule />;
+      case 'setup':
+        return <BusinessSetupModule onNavigate={setActiveTab} />;
       default:
         return renderDashboardView();
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 transition-colors duration-300 flex">
+    <div className={`marketmind-workspace role-${currentRole.id} ${profile?.dashboard_density === 'compact' ? 'density-compact' : ''} min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 transition-colors duration-300 flex`}>
       {/* Collapsible Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -101,7 +129,7 @@ const MainAppContent = () => {
 
       {/* Dynamic Main Workspace Container */}
       <main
-        className={`flex-1 pt-20 pb-12 px-4 sm:px-8 transition-all duration-300 ${
+        className={`dashboard-canvas flex-1 pt-20 pb-12 px-4 sm:px-8 transition-all duration-300 ${
           isCollapsed ? 'ml-20' : 'ml-64'
         }`}
       >

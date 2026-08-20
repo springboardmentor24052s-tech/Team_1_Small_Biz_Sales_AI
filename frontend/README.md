@@ -13,7 +13,20 @@ for each authorized role.
 - Sales date filtering and role-scoped global search
 - Sales transaction create, update, and void workflows
 - Inventory stock levels and low-stock alerts
-- Administrator user and access management
+- Business Owner Team & Performance workspace for employee access, targets, search/filtering, performance trends and individual drill-down
+- Store Manager team-performance view and Sales Executive personal-performance view, both restricted to their authorized data scope
+- Internal Administrator workspace for platform RBAC policy, security audit and model monitoring
+- Settings in every role workspace, with database-backed profiles for Owners, Managers and Sales Executives
+- Email-confirmed employee invitations that remain pending until activation, plus email-based password recovery
+- Profile photos or selectable fallback avatars, contact/location details, date of birth, joined date, role/store context, language, theme, date, density and personalized role preferences
+- Active role preferences: default KPI/sales periods, inventory views, live summaries, stock/revenue/customer/security alerts and Administrator monitoring intervals
+- Database-generated notification centre with preference-controlled low-stock, sales movement, target-progress and customer-decline alerts
+- Business Setup workspace with a progress checklist, store creation, downloadable CSV templates, validation previews, error reports, sample data and forecast-readiness indicators
+- Business Owner **Train & Refresh Intelligence** control showing real data blockers, eligible
+  modules, last-run status and the no-publication-on-failure policy
+- Honest empty states for new tenants; no existing business or mock inventory is shown in a newly registered workspace
+- Daily multi-product sales form with live totals, store-stock visibility, customer reference,
+  payment method, line/order discounts and tax
 - Indian rupee formatting throughout the application
 - Clear labels for sample layouts and features planned for later milestones
 
@@ -24,8 +37,9 @@ for each authorized role.
 - Sales Executive personal forecast trained from authorised cleaned sales history
 - Administrator access to business revenue, store demand, seller-personal forecasts, model registry
   and import-job monitoring, with explicit store/seller selectors
-- Actual-versus-predicted charts, confidence ranges and chronological model metrics
-- Customer segment profiles, purchasing behaviour, engagement, search, pagination and drill-down
+- Actual-versus-predicted charts with recorded history, future confidence ranges and chronological model metrics
+- Customer segment profiles, observed-distribution chart, purchasing behaviour, engagement, search and pagination
+- Customer 360 drill-down with visits, favourite products, purchase-trend evidence and follow-up suggestions
 - Backend-enforced business, store, seller and administrator access scopes
 - CSV and print/PDF actions shown only to roles with report-export permission
 - Demand rows show their inventory mapping status, reviewed SKU/name and stock risk; unmapped source

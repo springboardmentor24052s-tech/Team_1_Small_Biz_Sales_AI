@@ -58,9 +58,14 @@ def main() -> None:
         roles = {role.code: role for role in db.scalars(select(Role)).all()}
         created = []
         for role_code, email in DEMO_ACCOUNTS.items():
+            role = roles[role_code.value]
+            if role_code == RoleCode.ADMINISTRATOR:
+                existing_admin = db.scalar(select(User).where(User.role_id == role.id))
+                if existing_admin:
+                    created.append({"role": role.name, "email": existing_admin.email})
+                    continue
             legacy_email = email.replace(".example.com", ".local")
             user = db.scalar(select(User).where(User.email.in_([email, legacy_email])))
-            role = roles[role_code.value]
             if not user:
                 user = User(
                     tenant_id=tenant.id,

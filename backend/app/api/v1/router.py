@@ -7,9 +7,13 @@ from app.api.v1 import (
     dashboard,
     forecasting,
     health,
+    intelligence,
     inventory,
+    notifications,
+    onboarding,
     sales,
     segmentation,
+    team,
     users,
 )
 
@@ -19,8 +23,12 @@ api_router.include_router(auth.router)
 api_router.include_router(users.router)
 api_router.include_router(sales.router)
 api_router.include_router(inventory.router)
+api_router.include_router(notifications.router)
+api_router.include_router(onboarding.router)
+api_router.include_router(intelligence.router)
 api_router.include_router(customers.router)
 api_router.include_router(segmentation.router)
+api_router.include_router(team.router)
 api_router.include_router(forecasting.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(audit.router)

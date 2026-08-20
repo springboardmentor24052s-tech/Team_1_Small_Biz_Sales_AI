@@ -74,6 +74,7 @@ export const OwnerDashboard = ({ onNavigate }) => {
     revenue: Number(point.revenue),
     transactions: point.transaction_count
   }));
+  const hasBusinessData = Number(salesDashboard?.transaction_count.value || 0) > 0;
 
   return (
     <div className="space-y-6">
@@ -103,6 +104,8 @@ export const OwnerDashboard = ({ onNavigate }) => {
       </div>
 
       <DateRangeFilter />
+
+      {!hasBusinessData && <Card className="border-indigo-200 bg-indigo-50/50 dark:border-indigo-900 dark:bg-indigo-950/20" hoverEffect={false}><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="text-lg font-bold">Add your first business records</h3><p className="mt-1 text-sm text-slate-500">Your workspace is correctly isolated and empty. Use Business Setup to import products, inventory, sales and customers, or add evaluation sample data.</p></div><Button icon={ArrowUpRight} onClick={() => onNavigate('setup')}>Open Business Setup</Button></div></Card>}
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

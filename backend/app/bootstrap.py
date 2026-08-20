@@ -31,6 +31,8 @@ def bootstrap() -> None:
         role = db.scalar(select(Role).where(Role.code == RoleCode.ADMINISTRATOR))
         if not role:
             raise RuntimeError("Administrator role was not initialized")
+        if db.scalar(select(User.id).where(User.role_id == role.id)):
+            return
         password = settings.initial_admin_password.get_secret_value()
         admin = User(
             tenant_id=tenant.id,

@@ -64,7 +64,7 @@ PERMISSION_DEFINITIONS = [
 ROLE_DEFINITIONS: dict[RoleCode, dict[str, object]] = {
     RoleCode.BUSINESS_OWNER: {
         "name": "Business Owner",
-        "description": "Business-wide analytics and operational oversight",
+        "description": "Business-wide analytics, operations, and employee account management",
         "permissions": {
             Permissions.DASHBOARD_SALES_ALL,
             Permissions.DASHBOARD_INVENTORY_VIEW,
@@ -77,6 +77,8 @@ ROLE_DEFINITIONS: dict[RoleCode, dict[str, object]] = {
             Permissions.CUSTOMERS_READ_ALL,
             Permissions.INVOICES_READ,
             Permissions.REPORTS_EXPORT_BUSINESS,
+            Permissions.USERS_READ,
+            Permissions.USERS_MANAGE,
         },
     },
     RoleCode.STORE_MANAGER: {
@@ -118,7 +120,11 @@ ROLE_DEFINITIONS: dict[RoleCode, dict[str, object]] = {
     },
     RoleCode.ADMINISTRATOR: {
         "name": "Administrator",
-        "description": "Platform security, users, datasets, models, and full oversight",
-        "permissions": {definition.code for definition in PERMISSION_DEFINITIONS},
+        "description": "Internal MarketMind platform security, permissions, datasets, and models",
+        "permissions": {
+            definition.code
+            for definition in PERMISSION_DEFINITIONS
+            if definition.code not in {Permissions.USERS_READ, Permissions.USERS_MANAGE}
+        },
     },
 }

@@ -2,9 +2,11 @@ from contextlib import asynccontextmanager
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.router import api_router
 from app.core.config import settings
@@ -72,13 +74,18 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "code": "validation_error",
             "message": "Request validation failed",
             "correlation_id": request.state.correlation_id,
-            "field_details": exc.errors(),
+            "field_details": jsonable_encoder(exc.errors()),
             "retryable": False,
         },
     )
 
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
+app.mount(
+    f"{settings.api_v1_prefix}/uploads",
+    StaticFiles(directory="uploads", check_dir=False),
+    name="uploads",
+)
 
 
 @app.get("/", include_in_schema=False)

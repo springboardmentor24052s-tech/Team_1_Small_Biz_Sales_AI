@@ -5,6 +5,7 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -103,14 +104,22 @@ const Section = ({ title, subtitle, children }) => (
   </section>
 );
 
-const ForecastLineChart = ({ series, unit = '', title = 'Actual vs Predicted' }) => {
-  const rows = (series || []).map((point) => ({
+const ForecastLineChart = ({ history = [], series, unit = '', title = 'Actual vs Predicted' }) => {
+  const historicalRows = (history || []).map((point) => ({
+    date: point.date,
+    actual: Number(point.actual),
+    predicted: null,
+    lower_bound: null,
+    upper_bound: null,
+  }));
+  const forecastRows = (series || []).map((point) => ({
     ...point,
     actual: point.actual == null ? null : Number(point.actual),
     predicted: Number(point.predicted),
     lower_bound: Number(point.lower_bound),
     upper_bound: Number(point.upper_bound),
   }));
+  const rows = [...historicalRows, ...forecastRows];
 
   if (!rows.length) {
     return <p className="py-10 text-center text-xs text-slate-400">No forecast points match these filters.</p>;
@@ -128,8 +137,16 @@ const ForecastLineChart = ({ series, unit = '', title = 'Actual vs Predicted' })
             formatter={(value, name) => [formatNumber(value), `${name} ${unit}`.trim()]}
           />
           <Legend />
-          <Line type="monotone" dataKey="actual" name="Actual" stroke="#a855f7" strokeWidth={2} connectNulls />
-          <Line type="monotone" dataKey="predicted" name="Predicted" stroke="#3b82f6" strokeWidth={2} />
+          {forecastRows[0]?.date && (
+            <ReferenceLine
+              x={forecastRows[0].date}
+              stroke="#f59e0b"
+              strokeDasharray="4 4"
+              label={{ value: 'Forecast starts', fill: '#f59e0b', fontSize: 11 }}
+            />
+          )}
+          <Line type="monotone" dataKey="actual" name="Recorded actual" stroke="#a855f7" strokeWidth={2} connectNulls={false} />
+          <Line type="monotone" dataKey="predicted" name="Model prediction" stroke="#3b82f6" strokeWidth={2} connectNulls={false} />
           <Line type="monotone" dataKey="lower_bound" name="Lower bound" stroke="#64748b" strokeDasharray="4 4" dot={false} />
           <Line type="monotone" dataKey="upper_bound" name="Upper bound" stroke="#64748b" strokeDasharray="4 4" dot={false} />
         </LineChart>
@@ -137,6 +154,13 @@ const ForecastLineChart = ({ series, unit = '', title = 'Actual vs Predicted' })
     </div>
   );
 };
+
+const dataSourceLabel = (value) => ({
+  evaluation_sample_data: 'Evaluation sample data',
+  mixed_uploaded_and_sample_data: 'Mixed uploaded + sample data',
+  tenant_uploaded_database_records: 'Uploaded business records',
+  tenant_database: 'Tenant database records',
+}[value] || String(value || 'Source not reported'));
 
 export const ReportsModule = () => {
   const { api, currentRole, access } = useAuth();
@@ -173,7 +197,7 @@ export const ReportsModule = () => {
       setSellerId('');
       return;
     }
-    Promise.all([api('/users/stores/catalog'), api('/users')])
+    Promise.all([api('/users/stores/catalog'), api('/users/sellers/catalog')])
       .then(([stores, users]) => {
         const sellers = users.filter((user) => user.role?.code === 'sales_executive');
         setAdminStores(stores);
@@ -430,9 +454,11 @@ export const ReportsModule = () => {
         title={title}
         subtitle={`${reportData.forecast_type} • ${reportData.algorithm} • ${reportData.horizon_days}-day horizon`}
       >
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
           <ReportMetric label="Model Version" value={reportData.model_version} />
           <ReportMetric label="Forecast Horizon" value={`${reportData.horizon_days} days`} />
+          <ReportMetric label="Training Data" value={dataSourceLabel(reportData.data_source)} />
+          <ReportMetric label="Quality" value={reportData.quality_status} />
           <ReportMetric label="MAE" value={formatNumber(reportData.metrics?.mae, 3)} />
           <ReportMetric label="RMSE" value={formatNumber(reportData.metrics?.rmse, 3)} />
         </div>
@@ -450,6 +476,7 @@ export const ReportsModule = () => {
             </div>
 
             <ForecastLineChart
+              history={reportData.history}
               series={reportData.series}
               unit={reportData.unit}
               title={personal ? 'Personal sales actual versus predicted' : 'Revenue actual versus predicted'}
@@ -536,11 +563,13 @@ export const ReportsModule = () => {
         title="Product Demand Forecast"
         subtitle={`${reportData.total_products} products • ${reportData.horizon_days}-day horizon • Target: ${reportData.target}`}
       >
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
           <ReportMetric label="Products Forecasted" value={formatNumber(reportData.total_products, 0)} />
           <ReportMetric label="Increasing Demand" value={formatNumber(reportData.increasing_demand, 0)} />
           <ReportMetric label="Decreasing Demand" value={formatNumber(reportData.decreasing_demand, 0)} />
           <ReportMetric label="Potential Stock Risk" value={formatNumber(reportData.potential_stock_risk, 0)} />
+          <ReportMetric label="Training Data" value={dataSourceLabel(reportData.data_source)} />
+          <ReportMetric label="Quality" value={reportData.quality_status} />
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-slate-700/70">
@@ -594,9 +623,10 @@ export const ReportsModule = () => {
               Product {reportData.products[0].source_product_id} demand trend
             </h4>
             <p className="mb-3 text-xs text-slate-400">
-              Historical values are shown where the dataset provides an actual value.
+              Purple is recorded product demand. Blue begins after the forecast date and is the model prediction.
             </p>
             <ForecastLineChart
+              history={reportData.products[0].history}
               series={reportData.products[0].series}
               unit={reportData.unit}
               title="Product demand actual versus predicted"

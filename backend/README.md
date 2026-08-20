@@ -8,13 +8,28 @@ Backend development and Milestone 1 integration are maintained on the `Garvitk00
 ## What is included
 
 - Registration, email verification, login, logout, password reset, and profile updates
+- Optional SMTP delivery for registration verification, employee invitations and password resets; development keeps one-time tokens visible for local testing
+- Database-backed user profiles with photo upload, five fallback avatars, contact details, date of birth, location, joined date, and role-specific dashboard preferences
 - Argon2 password hashing, login throttling and lockout
 - Short-lived JWT access tokens and rotating, server-revocable refresh sessions
 - TOTP multi-factor authentication, required for administrator actions
 - Four system roles: Business Owner, Store Manager, Sales Executive, and Administrator
 - Deny-by-default permissions enforced at the API layer
 - Tenant, store, and seller-level data isolation
-- Administrator invitations, role changes, account state management, and re-authentication
+- Business Owner employee invitations, store/role assignment, account state management, target setting, individual performance analysis, and re-authentication
+- Database-backed team analytics with revenue, orders, average order value, customers handled, store ranking, previous-period comparison and attention insights
+- Store-scoped team performance for Managers and personal target/performance visibility for Sales Executives
+- Preference-aware notifications generated from real revenue, inventory, targets, customer, audit and forecasting records
+- Evidence-backed alerts for low stock, daily sales movement, target pace and declining purchases, scoped by role, store and seller
+- Customer 360 insights with linked visits, favourite products/categories, buying patterns, 30-day comparison and follow-up suggestions
+- Saved dashboard periods, inventory views, alert switches and Administrator refresh intervals are enforced by the API and UI
+- Guided Business Owner onboarding with store creation, CSV preview/validation, confirmed imports, import history, repeatable sample data and analytics-readiness checks
+- Tenant-specific intelligence refresh with source lineage, chronological model validation,
+  baseline-improvement gates and K-Means cluster-quality gates
+- SKU-linked sales line items for trustworthy store/product demand training
+- Atomic daily-sale API with product lines, quantity, unit price, discounts, tax, payment method,
+  optional customer reference, automatic inventory deduction and customer-summary updates
+- A separately bootstrapped internal Administrator for platform security, RBAC policy, datasets, models, monitoring, and audit
 - Append-only audit events for authentication and privileged operations
 - Role-specific dashboard navigation and sales KPI scope
 - Sales transaction create, list, update, and void workflow
@@ -57,6 +72,12 @@ Copy-Item .env.example .env
 ```
 
 Replace `MARKETMIND_JWT_SECRET` and `MARKETMIND_INITIAL_ADMIN_PASSWORD` before starting:
+
+For real invitation, verification and password-reset emails, also set `MARKETMIND_SMTP_HOST`,
+`MARKETMIND_SMTP_PORT`, `MARKETMIND_SMTP_USERNAME`, `MARKETMIND_SMTP_PASSWORD` and
+`MARKETMIND_SMTP_FROM_EMAIL`. Production refuses to create security tokens when email delivery is
+not configured. Development may expose one-time tokens in the UI so the local workflow remains
+testable without an email provider.
 
 ```powershell
 docker compose up --build
@@ -137,6 +158,18 @@ Customer endpoints:
 - `GET /api/v1/customers`
 - `GET /api/v1/customers/summary`
 - `GET /api/v1/customers/{customer_id}`
+- `GET /api/v1/customers/{customer_id}/insights` — role-scoped Customer 360 timeline and purchasing evidence
+
+Profile and preference endpoints:
+
+- `GET /api/v1/users/me`
+- `PATCH /api/v1/users/me`
+- `POST /api/v1/users/me/avatar`
+- `DELETE /api/v1/users/me/avatar`
+
+Business Owners, Store Managers and Sales Executives can maintain their own profile details and
+photo. The internal Administrator has console and security preferences but does not use a public
+employee profile or avatar.
 
 Business Owners and Administrators can view tenant customer records. Store Managers receive the
 customer summary, while Sales Executives only receive customers assigned to them.
@@ -163,6 +196,30 @@ Customer-segmentation endpoints:
 - `GET /api/v1/customer-segments/summary`
 - `GET /api/v1/customer-segments`
 - `GET /api/v1/customer-segments/{customer_id}`
+
+Tenant training endpoints (Business Owner only; training requires recent password confirmation):
+
+- `GET /api/v1/intelligence/readiness` — exact record counts, date coverage, data source and blockers
+- `POST /api/v1/intelligence/train` — trains eligible modules and publishes only quality-approved outputs
+
+The onboarding sales CSV contract is
+`order_id,order_date,sku,quantity,amount,currency`. `sku` and `quantity` are mandatory because an
+order total cannot support a defensible product-demand forecast. Revenue needs at least 30 completed
+sales across 30 days, demand needs at least one SKU/store series with 30 records across 30 days, and
+segmentation needs at least 20 customers. Forecast models must beat the last-value baseline by 2%
+on later unseen dates; clustering requires a Silhouette Score of at least `0.20`. Failed gates are
+recorded in the training job and are never served as active dashboard models.
+
+Daily sales endpoints:
+
+- `GET /api/v1/sales/catalog` — store-scoped product and available-stock choices
+- `POST /api/v1/sales/transactions` — accepts one or more product lines and calculates totals server-side
+- `POST /api/v1/sales/transactions/{transaction_id}/void` — restores stock and reverses customer totals for POS-created sales
+
+The product-sale operation is atomic. Unknown products, products outside the assigned store, duplicate
+product lines, invalid discounts, and insufficient inventory reject the complete order without making
+partial changes. New sales and customer changes also make the Business Setup intelligence-refresh
+indicator active; models are still retrained only after an explicit Business Owner confirmation.
 
 Business Owners and MFA-verified Administrators receive business-wide results. Store Managers can
 only read their assigned-store summary. Sales Executives can list or open their assigned customers.
@@ -247,6 +304,10 @@ Administrators may call all four endpoints. Store demand requires `store_id`, an
 forecast requires `seller_id`; the frontend obtains both choices from protected catalog APIs.
 Sales Executive personal forecasting is intentionally seller-scoped. It is a documented extension
 to the original proposal, which denied general forecasting access to that role.
+
+Revenue and personal responses include a 30-day `history` array of recorded database values before
+the future `series`. Every mapped demand product carries the same recorded demand history, keeping
+actual observations and model predictions visibly separate.
 
 The demand source target is the Parquet `sale_amount` field. Because its provider has not supplied
 a signed definition confirming quantity, money or index semantics, MarketMind reports the unit as

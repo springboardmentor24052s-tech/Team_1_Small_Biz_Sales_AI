@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Download, Eye, RefreshCw, Search, Users } from 'lucide-react';
+import { AlertTriangle, Download, Eye, RefreshCw, Search, ShoppingBag, Users } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { Badge } from '../ui/Badge';
@@ -18,12 +19,12 @@ const number = (value, digits = 1) => Number(value || 0).toLocaleString('en-IN',
 });
 
 const csvValue = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
-
 export const CustomersModule = () => {
-  const { api, access } = useAuth();
+  const { api, access, currentRole } = useAuth();
   const { customerSegmentSummary: summary, isLoading: sharedLoading, refresh } = useData();
   const segmentAccess = (access?.modules || []).find((module) => module.code === 'customer_segments');
-  const canList = segmentAccess?.access !== 'summary';
+  const canSegmentList = segmentAccess?.access !== 'summary';
+  const canList = canSegmentList || currentRole.id === 'manager';
   const canExport = segmentAccess?.actions?.includes('export');
 
   const [items, setItems] = useState([]);
@@ -34,6 +35,8 @@ export const CustomersModule = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState(null);
+  const [insight, setInsight] = useState(null);
+  const [insightLoading, setInsightLoading] = useState(false);
   const limit = 50;
 
   useEffect(() => {
@@ -49,8 +52,15 @@ export const CustomersModule = () => {
       if (search.trim()) params.set('search', search.trim());
       if (segment !== 'ALL') params.set('segment_code', segment);
       try {
-        const result = await api(`/customer-segments?${params}`);
-        setItems(result.items || []);
+        const endpoint = canSegmentList ? `/customer-segments?${params}` : `/customers?${params}`;
+        const result = await api(endpoint);
+        setItems((result.items || []).map((item) => canSegmentList ? item : ({
+          ...item,
+          customer_id: item.id,
+          segment_name: 'Store customer',
+          average_order_value: item.order_count ? Number(item.total_revenue) / item.order_count : 0,
+          engagement_score: null,
+        })));
         setTotal(result.total || 0);
       } catch (requestError) {
         setItems([]);
@@ -61,12 +71,30 @@ export const CustomersModule = () => {
       }
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [api, canList, page, search, segment]);
+  }, [api, canList, canSegmentList, page, search, segment]);
 
   useEffect(() => setPage(0), [search, segment]);
 
   const segmentOptions = useMemo(() => summary?.segments || [], [summary]);
   const pageCount = Math.max(1, Math.ceil(total / limit));
+  const chartRows = segmentOptions.map((profile) => ({
+    name: profile.segment_name,
+    customers: Number(profile.customer_count),
+    revenueShare: Number(profile.revenue_share || 0) * 100,
+  }));
+
+  const openCustomer = async (item) => {
+    setSelected(item);
+    setInsight(null);
+    setInsightLoading(true);
+    try {
+      setInsight(await api(`/customers/${item.customer_id}/insights`));
+    } catch (requestError) {
+      setError(requestError.message || 'Unable to load the customer timeline.');
+    } finally {
+      setInsightLoading(false);
+    }
+  };
 
   const exportCsv = () => {
     const headers = [
@@ -170,6 +198,25 @@ export const CustomersModule = () => {
               ))}
             </div>
           </Card>
+
+          <Card hoverEffect={false}>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Observed segment distribution</h3>
+            <p className="mt-1 text-xs text-slate-500">Bars use recorded customers and revenue. The model assigns similar customers to a segment; segmentation does not produce a future prediction.</p>
+            <div className="mt-4 h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartRows} margin={{ top: 8, right: 12, left: 0, bottom: 35 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
+                  <XAxis dataKey="name" angle={-18} textAnchor="end" height={58} fontSize={11} />
+                  <YAxis yAxisId="count" fontSize={11} />
+                  <YAxis yAxisId="share" orientation="right" unit="%" fontSize={11} />
+                  <Tooltip formatter={(value, name) => [number(value), name === 'customers' ? 'Recorded customers' : 'Revenue share (%)']} />
+                  <Legend />
+                  <Bar yAxisId="count" dataKey="customers" name="Recorded customers" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                  <Bar yAxisId="share" dataKey="revenueShare" name="Revenue share (%)" fill="#14b8a6" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
         </>
       ) : (
         <Card hoverEffect={false}>
@@ -192,7 +239,7 @@ export const CustomersModule = () => {
                   className="w-full rounded-xl border border-slate-200 bg-slate-100 py-2 pl-9 pr-3 text-xs outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-slate-700 dark:bg-slate-800"
                 />
               </div>
-              <select
+              {canSegmentList && <select
                 value={segment}
                 onChange={(event) => setSegment(event.target.value)}
                 className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800"
@@ -201,7 +248,7 @@ export const CustomersModule = () => {
                 {segmentOptions.map((profile) => (
                   <option key={profile.segment_code} value={profile.segment_code}>{profile.segment_name}</option>
                 ))}
-              </select>
+              </select>}
             </div>
             <p className="text-xs text-slate-500">{number(total, 0)} authorised customers</p>
           </div>
@@ -225,10 +272,10 @@ export const CustomersModule = () => {
                     <td className="px-3 py-3 font-semibold text-indigo-500">{money(item.total_revenue)}</td>
                     <td className="px-3 py-3">{number(item.order_count, 0)}</td>
                     <td className="px-3 py-3">{money(item.average_order_value)}</td>
-                    <td className="px-3 py-3">{number(item.engagement_score)}</td>
+                    <td className="px-3 py-3">{item.engagement_score == null ? 'Needs model' : number(item.engagement_score)}</td>
                     <td className="px-3 py-3">{number(item.recency_days, 0)} days</td>
                     <td className="px-3 py-3 text-right">
-                      <Button variant="ghost" size="sm" icon={Eye} onClick={() => setSelected(item)}>View</Button>
+                      <Button variant="ghost" size="sm" icon={Eye} onClick={() => openCustomer(item)}>View 360°</Button>
                     </td>
                   </tr>
                 ))}
@@ -253,24 +300,26 @@ export const CustomersModule = () => {
         </Card>
       )}
 
-      <Modal isOpen={Boolean(selected)} onClose={() => setSelected(null)} title="Customer behaviour details" maxWidth="max-w-2xl">
-        {selected && (
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              ['Customer ID', selected.external_customer_id], ['Segment', selected.segment_name],
-              ['Total revenue', money(selected.total_revenue)], ['Order count', number(selected.order_count, 0)],
-              ['Average order value', money(selected.average_order_value)], ['Average basket size', number(selected.average_basket_size)],
-              ['Purchase frequency (30d)', number(selected.purchase_frequency_30d)], ['Active months', number(selected.active_months, 0)],
-              ['Product variety', number(selected.product_variety, 0)], ['Return rate', `${number(Number(selected.return_rate) * 100)}%`],
-              ['Engagement score', number(selected.engagement_score)], ['Recency', `${number(selected.recency_days, 0)} days`],
-            ].map(([label, value]) => (
-              <div key={label} className="rounded-xl bg-slate-100 p-3 dark:bg-slate-800">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{value}</p>
-              </div>
-            ))}
+      <Modal isOpen={Boolean(selected)} onClose={() => { setSelected(null); setInsight(null); }} title="Customer 360°" maxWidth="max-w-5xl">
+        {insightLoading && <p className="py-10 text-center text-sm text-slate-500">Building the customer timeline from linked sales…</p>}
+        {selected && insight && <div className="space-y-5">
+          <div className={`rounded-xl border p-4 ${['decreasing', 'inactive'].includes(insight.decline_status) ? 'border-rose-300 bg-rose-50 dark:border-rose-900 dark:bg-rose-950/30' : 'border-emerald-300 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30'}`}>
+            <div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /><div><p className="font-bold capitalize">Purchase trend: {insight.decline_status.replaceAll('_', ' ')}</p><p className="mt-1 text-xs leading-relaxed">{insight.decline_explanation}</p></div></div>
           </div>
-        )}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {[
+              ['Customer', insight.external_customer_id], ['Linked visits', number(insight.linked_visit_count, 0)],
+              ['Linked revenue', money(insight.total_revenue)], ['Average order', money(insight.average_order_value)],
+              ['Preferred store', insight.preferred_store || 'Not enough data'], ['Preferred seller', insight.preferred_seller || 'Not enough data'],
+              ['Usual day', insight.typical_weekday || 'Not enough data'], ['Payment', insight.preferred_payment_method || 'Not enough data'],
+            ].map(([label, value]) => <div key={label} className="rounded-xl bg-slate-100 p-3 dark:bg-slate-800"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p><p className="mt-1 text-sm font-semibold">{value}</p></div>)}
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"><h4 className="flex items-center gap-2 text-sm font-bold"><ShoppingBag className="h-4 w-4 text-indigo-500" />What this customer likes</h4>{insight.favourite_products.length ? <div className="mt-3 space-y-2">{insight.favourite_products.map((item) => <div key={item.name} className="flex justify-between text-xs"><span>{item.name}</span><span className="font-semibold">{number(item.quantity, 0)} units • {money(item.revenue)}</span></div>)}</div> : <p className="mt-3 text-xs text-slate-500">Product-level sales have not been linked yet.</p>}</div>
+            <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"><h4 className="text-sm font-bold">Suggested next action</h4>{insight.suggestions.length ? <ul className="mt-3 space-y-2 text-xs text-slate-600 dark:text-slate-300">{insight.suggestions.map((item) => <li key={item} className="rounded-lg bg-indigo-50 p-3 dark:bg-indigo-950/30">{item}</li>)}</ul> : <p className="mt-3 text-xs text-slate-500">No action is supported by the current data.</p>}</div>
+          </div>
+          <div><h4 className="text-sm font-bold">Recent visits</h4><div className="mt-3 max-h-64 overflow-auto rounded-xl border border-slate-200 dark:border-slate-800"><table className="w-full min-w-[700px] text-left text-xs"><thead className="bg-slate-50 text-slate-500 dark:bg-slate-900"><tr><th className="p-3">Date</th><th className="p-3">Store</th><th className="p-3">Products</th><th className="p-3">Amount</th></tr></thead><tbody>{insight.recent_visits.map((visit) => <tr key={visit.transaction_id} className="border-t border-slate-200 dark:border-slate-800"><td className="p-3">{new Date(visit.occurred_at).toLocaleString('en-IN')}</td><td className="p-3">{visit.store_name}</td><td className="p-3">{visit.products.join(', ') || 'Order details unavailable'}</td><td className="p-3 font-semibold">{money(visit.amount)}</td></tr>)}</tbody></table>{!insight.recent_visits.length && <p className="p-6 text-center text-xs text-slate-500">No linked visits are available.</p>}</div></div>
+        </div>}
       </Modal>
     </div>
   );

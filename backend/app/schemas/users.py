@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
+from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.schemas.common import ORMModel
 
@@ -31,6 +32,23 @@ class UserResponse(ORMModel):
     status: str
     locale: str
     timezone: str
+    phone_number: str | None
+    job_title: str | None
+    location: str | None
+    bio: str | None
+    avatar_url: str | None
+    avatar_emoji: str
+    date_of_birth: date | None
+    theme_preference: str
+    date_format: str
+    dashboard_density: str
+    email_notifications: bool
+    role_preferences: dict[str, bool | int | str]
+    joined_at: datetime
+    last_login_at: datetime | None
+    tenant_name: str
+    currency: str
+    store: StoreResponse | None
     email_verified_at: datetime | None
     mfa_enabled: bool
     role: RoleResponse
@@ -40,6 +58,29 @@ class ProfileUpdate(BaseModel):
     full_name: str | None = Field(default=None, min_length=2, max_length=160)
     locale: str | None = Field(default=None, min_length=2, max_length=16)
     timezone: str | None = Field(default=None, min_length=2, max_length=64)
+    phone_number: str | None = Field(default=None, max_length=24)
+    job_title: str | None = Field(default=None, max_length=100)
+    location: str | None = Field(default=None, max_length=160)
+    bio: str | None = Field(default=None, max_length=500)
+    date_of_birth: date | None = None
+    avatar_emoji: Literal["🙂", "👨‍💼", "👩‍💼", "🧑‍💼", "🚀"] | None = None
+    theme_preference: Literal["light", "dark", "system"] | None = None
+    date_format: Literal["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"] | None = None
+    dashboard_density: Literal["comfortable", "compact"] | None = None
+    email_notifications: bool | None = None
+    role_preferences: dict[str, bool | int | str] | None = None
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, value: str | None) -> str | None:
+        if value is None or not value.strip():
+            return None
+        cleaned = value.strip()
+        if not all(character.isdigit() or character in "+- ()" for character in cleaned):
+            raise ValueError("Phone number contains unsupported characters")
+        if sum(character.isdigit() for character in cleaned) < 7:
+            raise ValueError("Phone number must contain at least 7 digits")
+        return cleaned
 
 
 class UserInvitationRequest(BaseModel):

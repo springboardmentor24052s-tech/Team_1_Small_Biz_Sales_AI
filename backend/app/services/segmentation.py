@@ -73,9 +73,7 @@ def summarize_behavior(rows: list[tuple[CustomerSegmentAssignment, Customer]]) -
                 "customer_count": count,
                 "customer_share": count / customer_count if customer_count else 0,
                 "total_revenue": segment_revenue,
-                "revenue_share": (
-                    float(segment_revenue / total_revenue) if total_revenue else 0
-                ),
+                "revenue_share": (float(segment_revenue / total_revenue) if total_revenue else 0),
                 "average_order_value": (
                     segment_revenue / segment_orders if segment_orders else Decimal("0")
                 ),
@@ -89,9 +87,14 @@ def summarize_behavior(rows: list[tuple[CustomerSegmentAssignment, Customer]]) -
                     else 0
                 ),
                 "average_return_rate": (
-                    sum(float(assignment.return_rate) for assignment, _ in group) / count
-                    if count
-                    else 0
+                    sum(
+                        float(value)
+                        for value in [item.return_rate for item, _ in group]
+                        if value is not None
+                    )
+                    / sum(item.return_rate is not None for item, _ in group)
+                    if any(item.return_rate is not None for item, _ in group)
+                    else None
                 ),
             }
         )

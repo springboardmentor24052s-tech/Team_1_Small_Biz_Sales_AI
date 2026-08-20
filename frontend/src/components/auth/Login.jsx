@@ -18,20 +18,22 @@ import {
   CheckCircle2,
   User,
   Building2,
-  Store
+  Store,
+  ArrowLeft
 } from 'lucide-react';
 
-export const Login = () => {
+export const Login = ({ initialMode = 'login', onBack }) => {
   const {
     login,
     register,
     verifyEmail,
+    acceptInvitation,
     requestPasswordReset,
     confirmPasswordReset
   } = useAuth();
   const { addToast } = useToast();
 
-  const [authMode, setAuthMode] = useState('login');
+  const [authMode, setAuthMode] = useState(initialMode);
   const [selectedRole, setSelectedRole] = useState('owner');
   const [email, setEmail] = useState('owner.demo@marketmind.example.com');
   const [password, setPassword] = useState('MarketMindDemo123!');
@@ -46,11 +48,16 @@ export const Login = () => {
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSubmitted, setForgotSubmitted] = useState(false);
+  const [isResetRequested, setIsResetRequested] = useState(false);
   const [resetToken, setResetToken] = useState('');
   const [resetPassword, setResetPassword] = useState('');
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const [verifyToken, setVerifyToken] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isInvitationOpen, setIsInvitationOpen] = useState(false);
+  const [invitationToken, setInvitationToken] = useState('');
+  const [invitationPassword, setInvitationPassword] = useState('');
+  const [isAcceptingInvitation, setIsAcceptingInvitation] = useState(false);
 
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -138,11 +145,13 @@ export const Login = () => {
     if (!forgotEmail) return;
     setForgotSubmitted(true);
     try {
-      if (!resetToken) {
+      if (!isResetRequested) {
         const response = await requestPasswordReset(forgotEmail.trim());
         setResetToken(response.token || '');
+        setIsResetRequested(true);
         addToast(response.message, 'info');
       } else {
+        if (!resetToken.trim()) throw new Error('Enter the reset token sent to your email.');
         const invalidPassword = passwordError(resetPassword);
         if (invalidPassword) throw new Error(invalidPassword);
         const response = await confirmPasswordReset({
@@ -152,6 +161,7 @@ export const Login = () => {
         addToast(response.message, 'success');
         setIsForgotModalOpen(false);
         setForgotEmail('');
+        setIsResetRequested(false);
         setResetToken('');
         setResetPassword('');
       }
@@ -179,6 +189,30 @@ export const Login = () => {
       addToast(error.message, 'danger');
     } finally {
       setIsVerifying(false);
+    }
+  };
+
+  const handleInvitationSubmit = async (event) => {
+    event.preventDefault();
+    const invalidPassword = passwordError(invitationPassword);
+    if (invalidPassword) {
+      addToast(invalidPassword, 'danger');
+      return;
+    }
+    setIsAcceptingInvitation(true);
+    try {
+      const response = await acceptInvitation({
+        token: invitationToken.trim(),
+        password: invitationPassword
+      });
+      addToast(response.message, 'success');
+      setIsInvitationOpen(false);
+      setInvitationToken('');
+      setInvitationPassword('');
+    } catch (error) {
+      addToast(error.message, 'danger');
+    } finally {
+      setIsAcceptingInvitation(false);
     }
   };
 
@@ -247,7 +281,17 @@ export const Login = () => {
 
       {/* Right side: Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-slate-900">
-        <div className="w-full max-w-md space-y-8">
+        <div className="w-full max-w-md space-y-8 [&_input]:text-base [&_label]:text-sm">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 transition hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to MarketMind
+            </button>
+          )}
           {/* Header */}
           <div className="text-center lg:text-left space-y-2">
             <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
@@ -267,12 +311,12 @@ export const Login = () => {
                   setErrorMessage('');
                   setMfaCode('');
                 }}
-                className="text-xs font-semibold text-indigo-400 hover:text-indigo-300"
+                className="text-sm font-semibold text-indigo-400 hover:text-indigo-300"
               >
                 {authMode === 'login' ? 'Register' : 'Back to login'}
               </button>
             </div>
-            <p className="text-sm text-slate-400">
+            <p className="text-base leading-6 text-slate-400">
               {authMode === 'login'
                 ? 'Enter credentials or select a pre-configured demo role below.'
                 : 'Set up the first Business Owner account and store for a new workspace.'}
@@ -281,7 +325,7 @@ export const Login = () => {
 
           {/* Quick Role Selector Demo Tabs */}
           {authMode === 'login' && <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <label className="block text-sm font-semibold text-slate-400 uppercase tracking-wider">
               Demo Access Role:
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1 bg-slate-800/80 rounded-xl border border-slate-700/60">
@@ -290,7 +334,7 @@ export const Login = () => {
                   key={role.id}
                   type="button"
                   onClick={() => handleRoleChange(role.id)}
-                  className={`py-2 px-2 rounded-lg text-xs font-medium transition-all text-center flex flex-col items-center gap-1 ${
+                  className={`py-2.5 px-2 rounded-lg text-sm font-medium transition-all text-center flex flex-col items-center gap-1 ${
                     selectedRole === role.id
                       ? 'bg-indigo-600 text-white shadow-md'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
@@ -300,7 +344,7 @@ export const Login = () => {
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-indigo-400 text-right font-medium">
+            <p className="text-xs text-indigo-400 text-right font-medium">
               Active Selection: {MOCK_ROLES.find(r => r.id === selectedRole)?.name}
             </p>
           </div>}
@@ -393,7 +437,7 @@ export const Login = () => {
             />
 
             {/* Remember Me & Forgot Password */}
-            {authMode === 'login' && <div className="flex items-center justify-between text-xs">
+            {authMode === 'login' && <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 cursor-pointer text-slate-300">
                 <input
                   type="checkbox"
@@ -427,18 +471,28 @@ export const Login = () => {
             </Button>
           </form>
 
+          {authMode === 'login' && (
+            <button
+              type="button"
+              onClick={() => setIsInvitationOpen(true)}
+              className="w-full text-center text-sm font-semibold text-indigo-400 hover:text-indigo-300"
+            >
+              Have an employee invitation token? Activate your account
+            </button>
+          )}
+
           {/* Social Logins */}
           {authMode === 'login' && <div className="space-y-4 pt-2">
             <div className="relative flex items-center justify-center">
               <div className="border-t border-slate-800 w-full" />
-              <span className="bg-slate-900 px-3 text-xs text-slate-500 uppercase tracking-wider font-medium">Or continue with</span>
+              <span className="bg-slate-900 px-3 text-sm text-slate-500 uppercase tracking-wider font-medium">Or continue with</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => addToast('Google Enterprise SSO simulated', 'info')}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-800 bg-slate-800/50 hover:bg-slate-800 text-xs font-medium text-slate-300 transition-colors"
+                className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-800 bg-slate-800/50 hover:bg-slate-800 text-sm font-medium text-slate-300 transition-colors"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
@@ -452,7 +506,7 @@ export const Login = () => {
               <button
                 type="button"
                 onClick={() => addToast('Microsoft Entra ID SSO simulated', 'info')}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-800 bg-slate-800/50 hover:bg-slate-800 text-xs font-medium text-slate-300 transition-colors"
+                className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-800 bg-slate-800/50 hover:bg-slate-800 text-sm font-medium text-slate-300 transition-colors"
               >
                 <svg className="w-4 h-4" viewBox="0 0 23 23">
                   <path fill="#f35325" d="M1 1h10v10H1z" />
@@ -475,9 +529,9 @@ export const Login = () => {
       >
         <form onSubmit={handleForgotSubmit} className="space-y-4">
           <p className="text-sm text-slate-600 dark:text-slate-300">
-            {resetToken
-              ? 'Enter the reset token and choose a new password.'
-              : 'Enter your work email address to request a secure reset token.'}
+            {isResetRequested
+              ? 'Check your email, enter the one-time reset token, and choose a new password. Local development fills the token automatically.'
+              : 'Enter your work email. If the account exists, MarketMind will send password-reset instructions to that address.'}
           </p>
           <Input
             id="forgotEmail"
@@ -489,7 +543,7 @@ export const Login = () => {
             icon={Mail}
             required
           />
-          {resetToken && (
+          {isResetRequested && (
             <>
               <Input
                 id="resetToken"
@@ -519,12 +573,50 @@ export const Login = () => {
                 setIsForgotModalOpen(false);
                 setResetToken('');
                 setResetPassword('');
+                setIsResetRequested(false);
               }}
             >
               Cancel
             </Button>
             <Button type="submit" variant="primary" isLoading={forgotSubmitted}>
-              {resetToken ? 'Set New Password' : 'Request Reset Token'}
+              {isResetRequested ? 'Set New Password' : 'Email Reset Instructions'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isInvitationOpen}
+        onClose={() => setIsInvitationOpen(false)}
+        title="Activate Employee Account"
+      >
+        <form onSubmit={handleInvitationSubmit} className="space-y-4">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Paste the invitation token shared by your Business Owner and create your password.
+          </p>
+          <Input
+            id="invitationToken"
+            label="Invitation Token"
+            value={invitationToken}
+            onChange={(event) => setInvitationToken(event.target.value)}
+            icon={CheckCircle2}
+            required
+          />
+          <Input
+            id="invitationPassword"
+            label="Create Password"
+            type="password"
+            value={invitationPassword}
+            onChange={(event) => setInvitationPassword(event.target.value)}
+            icon={Lock}
+            required
+          />
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setIsInvitationOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" isLoading={isAcceptingInvitation}>
+              Activate Account
             </Button>
           </div>
         </form>

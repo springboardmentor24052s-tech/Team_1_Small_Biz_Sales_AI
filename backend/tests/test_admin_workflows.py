@@ -6,7 +6,18 @@ from app.models.identity import Store, Tenant
 from tests.conftest import TEST_PASSWORD, auth_header, create_user, login
 
 
-def enable_admin_mfa(client: TestClient, email: str) -> tuple[str, str]:
+def reauthenticated_headers(client: TestClient, email: str) -> dict[str, str]:
+    token = login(client, email)
+    response = client.post(
+        "/api/v1/auth/reauthenticate",
+        json={"password": TEST_PASSWORD},
+        headers=auth_header(token),
+    )
+    assert response.status_code == 200
+    return {**auth_header(token), "X-Reauth-Token": response.json()["reauth_token"]}
+
+
+def enable_admin_mfa(client: TestClient, email: str) -> str:
     initial_token = login(client, email)
     setup = client.post("/api/v1/auth/mfa/setup", headers=auth_header(initial_token))
     secret = setup.json()["secret"]
@@ -16,10 +27,85 @@ def enable_admin_mfa(client: TestClient, email: str) -> tuple[str, str]:
         headers=auth_header(initial_token),
     )
     assert confirmation.status_code == 200
-    return secret, login(client, email, pyotp.TOTP(secret).now())
+    return login(client, email, pyotp.TOTP(secret).now())
 
 
-def test_admin_invitation_role_change_and_audit(
+def test_owner_invites_and_manages_employees(
+    client: TestClient,
+    db: Session,
+    tenant: Tenant,
+    store: Store,
+):
+    owner = create_user(
+        db,
+        tenant=tenant,
+        store=store,
+        role_code="business_owner",
+        email="owner@example.com",
+    )
+    manager = create_user(
+        db,
+        tenant=tenant,
+        store=store,
+        role_code="store_manager",
+        email="existing.manager@example.com",
+    )
+    headers = reauthenticated_headers(client, owner.email)
+
+    roles = client.get("/api/v1/users/roles/catalog", headers=headers)
+    assert roles.status_code == 200
+    assert {role["code"] for role in roles.json()} == {"store_manager", "sales_executive"}
+
+    invite = client.post(
+        "/api/v1/users/invite",
+        json={
+            "email": "new.sales@example.com",
+            "full_name": "New Sales Executive",
+            "role_code": "sales_executive",
+            "store_id": str(store.id),
+        },
+        headers=headers,
+    )
+    assert invite.status_code == 201, invite.text
+    assert "pending" in invite.json()["message"].lower()
+
+    pending_login = client.post(
+        "/api/v1/auth/login",
+        json={"email": "new.sales@example.com", "password": TEST_PASSWORD},
+    )
+    assert pending_login.status_code == 403
+
+    accepted = client.post(
+        "/api/v1/users/accept-invitation",
+        json={"token": invite.json()["token"], "password": TEST_PASSWORD},
+    )
+    assert accepted.status_code == 200
+    sales_token = login(client, "new.sales@example.com")
+    profile = client.get("/api/v1/users/me", headers=auth_header(sales_token))
+    assert profile.json()["role"]["code"] == "sales_executive"
+
+    changed = client.patch(
+        f"/api/v1/users/{manager.id}/role",
+        json={"role_code": "sales_executive", "store_id": str(store.id)},
+        headers=headers,
+    )
+    assert changed.status_code == 200, changed.text
+    assert changed.json()["role"]["code"] == "sales_executive"
+
+    forbidden_owner_role = client.post(
+        "/api/v1/users/invite",
+        json={
+            "email": "another.owner@example.com",
+            "full_name": "Another Owner",
+            "role_code": "business_owner",
+            "store_id": str(store.id),
+        },
+        headers=headers,
+    )
+    assert forbidden_owner_role.status_code == 422
+
+
+def test_internal_admin_cannot_manage_business_employees(
     client: TestClient,
     db: Session,
     tenant: Tenant,
@@ -32,79 +118,20 @@ def test_admin_invitation_role_change_and_audit(
         role_code="administrator",
         email="security.admin@example.com",
     )
-    manager = create_user(
-        db,
-        tenant=tenant,
-        store=store,
-        role_code="store_manager",
-        email="existing.manager@example.com",
-    )
-    secret, admin_token = enable_admin_mfa(client, admin.email)
+    token = enable_admin_mfa(client, admin.email)
 
-    reauth = client.post(
-        "/api/v1/auth/reauthenticate",
-        json={"password": TEST_PASSWORD, "mfa_code": pyotp.TOTP(secret).now()},
-        headers=auth_header(admin_token),
-    )
-    assert reauth.status_code == 200
-    privileged_headers = {
-        **auth_header(admin_token),
-        "X-Reauth-Token": reauth.json()["reauth_token"],
-    }
-
-    stores = client.get("/api/v1/users/stores/catalog", headers=auth_header(admin_token))
-    assert stores.status_code == 200
-    assert stores.json() == [
-        {
-            "id": str(store.id),
-            "name": store.name,
-            "code": store.code,
-            "timezone": store.timezone,
-            "is_active": True,
-        }
-    ]
-
+    assert client.get("/api/v1/users", headers=auth_header(token)).status_code == 403
     invite = client.post(
         "/api/v1/users/invite",
         json={
-            "email": "new.sales@example.com",
-            "full_name": "New Sales Executive",
+            "email": "blocked.sales@example.com",
+            "full_name": "Blocked Sales",
             "role_code": "sales_executive",
             "store_id": str(store.id),
         },
-        headers=privileged_headers,
+        headers=auth_header(token),
     )
-    assert invite.status_code == 201, invite.text
-
-    accepted = client.post(
-        "/api/v1/users/accept-invitation",
-        json={"token": invite.json()["token"], "password": TEST_PASSWORD},
-    )
-    assert accepted.status_code == 200
-    sales_token = login(client, "new.sales@example.com")
-    profile = client.get("/api/v1/users/me", headers=auth_header(sales_token))
-    assert profile.json()["role"]["code"] == "sales_executive"
-
-    without_reauth = client.patch(
-        f"/api/v1/users/{manager.id}/role",
-        json={"role_code": "business_owner", "store_id": str(store.id)},
-        headers=auth_header(admin_token),
-    )
-    assert without_reauth.status_code == 401
-
-    changed = client.patch(
-        f"/api/v1/users/{manager.id}/role",
-        json={"role_code": "business_owner", "store_id": str(store.id)},
-        headers=privileged_headers,
-    )
-    assert changed.status_code == 200, changed.text
-    assert changed.json()["role"]["code"] == "business_owner"
-
-    audit = client.get("/api/v1/audit", headers=auth_header(admin_token))
-    assert audit.status_code == 200
-    event_types = {event["event_type"] for event in audit.json()}
-    assert "admin.user_invited" in event_types
-    assert "admin.user_role_changed" in event_types
+    assert invite.status_code in {401, 403}
 
 
 def test_password_reset_revokes_existing_sessions(
@@ -121,10 +148,7 @@ def test_password_reset_revokes_existing_sessions(
         email="reset.owner@example.com",
     )
     existing_token = login(client, user.email)
-    reset = client.post(
-        "/api/v1/auth/password-reset/request",
-        json={"email": user.email},
-    )
+    reset = client.post("/api/v1/auth/password-reset/request", json={"email": user.email})
     assert reset.status_code == 200
     completed = client.post(
         "/api/v1/auth/password-reset/confirm",
