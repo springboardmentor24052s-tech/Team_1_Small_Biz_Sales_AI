@@ -22,6 +22,7 @@ import { CustomersModule } from './components/modules/CustomersModule';
 import { ReportsModule } from './components/modules/ReportsModule';
 import { SettingsModule } from './components/modules/SettingsModule';
 import { AIForecasting } from './components/modules/AIForecasting';
+import { ProductRecommendationsModule } from './components/modules/ProductRecommendationsModule';
 
 const MainAppContent = () => {
   const { isAuthenticated, isInitializing, currentRole } = useAuth();
@@ -68,6 +69,8 @@ const MainAppContent = () => {
         return <InventoryModule />;
       case 'customers':
         return <CustomersModule />;
+      case 'recommendations':
+        return <ProductRecommendationsModule />;
       case 'reports':
         return <ReportsModule />;
       case 'ai-forecasting':

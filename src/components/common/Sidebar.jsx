@@ -26,6 +26,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
     ...(allowedModules.has('sales') ? [{ id: 'sales', label: 'Sales Deals', icon: ShoppingBag, badge: null }] : []),
     ...(allowedModules.has('inventory') ? [{ id: 'inventory', label: 'Inventory', icon: PackageCheck, badge: currentRole.id === 'manager' ? 'Stock Alerts' : null, badgeColor: 'bg-rose-500 text-white' }] : []),
     ...(allowedModules.has('customer_segments') ? [{ id: 'customers', label: 'Customers', icon: Users, badge: null }] : []),
+    { id: 'recommendations', label: 'AI Recommendations', icon: Sparkles, badge: 'New AI', badgeColor: 'bg-indigo-500 text-white' },
     ...(currentRole.id === 'owner'
   ? [
       { id: 'reports', label: 'Reports', icon: BarChart3, badge: null },
