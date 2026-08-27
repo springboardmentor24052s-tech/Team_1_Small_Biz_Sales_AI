@@ -5,6 +5,10 @@ import {
   Legend,
   Line,
   LineChart,
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -104,7 +108,7 @@ const Section = ({ title, subtitle, children }) => (
   </section>
 );
 
-const ForecastLineChart = ({ history = [], series, unit = '', title = 'Actual vs Predicted' }) => {
+const ForecastLineChart = ({ history = [], series, unit = '', title = 'Actual vs Predicted', chartType = 'area' }) => {
   const historicalRows = (history || []).map((point) => ({
     date: point.date,
     actual: Number(point.actual),
@@ -125,9 +129,26 @@ const ForecastLineChart = ({ history = [], series, unit = '', title = 'Actual vs
     return <p className="py-10 text-center text-xs text-slate-400">No forecast points match these filters.</p>;
   }
 
-  return (
-    <div className="h-80 w-full" aria-label={title}>
-      <ResponsiveContainer width="100%" height="100%">
+  const renderChart = () => {
+    if (chartType === 'bar') {
+      return (
+        <BarChart data={rows} margin={{ top: 12, right: 16, left: 8, bottom: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.45} />
+          <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} minTickGap={24} />
+          <YAxis stroke="#94a3b8" fontSize={11} width={70} />
+          <Tooltip
+            contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 12 }}
+            formatter={(value, name) => [formatNumber(value), `${name} ${unit}`.trim()]}
+          />
+          <Legend />
+          <Bar dataKey="actual" name="Recorded actual" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="predicted" name="Model prediction" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      );
+    }
+
+    if (chartType === 'line') {
+      return (
         <LineChart data={rows} margin={{ top: 12, right: 16, left: 8, bottom: 4 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.45} />
           <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} minTickGap={24} />
@@ -145,11 +166,52 @@ const ForecastLineChart = ({ history = [], series, unit = '', title = 'Actual vs
               label={{ value: 'Forecast starts', fill: '#f59e0b', fontSize: 11 }}
             />
           )}
-          <Line type="monotone" dataKey="actual" name="Recorded actual" stroke="#a855f7" strokeWidth={2} connectNulls={false} />
-          <Line type="monotone" dataKey="predicted" name="Model prediction" stroke="#3b82f6" strokeWidth={2} connectNulls={false} />
+          <Line type="monotone" dataKey="actual" name="Recorded actual" stroke="#a855f7" strokeWidth={2.5} connectNulls={false} />
+          <Line type="monotone" dataKey="predicted" name="Model prediction" stroke="#3b82f6" strokeWidth={2.5} connectNulls={false} />
           <Line type="monotone" dataKey="lower_bound" name="Lower bound" stroke="#64748b" strokeDasharray="4 4" dot={false} />
           <Line type="monotone" dataKey="upper_bound" name="Upper bound" stroke="#64748b" strokeDasharray="4 4" dot={false} />
         </LineChart>
+      );
+    }
+
+    return (
+      <AreaChart data={rows} margin={{ top: 12, right: 16, left: 8, bottom: 4 }}>
+        <defs>
+          <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4} />
+            <stop offset="95%" stopColor="#a855f7" stopOpacity={0.0} />
+          </linearGradient>
+          <linearGradient id="predGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.45} />
+        <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} minTickGap={24} />
+        <YAxis stroke="#94a3b8" fontSize={11} width={70} />
+        <Tooltip
+          contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 12 }}
+          formatter={(value, name) => [formatNumber(value), `${name} ${unit}`.trim()]}
+        />
+        <Legend />
+        {forecastRows[0]?.date && (
+          <ReferenceLine
+            x={forecastRows[0].date}
+            stroke="#f59e0b"
+            strokeDasharray="4 4"
+            label={{ value: 'Forecast starts', fill: '#f59e0b', fontSize: 11 }}
+          />
+        )}
+        <Area type="monotone" dataKey="actual" name="Recorded actual" stroke="#a855f7" strokeWidth={2.5} fillOpacity={1} fill="url(#actualGrad)" connectNulls={false} />
+        <Area type="monotone" dataKey="predicted" name="Model prediction" stroke="#3b82f6" strokeWidth={2.5} fillOpacity={1} fill="url(#predGrad)" connectNulls={false} />
+      </AreaChart>
+    );
+  };
+
+  return (
+    <div className="h-80 w-full" aria-label={title}>
+      <ResponsiveContainer width="100%" height="100%">
+        {renderChart()}
       </ResponsiveContainer>
     </div>
   );
@@ -181,6 +243,7 @@ export const ReportsModule = () => {
   const [adminSellers, setAdminSellers] = useState([]);
   const [storeId, setStoreId] = useState('');
   const [sellerId, setSellerId] = useState('');
+  const [selectedChartType, setSelectedChartType] = useState('area');
   const forecastAccess = (access?.modules || []).find((module) => module.code === 'forecasts');
   const canExport = forecastAccess?.actions?.includes('export');
 
@@ -465,20 +528,41 @@ export const ReportsModule = () => {
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-4 lg:col-span-2">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h4 className="text-sm font-semibold text-slate-100">Actual vs Predicted</h4>
+                <h4 className="text-sm font-semibold text-slate-100">Actual vs Predicted Trend</h4>
                 <p className="text-xs text-slate-400">
                   {personal ? 'Authorized personal sales scope' : `Target: ${reportData.target}`}
                 </p>
               </div>
-              <Badge variant="info">{reportData.unit}</Badge>
+
+              <div className="flex items-center gap-2">
+                {[
+                  { id: 'area', label: '📈 Area Trend' },
+                  { id: 'line', label: '📉 Line Chart' },
+                  { id: 'bar', label: '📊 Bar Chart' }
+                ].map((type) => (
+                  <button
+                    key={type.id}
+                    onClick={() => setSelectedChartType(type.id)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      selectedChartType === type.id
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                    }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+                <Badge variant="info">{reportData.unit}</Badge>
+              </div>
             </div>
 
             <ForecastLineChart
               history={reportData.history}
               series={reportData.series}
               unit={reportData.unit}
+              chartType={selectedChartType}
               title={personal ? 'Personal sales actual versus predicted' : 'Revenue actual versus predicted'}
             />
 
