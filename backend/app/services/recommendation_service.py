@@ -401,7 +401,7 @@ def get_recommendation_insights(db: Session) -> RecommendationInsights:
         )
 
     # High-price upsell category
-    high_price_products = [p for p in products if p.unit_price >= 200.0]
+    high_price_products = [p for p in products if getattr(p, 'unit_price', 199.0) >= 200.0]
     if high_price_products:
         upsell_cats: Dict[str, int] = {}
         for p in high_price_products:

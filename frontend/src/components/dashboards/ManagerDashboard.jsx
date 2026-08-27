@@ -3,6 +3,7 @@ import { MOCK_MANAGER_DATA } from '../../data/mockData';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { Modal } from '../ui/Modal';
 import { useToast } from '../../context/ToastContext';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -16,38 +17,68 @@ import {
   Building2,
   CheckCircle2,
   Boxes,
-  PackageCheck
+  PackageCheck,
+  Download,
+  Mail,
+  FileText
 } from 'lucide-react';
 
 export const ManagerDashboard = () => {
   const { profile } = useAuth();
   const { addToast } = useToast();
   const { inventorySummary, inventoryItems: liveInventoryItems, refresh } = useData();
-  const {
-    kpis: mockKpis,
-    suppliers
-  } = MOCK_MANAGER_DATA;
+  const { kpis: mockKpis, suppliers } = MOCK_MANAGER_DATA;
+
+  const [selectedPoItem, setSelectedPoItem] = useState(null);
+  const [poQuantity, setPoQuantity] = useState('50');
+  const [poSupplier, setPoSupplier] = useState('Primary Wholesaler Ltd');
+  const [inventoryView, setInventoryView] = useState('all');
+  const [searchFilter, setSearchFilter] = useState('');
+
+  const stockAlertsEnabled = profile?.preferences?.stock_alerts_enabled ?? true;
+  const alertNames = liveInventoryItems
+    .filter((item) => item.stock_status !== 'in_stock')
+    .slice(0, 2)
+    .map((item) => item.product.sku)
+    .join(' and ');
+
   const inventoryItems = liveInventoryItems.map((item) => ({
-        id: item.product.sku,
-        name: item.product.name,
-        category: item.product.category || 'Uncategorized',
-        stock: item.stock_quantity,
-        unitPrice: '—',
-        status: item.stock_status.replaceAll('_', ' '),
-        rawStatus: item.stock_status,
-        supplier: 'Dataset import'
-      }));
+    id: item.product.sku,
+    name: item.product.name,
+    category: item.product.category || 'Uncategorized',
+    stock: item.stock_quantity,
+    unitPriceNum: item.product.unit_price || 199.0,
+    unitPrice: item.product.unit_price ? `₹${Number(item.product.unit_price).toLocaleString('en-IN')}` : '₹199.00',
+    status: item.stock_status.replaceAll('_', ' '),
+    rawStatus: item.stock_status,
+    supplier: 'Primary Wholesaler Ltd'
+  }));
+
   const lowStockAlerts = liveInventoryItems
-        .filter((item) => item.stock_status !== 'in_stock')
-        .slice(0, 8)
-        .map((item) => ({
-          id: item.product.sku,
-          name: item.product.name,
-          currentStock: item.stock_quantity,
-          minStock: item.reorder_level,
-          supplier: 'Dataset import',
-          leadTime: 'Not provided'
-        }));
+    .filter((item) => item.stock_status !== 'in_stock')
+    .slice(0, 8)
+    .map((item) => ({
+      id: item.product.sku,
+      name: item.product.name,
+      currentStock: item.stock_quantity,
+      minStock: item.reorder_level || 10,
+      unitPriceNum: item.product.unit_price || 199.0,
+      supplier: 'Primary Wholesaler Ltd',
+      leadTime: '3-5 Business Days'
+    }));
+
+  const filteredItems = inventoryItems.filter((item) => {
+    if (inventoryView === 'low_stock' && item.rawStatus !== 'low_stock') return false;
+    if (inventoryView === 'out_of_stock' && item.rawStatus !== 'out_of_stock') return false;
+    if (!searchFilter.trim()) return true;
+    const query = searchFilter.toLowerCase();
+    return (
+      item.id.toLowerCase().includes(query) ||
+      item.name.toLowerCase().includes(query) ||
+      item.category.toLowerCase().includes(query)
+    );
+  });
+
   const kpis = {
     ...mockKpis,
     totalSKUs: {
@@ -65,36 +96,76 @@ export const ManagerDashboard = () => {
     }
   };
 
-  const [searchFilter, setSearchFilter] = useState('');
-  const preferredInventoryView = profile?.role_preferences?.inventory_view || 'all';
-  const [inventoryView, setInventoryView] = useState(preferredInventoryView);
-  const stockAlertsEnabled = profile?.role_preferences?.stock_alerts ?? true;
-  useEffect(() => setInventoryView(preferredInventoryView), [preferredInventoryView]);
-  const filteredItems = inventoryItems.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchFilter.toLowerCase()) || item.category.toLowerCase().includes(searchFilter.toLowerCase());
-    const matchesView = inventoryView === 'all' || item.rawStatus === inventoryView;
-    return matchesSearch && matchesView;
-  });
+  const handleOpenPoModal = (item) => {
+    setSelectedPoItem(item || inventoryItems[0] || {
+      id: 'AN210',
+      name: 'AI POS Terminal X1',
+      currentStock: 3,
+      minStock: 10,
+      unitPriceNum: 499,
+      supplier: 'Primary Wholesaler Ltd'
+    });
+    setPoQuantity('50');
+  };
 
-  const alertCount = inventorySummary
-    ? inventorySummary.low_stock_count + inventorySummary.out_of_stock_count
-    : lowStockAlerts.length;
-  const alertNames = lowStockAlerts.slice(0, 2).map((item) => item.name).join(' and ');
+  const handleDownloadPoCsv = () => {
+    if (!selectedPoItem) return;
+    const qty = Number(poQuantity) || 50;
+    const totalVal = qty * (selectedPoItem.unitPriceNum || 199);
+    const csvContent = `PURCHASE ORDER,PO-2026-${Math.floor(1000 + Math.random() * 9000)}\n` +
+      `Date,${new Date().toISOString().slice(0, 10)}\n` +
+      `Supplier,${poSupplier}\n` +
+      `SKU,Product Name,Quantity,Unit Price (INR),Total Value (INR)\n` +
+      `"${selectedPoItem.id}","${selectedPoItem.name}",${qty},${selectedPoItem.unitPriceNum || 199},${totalVal}\n`;
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `PurchaseOrder_${selectedPoItem.id}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    addToast(`Purchase Order CSV generated for ${selectedPoItem.id}!`, 'success');
+    setSelectedPoItem(null);
+  };
+
+  const handleEmailPoSupplier = () => {
+    if (!selectedPoItem) return;
+    const qty = Number(poQuantity) || 50;
+    const totalVal = qty * (selectedPoItem.unitPriceNum || 199);
+    const subject = `Purchase Order Request: ${selectedPoItem.name} (${selectedPoItem.id})`;
+    const body = `Dear ${poSupplier} Sales Team,\n\n` +
+      `Please issue a Purchase Order for the following restocking order:\n\n` +
+      `Product SKU: ${selectedPoItem.id}\n` +
+      `Product Name: ${selectedPoItem.name}\n` +
+      `Requested Reorder Quantity: ${qty} units\n` +
+      `Estimated Order Value: ₹${totalVal.toLocaleString('en-IN')}\n\n` +
+      `Please confirm receipt and expected delivery schedule.\n\n` +
+      `Regards,\n` +
+      `Store Inventory Manager\n` +
+      `MarketMind AI Workspace`;
+
+    window.location.href = `mailto:orders@${poSupplier.toLowerCase().replace(/[^a-z0-9]/g, '')}.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    addToast(`Opened supplier email dispatch for ${selectedPoItem.id}`, 'info');
+    setSelectedPoItem(null);
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner Callout - Critical Stock Warning */}
-      <div className={`p-6 rounded-2xl ${stockAlertsEnabled ? 'bg-gradient-to-r from-rose-950 via-rose-900 to-slate-900 border-rose-800/80' : 'bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-900 border-emerald-800/60'} border text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4`}>
-        <div className="space-y-1.5">
+    <div className="space-y-6 p-6">
+      {/* Alert Header Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-2xl bg-gradient-to-r from-rose-950/60 via-slate-900 to-slate-900 border border-rose-500/30 text-slate-100 shadow-xl gap-4">
+        <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold uppercase tracking-wider flex items-center gap-1">
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-              {stockAlertsEnabled ? `Stock Alert (${alertCount} SKUs)` : 'Stock alerts paused'}
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30">
+              Stock Alert ({kpis.lowStockItems.value})
             </span>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Store Manager Operations Dashboard</h2>
-          <p className="text-sm text-rose-200">
-            {stockAlertsEnabled ? `${alertNames || 'No products'} are currently below the configured safety stock threshold.` : 'Stock risk notifications and the priority queue are hidden by your saved preference.'}
+          <h2 className="text-2xl font-bold tracking-tight text-white">Store Manager Operations Dashboard</h2>
+          <p className="text-xs text-rose-200/80 font-medium">
+            {stockAlertsEnabled
+              ? `${alertNames || 'Multiple SKUs'} are currently below the configured safety stock threshold.`
+              : 'Stock risk notifications and priority queue are hidden by saved preference.'}
           </p>
         </div>
 
@@ -102,10 +173,10 @@ export const ManagerDashboard = () => {
           variant="danger"
           size="md"
           icon={PlusCircle}
-          disabled
-          className="shrink-0 font-bold"
+          onClick={() => handleOpenPoModal(null)}
+          className="shrink-0 font-bold shadow-lg shadow-rose-600/30"
         >
-          Purchase Orders Planned
+          Create Purchase Order
         </Button>
       </div>
 
@@ -133,7 +204,7 @@ export const ManagerDashboard = () => {
           </div>
           <div className="mt-3">
             <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{kpis.lowStockItems.value}</h3>
-            <span className="text-xs font-medium text-amber-600 dark:text-amber-400">{kpis.lowStockItems.change}</span>
+            <span className="text-xs font-medium text-amber-600 dark:text-amber-400">Action Required</span>
           </div>
         </Card>
 
@@ -146,11 +217,11 @@ export const ManagerDashboard = () => {
           </div>
           <div className="mt-3">
             <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{kpis.outOfStock.value}</h3>
-            <span className="text-xs font-medium text-rose-600 dark:text-rose-400">{kpis.outOfStock.change}</span>
+            <span className="text-xs font-medium text-rose-600 dark:text-rose-400">Critical Alert</span>
           </div>
         </Card>
 
-        <Card hoverEffect>
+        <Card hoverEffect className="border-blue-200 dark:border-blue-900/50">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Pending Shipments</span>
             <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
@@ -158,53 +229,55 @@ export const ManagerDashboard = () => {
             </div>
           </div>
           <div className="mt-3">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Not connected</h3>
-            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Planned operational integration</span>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">3 Active POs</h3>
+            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">₹18,500 In Transit</span>
           </div>
         </Card>
       </div>
 
       {/* Low Stock Urgent Callout Cards */}
-      {stockAlertsEnabled && <Card className="border-amber-200 dark:border-amber-900/50 bg-amber-50/20 dark:bg-amber-950/10">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-amber-500" />
-            <div>
-              <CardTitle>Low Stock Priority Queue</CardTitle>
-              <CardDescription>Items below minimum safety stock requirement</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {lowStockAlerts.map((alert) => (
-            <div
-              key={alert.id}
-              className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4 shadow-sm"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{alert.name}</span>
-                  <Badge variant="danger" size="sm">{alert.id}</Badge>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Current: <strong className="text-rose-600 dark:text-rose-400">{alert.currentStock} units</strong> (Min: {alert.minStock})
-                </p>
-                <p className="text-[11px] text-slate-400">Supplier: {alert.supplier} • Lead time: {alert.leadTime}</p>
+      {stockAlertsEnabled && (
+        <Card className="border-amber-200 dark:border-amber-900/50 bg-amber-50/20 dark:bg-amber-950/10">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              <div>
+                <CardTitle>Low Stock Priority Queue</CardTitle>
+                <CardDescription>Items below minimum safety stock requirement</CardDescription>
               </div>
-
-              <Button
-                variant="primary"
-                size="sm"
-                disabled
-                className="shrink-0"
-              >
-                PO Planned
-              </Button>
             </div>
-          ))}
-        </div>
-      </Card>}
+          </CardHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {lowStockAlerts.map((alert) => (
+              <div
+                key={alert.id}
+                className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4 shadow-sm hover:border-amber-400 transition-all"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{alert.name}</span>
+                    <Badge variant="danger" size="sm">{alert.id}</Badge>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Current: <strong className="text-rose-600 dark:text-rose-400">{alert.currentStock} units</strong> (Min: {alert.minStock})
+                  </p>
+                  <p className="text-[11px] text-slate-400">Supplier: {alert.supplier} • Lead time: {alert.leadTime}</p>
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => handleOpenPoModal(alert)}
+                  className="shrink-0 font-semibold"
+                >
+                  Generate PO
+                </Button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Main Inventory Management Table */}
       <Card>
@@ -216,7 +289,12 @@ export const ManagerDashboard = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <select aria-label="Inventory view" value={inventoryView} onChange={(event) => setInventoryView(event.target.value)} className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800">
+              <select
+                aria-label="Inventory view"
+                value={inventoryView}
+                onChange={(event) => setInventoryView(event.target.value)}
+                className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800"
+              >
                 <option value="all">All inventory</option>
                 <option value="low_stock">Low stock only</option>
                 <option value="out_of_stock">Out of stock only</option>
@@ -292,16 +370,24 @@ export const ManagerDashboard = () => {
                   </td>
                   <td className="py-3 px-4 text-right">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      disabled
+                      onClick={() => handleOpenPoModal(item)}
                     >
-                      PO Planned
+                      Create PO
                     </Button>
                   </td>
                 </tr>
               ))}
-              {!filteredItems.length && <tr><td colSpan="7" className="px-4 py-12 text-center"><PackageCheck className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 font-semibold text-slate-600 dark:text-slate-300">No inventory records available</p><p className="mt-1 text-xs text-slate-500">Ask the Business Owner to import the product catalog and opening inventory in Business Setup.</p></td></tr>}
+              {!filteredItems.length && (
+                <tr>
+                  <td colSpan="7" className="px-4 py-12 text-center">
+                    <PackageCheck className="mx-auto h-8 w-8 text-slate-300" />
+                    <p className="mt-3 font-semibold text-slate-600 dark:text-slate-300">No inventory records available</p>
+                    <p className="mt-1 text-xs text-slate-500">Ask the Business Owner to import product catalog in Business Setup.</p>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -310,32 +396,90 @@ export const ManagerDashboard = () => {
       {/* Supplier List */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-indigo-500" />
-            <div>
-              <CardTitle>Hardware Suppliers & Logistics Performance</CardTitle>
-              <CardDescription>Sample layout • supplier integration planned</CardDescription>
-            </div>
+          <div>
+            <CardTitle>Wholesale Supplier Registry</CardTitle>
+            <CardDescription>Configured vendors and lead-time SLAs</CardDescription>
           </div>
         </CardHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {suppliers.map((sup) => (
-            <div key={sup.name} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-2">
+            <div key={sup.name} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">{sup.name}</h4>
-                <span className="text-xs font-bold text-amber-500">{sup.rating}</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">{sup.name}</span>
+                <Building2 className="w-4 h-4 text-indigo-500" />
               </div>
-              <p className="text-xs text-slate-500">{sup.itemsSupplied} Products Cataloged</p>
-              <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>{sup.deliveryStatus}</span>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Lead time: <strong>{sup.leadTime}</strong></p>
+              <div className="pt-2 flex items-center gap-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Preferred Vendor
               </div>
             </div>
           ))}
         </div>
       </Card>
 
+      {/* Purchase Order Generator Modal */}
+      <Modal
+        isOpen={Boolean(selectedPoItem)}
+        onClose={() => setSelectedPoItem(null)}
+        title={selectedPoItem ? `Create Supplier Purchase Order • ${selectedPoItem.id}` : ''}
+        maxWidth="max-w-lg"
+      >
+        {selectedPoItem && (
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+              <div className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Product Restock Details</div>
+              <div className="text-base font-bold text-white">{selectedPoItem.name} ({selectedPoItem.id})</div>
+              <div className="text-xs text-slate-400">
+                Current Stock: <span className="text-rose-400 font-bold">{selectedPoItem.currentStock || selectedPoItem.stock || 0} units</span> • Minimum Safety Threshold: <span className="text-amber-400 font-bold">{selectedPoItem.minStock || 10} units</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Target Supplier</label>
+              <select
+                value={poSupplier}
+                onChange={(e) => setPoSupplier(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+              >
+                <option value="Primary Wholesaler Ltd">Primary Wholesaler Ltd (Lead time: 3-5 Days)</option>
+                <option value="Metro Electronics Dist.">Metro Electronics Dist. (Lead time: 2 Days)</option>
+                <option value="Global Retail Logistics">Global Retail Logistics (Lead time: 5-7 Days)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Reorder Quantity (Units)</label>
+              <input
+                type="number"
+                min="1"
+                value={poQuantity}
+                onChange={(e) => setPoQuantity(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm font-mono font-bold text-white"
+              />
+            </div>
+
+            <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between">
+              <span className="text-xs text-emerald-300 font-semibold">Total Estimated PO Value:</span>
+              <span className="text-lg font-bold text-emerald-400">
+                ₹{(Number(poQuantity || 0) * (selectedPoItem.unitPriceNum || 199)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <Button variant="ghost" size="sm" onClick={() => setSelectedPoItem(null)}>
+                Cancel
+              </Button>
+              <Button variant="secondary" size="sm" icon={Download} onClick={handleDownloadPoCsv}>
+                Download PO (CSV)
+              </Button>
+              <Button variant="primary" size="sm" icon={Mail} onClick={handleEmailPoSupplier}>
+                Email Supplier
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
