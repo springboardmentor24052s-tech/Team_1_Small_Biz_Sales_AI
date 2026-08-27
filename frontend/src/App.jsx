@@ -159,16 +159,20 @@ const MainAppContent = () => {
   );
 };
 
+import { LanguageProvider } from './context/LanguageContext';
+
 export default function App() {
   return (
     <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <DataProvider>
-            <MainAppContent />
-          </DataProvider>
-        </AuthProvider>
-      </ToastProvider>
+      <LanguageProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <DataProvider>
+              <MainAppContent />
+            </DataProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

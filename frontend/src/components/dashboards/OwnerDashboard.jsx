@@ -30,6 +30,7 @@ import {
 
 export const OwnerDashboard = ({ onNavigate }) => {
   const { salesDashboard, customerSummary } = useData();
+  const { t } = useLanguage();
   const {
     kpis: mockKpis,
     categoryDistribution,
@@ -59,34 +60,34 @@ export const OwnerDashboard = ({ onNavigate }) => {
       change: customerSummary ? 'Cleaned customers' : mockKpis.totalCustomers.change,
       timeFrame: customerSummary ? 'all imported records' : mockKpis.totalCustomers.timeFrame
     },
-    grossProfit: {
-      ...mockKpis.grossProfit,
-      value: salesDashboard ? 'Not available' : mockKpis.grossProfit.value,
-      change: salesDashboard ? 'Cost data required' : mockKpis.grossProfit.change,
-      timeFrame: salesDashboard ? 'not calculated' : mockKpis.grossProfit.timeFrame
+    averageOrderValue: {
+      ...mockKpis.averageOrderValue,
+      value: salesDashboard ? money(salesDashboard.average_order_value.value) : mockKpis.averageOrderValue.value,
+      change: salesDashboard ? 'AOV calculation' : mockKpis.averageOrderValue.change,
+      timeFrame: salesDashboard ? 'selected period' : mockKpis.averageOrderValue.timeFrame
     }
   };
-  const revenueTrend = (salesDashboard?.revenue_series || []).map((point) => ({
-    date: new Date(`${point.date}T00:00:00`).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short'
-    }),
-    revenue: Number(point.revenue),
-    transactions: point.transaction_count
-  }));
-  const hasBusinessData = Number(salesDashboard?.transaction_count.value || 0) > 0;
+  const revenueTrendData = (salesDashboard?.trend || []).length
+    ? salesDashboard.trend.map((point) => ({ name: point.date, revenue: point.revenue }))
+    : MOCK_OWNER_DATA.revenueTrend;
+
+  const hasBusinessData = Boolean(
+    (salesDashboard?.transaction_count?.value || 0) > 0 || (customerSummary?.customer_count || 0) > 0
+  );
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & AI Recommendation Callout */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white shadow-xl">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
-            <span>Milestone 2 Forecasting • Live</span>
+      {/* Header Banner */}
+      <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-900 via-violet-800 to-slate-900 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-200 mb-2">
+            <Sparkles className="w-4 h-4 text-indigo-300" />
+            <span>{t('Owner Access')}</span>
+            <span>•</span>
+            <span>{t('Business Owner')}</span>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Business Owner Strategic Command</h2>
-          <p className="text-sm text-indigo-200">
+          <h2 className="text-2xl font-bold">{t('Business Owner Executive View')}</h2>
+          <p className="text-sm text-indigo-200 mt-1 max-w-2xl">
             Current KPIs use imported records. Revenue forecasts, confidence ranges and model metrics are available under Reports & Forecasts.
           </p>
         </div>
@@ -111,7 +112,7 @@ export const OwnerDashboard = ({ onNavigate }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <Card hoverEffect>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Total Revenue</span>
+            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">{t('Total Revenue')}</span>
             <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
               <DollarSign className="w-5 h-5" />
             </div>
@@ -130,7 +131,7 @@ export const OwnerDashboard = ({ onNavigate }) => {
 
         <Card hoverEffect>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Total Orders</span>
+            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">{t('Total Orders')}</span>
             <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
               <ShoppingCart className="w-5 h-5" />
             </div>
@@ -149,7 +150,7 @@ export const OwnerDashboard = ({ onNavigate }) => {
 
         <Card hoverEffect>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Active Customers</span>
+            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">{t('Active Customers')}</span>
             <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
               <Users className="w-5 h-5" />
             </div>
@@ -271,11 +272,11 @@ export const OwnerDashboard = ({ onNavigate }) => {
                 <Zap className="w-5 h-5 animate-bounce-slow" />
               </div>
               <div>
-                <CardTitle>AI Strategic Insights Engine</CardTitle>
-                <CardDescription>Real-time predictive insights from your recommendations, churn, and safeguard engines.</CardDescription>
+                <CardTitle>{t('AI Strategic Insights Engine')}</CardTitle>
+                <CardDescription>{t('Real-time predictive insights from your recommendations, churn, and safeguard engines.')}</CardDescription>
               </div>
             </div>
-            <Badge variant="info">Live AI Engine</Badge>
+            <Badge variant="info">{t('Live AI Engine')}</Badge>
           </CardHeader>
 
           <div className="space-y-4">

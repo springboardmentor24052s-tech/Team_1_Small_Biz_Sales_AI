@@ -11,12 +11,16 @@ import {
   Moon,
   Sparkles,
   ChevronDown,
-  LogOut
+  LogOut,
+  Languages
 } from 'lucide-react';
+
+import { useLanguage } from '../../context/LanguageContext';
 
 export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
   const { currentRole, userEmail, profile, logout, api } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
+  const { language, setLanguage } = useLanguage();
   const { addToast } = useToast();
   const { salesTransactions, inventoryItems, customers } = useData();
 
@@ -181,6 +185,16 @@ export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
           title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
           {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
+        </button>
+
+        {/* Language Selector Toggle */}
+        <button
+          onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 text-xs font-bold transition-all"
+          title="Switch Language / भाषा बदलें"
+        >
+          <Languages className="w-4 h-4 text-indigo-400" />
+          <span>{language === 'en' ? 'हिन्दी' : 'English'}</span>
         </button>
 
         {/* Notification Bell Dropdown */}
