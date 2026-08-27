@@ -18,6 +18,8 @@ class ChurnCustomerRecord(BaseModel):
     total_revenue: Decimal
     order_count: int
     retention_recommendation: str
+    email: str | None = None
+    phone: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
