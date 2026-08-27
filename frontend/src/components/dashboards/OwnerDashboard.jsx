@@ -68,7 +68,7 @@ export const OwnerDashboard = ({ onNavigate }) => {
       timeFrame: salesDashboard ? 'selected period' : (mockKpis.grossProfit?.timeFrame || 'vs last month')
     }
   };
-  const revenueTrendData = (salesDashboard?.trend || []).length
+  const revenueTrend = (salesDashboard?.trend || []).length
     ? salesDashboard.trend.map((point) => ({ name: point.date, revenue: point.revenue }))
     : MOCK_OWNER_DATA.revenueTrend;
 
