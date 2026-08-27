@@ -99,7 +99,7 @@ export const ChurnPredictionModule = () => {
               <TrendingDown className="w-5 h-5 text-amber-400" />
             </div>
             <div className="text-3xl font-bold text-amber-400">
-              ${Number(summary.potential_revenue_at_risk || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              ₹{Number(summary.potential_revenue_at_risk || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
             <div className="text-xs text-amber-400/80 mt-2 font-medium">High & medium risk total value</div>
           </div>
@@ -217,7 +217,7 @@ export const ChurnPredictionModule = () => {
                       {cust.inactivity_days} days ago
                     </td>
                     <td className="py-3.5 px-4 font-medium text-emerald-400">
-                      ${Number(cust.total_revenue).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      ₹{Number(cust.total_revenue).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="py-3.5 px-4 text-xs text-slate-300 max-w-xs truncate">
                       {cust.retention_recommendation}

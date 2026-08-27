@@ -95,7 +95,7 @@ function CrossSellSection({ items }) {
               </div>
               <div className="text-right shrink-0">
                 <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                  ${typeof rec.unit_price === 'number' ? rec.unit_price.toFixed(2) : rec.unit_price}
+                  ₹{typeof rec.unit_price === 'number' ? rec.unit_price.toFixed(2) : rec.unit_price}
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   Confidence: {rec.association_confidence
@@ -146,7 +146,7 @@ function UpsellSection({ items }) {
               </div>
               <div className="text-right shrink-0">
                 <p className="text-sm font-bold text-amber-600 dark:text-amber-400">
-                  ${typeof rec.unit_price === 'number' ? rec.unit_price.toFixed(2) : rec.unit_price}
+                  ₹{typeof rec.unit_price === 'number' ? rec.unit_price.toFixed(2) : rec.unit_price}
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   Score: {rec.match_score ? `${rec.match_score}%` : '--'}
@@ -571,7 +571,7 @@ function RecCard({ rec, userRole, onAddToQuote }) {
               Category: <strong className="text-slate-700 dark:text-slate-300">{rec.category}</strong>
             </span>
             <span className="font-bold text-indigo-600 dark:text-indigo-400 text-sm">
-              ${typeof rec.unit_price === 'number' ? rec.unit_price.toFixed(2) : rec.unit_price}
+              ₹{typeof rec.unit_price === 'number' ? rec.unit_price.toFixed(2) : rec.unit_price}
             </span>
           </div>
         </div>
@@ -1255,7 +1255,7 @@ export const ProductRecommendationsModule = () => {
                 {selectedRecItem.product_name} ({selectedRecItem.sku})
               </p>
               <div className="flex items-center justify-between text-xs text-slate-500 mt-1">
-                <span>Unit Price: ${selectedRecItem.unit_price}</span>
+                <span>Unit Price: ₹{selectedRecItem.unit_price}</span>
                 <Badge variant="success">{selectedRecItem.match_score}% Match</Badge>
               </div>
             </div>
