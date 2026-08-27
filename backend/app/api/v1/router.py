@@ -5,6 +5,7 @@ from app.api.v1 import (
     audit,
     auth,
     churn,
+    copilot,
     customers,
     dashboard,
     forecasting,
@@ -40,4 +41,5 @@ api_router.include_router(churn.router)
 api_router.include_router(anomalies.router)
 api_router.include_router(models_monitoring.router)
 api_router.include_router(recommendations.router)
+api_router.include_router(copilot.router)
 

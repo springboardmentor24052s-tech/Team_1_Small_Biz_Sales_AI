@@ -74,7 +74,7 @@ const PAGE_CONTEXT_KNOWLEDGE = {
 
 export const AiAssistantModal = ({ isOpen, onClose, activeTab = 'dashboard' }) => {
   const { language, t } = useLanguage();
-  const { currentRole } = useAuth();
+  const { currentRole, api } = useAuth();
   const isHindi = language === 'hi';
   
   const ctx = PAGE_CONTEXT_KNOWLEDGE[activeTab] || PAGE_CONTEXT_KNOWLEDGE.dashboard;
@@ -97,7 +97,7 @@ export const AiAssistantModal = ({ isOpen, onClose, activeTab = 'dashboard' }) =
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory, isThinking]);
 
-  const handleSend = (customPromptText) => {
+  const handleSend = async (customPromptText) => {
     const textToSend = customPromptText || query;
     if (!textToSend.trim()) return;
 
@@ -105,36 +105,49 @@ export const AiAssistantModal = ({ isOpen, onClose, activeTab = 'dashboard' }) =
     setQuery('');
     setIsThinking(true);
 
-    setTimeout(() => {
+    try {
+      const res = await api('/copilot/chat', {
+        method: 'POST',
+        body: JSON.stringify({
+          query: textToSend,
+          tab: activeTab,
+          language: language
+        })
+      });
       setIsThinking(false);
-      let aiResponse = '';
+      setChatHistory((prev) => [...prev, { sender: 'ai', text: res.response }]);
+    } catch {
+      // Fallback client intelligence if offline
+      setTimeout(() => {
+        setIsThinking(false);
+        let aiResponse = '';
+        const lower = textToSend.toLowerCase();
 
-      const lower = textToSend.toLowerCase();
+        if (lower.includes('summarize') || lower.includes('summary') || lower.includes('संक्षिप्त') || lower.includes('क्या है')) {
+          aiResponse = isHindi 
+            ? `📊 **${ctx.title} का सारांश**:\n${ctx.summary_hi}\n\n💡 **मुख्य लाभ**: यह आपको डेटा-संचालित निर्णय लेने और समय बचाने में मदद करता है।`
+            : `📊 **Summary of ${ctx.title}**:\n${ctx.summary_en}\n\n💡 **Key Value**: This workspace empowers data-driven decision making and saves administrative time.`;
+        } else if (lower.includes('how') || lower.includes('use') || lower.includes('कैसे') || lower.includes('उपयोग')) {
+          aiResponse = isHindi
+            ? `📝 **इस पेज का उपयोग कैसे करें**:\n${ctx.summary_hi}\n\nचरण:\n${ctx.guide_hi}`
+            : `📝 **How to use this page**:\n${ctx.summary_en}\n\nSteps:\n${ctx.guide_en}`;
+        } else if (lower.includes('sales') || lower.includes('growth') || lower.includes('बिक्री') || lower.includes('ग्रोथ')) {
+          aiResponse = isHindi
+            ? `🚀 **बिक्री बढ़ाने की सलाह**:\n${ctx.action_hi}`
+            : `🚀 **Sales Growth Advice**:\n${ctx.action_en}`;
+        } else if (lower.includes('risk') || lower.includes('security') || lower.includes('जोखिम') || lower.includes('सुरक्षा')) {
+          aiResponse = isHindi
+            ? `🛡️ **सुरक्षा और जोखिम जानकारी**:\nहमारा एआई इंजन असामान्य छूट स्पाइक्स और रिसाव की लगातार निगरानी करता है। अपना राजस्व सुरक्षित रखने के लिए "सुरक्षा अलर्ट" टैब देखें।`
+            : `🛡️ **Security & Risk Guidance**:\nOur AI Safeguards engine continuously monitors for unauthorized discount spikes and inventory leaks. Review Anomaly Alerts to protect bottom-line revenue.`;
+        } else {
+          aiResponse = isHindi
+            ? `यह **${ctx.title}** से संबंधित एक प्रश्न है!\n\n${ctx.summary_hi}\n\n👉 **सुझाया गया कदम**: ${ctx.action_hi}`
+            : `I have analyzed your query regarding **${ctx.title}**:\n\n${ctx.summary_en}\n\n👉 **Recommended Step**: ${ctx.action_en}`;
+        }
 
-      if (lower.includes('summarize') || lower.includes('summary') || lower.includes('संक्षिप्त') || lower.includes('क्या है')) {
-        aiResponse = isHindi 
-          ? `📊 **${ctx.title} का सारांश**:\n${ctx.summary_hi}\n\n💡 **मुख्य लाभ**: यह आपको डेटा-संचालित निर्णय लेने और समय बचाने में मदद करता है।`
-          : `📊 **Summary of ${ctx.title}**:\n${ctx.summary_en}\n\n💡 **Key Value**: This workspace empowers data-driven decision making and saves administrative time.`;
-      } else if (lower.includes('how') || lower.includes('use') || lower.includes('कैसे') || lower.includes('उपयोग')) {
-        aiResponse = isHindi
-          ? `📝 **इस पेज का उपयोग कैसे करें**:\n${ctx.summary_hi}\n\nचरण:\n${ctx.guide_hi}`
-          : `📝 **How to use this page**:\n${ctx.summary_en}\n\nSteps:\n${ctx.guide_en}`;
-      } else if (lower.includes('sales') || lower.includes('growth') || lower.includes('बिक्री') || lower.includes('ग्रोथ')) {
-        aiResponse = isHindi
-          ? `🚀 **बिक्री बढ़ाने की सलाह**:\n${ctx.action_hi}`
-          : `🚀 **Sales Growth Advice**:\n${ctx.action_en}`;
-      } else if (lower.includes('risk') || lower.includes('security') || lower.includes('जोखिम') || lower.includes('सुरक्षा')) {
-        aiResponse = isHindi
-          ? `🛡️ **सुरक्षा और जोखिम जानकारी**:\nहमारा एआई इंजन असामान्य छूट स्पाइक्स और रिसाव की लगातार निगरानी करता है। अपना राजस्व सुरक्षित रखने के लिए "सुरक्षा अलर्ट" टैब देखें।`
-          : `🛡️ **Security & Risk Guidance**:\nOur AI Safeguards engine continuously monitors for unauthorized discount spikes and inventory leaks. Review Anomaly Alerts to protect bottom-line revenue.`;
-      } else {
-        aiResponse = isHindi
-          ? `यह **${ctx.title}** से संबंधित एक बढ़िया प्रश्न है! \n\n${ctx.summary_hi}\n\n👉 **सुझाया गया कदम**: ${ctx.action_hi}`
-          : `That is a great question regarding **${ctx.title}**!\n\n${ctx.summary_en}\n\n👉 **Recommended Step**: ${ctx.action_en}`;
-      }
-
-      setChatHistory((prev) => [...prev, { sender: 'ai', text: aiResponse }]);
-    }, 750);
+        setChatHistory((prev) => [...prev, { sender: 'ai', text: aiResponse }]);
+      }, 500);
+    }
   };
 
   const presetButtons = [
