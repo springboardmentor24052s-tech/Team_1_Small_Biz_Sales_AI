@@ -3,14 +3,14 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
 import logging
 
-from backend.app.db.session import get_db
-from backend.app.schemas.recommendation import (
+from app.db.session import get_db
+from app.schemas.recommendation import (
     RecommendationResponse,
     RecommendationAnalytics,
     EvaluationMetrics,
     RecommendationInsights,
 )
-from backend.app.services.recommendation_service import (
+from app.services.recommendation_service import (
     get_product_recommendations,
     get_recommendation_analytics,
     calculate_evaluation_metrics,
@@ -19,7 +19,7 @@ from backend.app.services.recommendation_service import (
 
 logger = logging.getLogger("marketmind.api.recommendations")
 
-router = APIRouter()
+router = APIRouter(prefix="/recommendations", tags=["Product Recommendations"])
 
 @router.get("", response_model=RecommendationResponse, summary="Get Intelligent Product Recommendations")
 def read_recommendations(

@@ -25,6 +25,9 @@ import { ReportsModule } from './components/modules/ReportsModule';
 import { SettingsModule } from './components/modules/SettingsModule';
 import { TeamManagementModule } from './components/modules/TeamManagementModule';
 import { BusinessSetupModule } from './components/modules/BusinessSetupModule';
+import { ProductRecommendationsModule } from './components/modules/ProductRecommendationsModule';
+import { ChurnPredictionModule } from './components/modules/ChurnPredictionModule';
+import { AnomalyDetectionModule } from './components/modules/AnomalyDetectionModule';
 
 const MainAppContent = () => {
   const { isAuthenticated, isInitializing, currentRole, profile } = useAuth();
@@ -95,6 +98,12 @@ const MainAppContent = () => {
         return <InventoryModule />;
       case 'customers':
         return <CustomersModule />;
+      case 'recommendations':
+        return <ProductRecommendationsModule />;
+      case 'churn':
+        return <ChurnPredictionModule />;
+      case 'anomalies':
+        return <AnomalyDetectionModule />;
       case 'reports':
         return <ReportsModule />;
       case 'components':
