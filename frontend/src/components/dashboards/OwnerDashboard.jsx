@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { useData } from '../../context/DataContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { DateRangeFilter } from '../common/DateRangeFilter';
 import {
   DollarSign,
