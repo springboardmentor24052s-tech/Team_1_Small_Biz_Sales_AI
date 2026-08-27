@@ -45,27 +45,27 @@ export const OwnerDashboard = ({ onNavigate }) => {
     ...mockKpis,
     totalRevenue: {
       ...mockKpis.totalRevenue,
-      value: salesDashboard?.revenue?.value != null ? money(salesDashboard.revenue.value) : mockKpis.totalRevenue.value,
-      change: salesDashboard ? 'Live database' : mockKpis.totalRevenue.change,
-      timeFrame: salesDashboard ? 'selected period' : mockKpis.totalRevenue.timeFrame
+      value: salesDashboard?.revenue?.value != null ? money(salesDashboard.revenue.value) : (mockKpis.totalRevenue?.value || '₹0.00'),
+      change: salesDashboard ? 'Live database' : (mockKpis.totalRevenue?.change || '0%'),
+      timeFrame: salesDashboard ? 'selected period' : (mockKpis.totalRevenue?.timeFrame || 'vs last month')
     },
     totalOrders: {
       ...mockKpis.totalOrders,
-      value: salesDashboard?.transaction_count?.value ?? mockKpis.totalOrders.value,
-      change: salesDashboard ? 'Imported orders' : mockKpis.totalOrders.change,
-      timeFrame: salesDashboard ? 'selected period' : mockKpis.totalOrders.timeFrame
+      value: salesDashboard?.transaction_count?.value != null ? salesDashboard.transaction_count.value : (mockKpis.totalOrders?.value || '0'),
+      change: salesDashboard ? 'Imported orders' : (mockKpis.totalOrders?.change || '0%'),
+      timeFrame: salesDashboard ? 'selected period' : (mockKpis.totalOrders?.timeFrame || 'vs last month')
     },
     totalCustomers: {
       ...mockKpis.totalCustomers,
-      value: customerSummary?.customer_count ?? mockKpis.totalCustomers.value,
-      change: customerSummary ? 'Cleaned customers' : mockKpis.totalCustomers.change,
-      timeFrame: customerSummary ? 'all imported records' : mockKpis.totalCustomers.timeFrame
+      value: customerSummary?.customer_count != null ? customerSummary.customer_count : (mockKpis.totalCustomers?.value || '0'),
+      change: customerSummary ? 'Cleaned customers' : (mockKpis.totalCustomers?.change || '0%'),
+      timeFrame: customerSummary ? 'all imported records' : (mockKpis.totalCustomers?.timeFrame || 'vs last month')
     },
-    averageOrderValue: {
-      ...mockKpis.averageOrderValue,
-      value: salesDashboard?.average_order_value?.value != null ? money(salesDashboard.average_order_value.value) : mockKpis.averageOrderValue.value,
-      change: salesDashboard ? 'AOV calculation' : mockKpis.averageOrderValue.change,
-      timeFrame: salesDashboard ? 'selected period' : mockKpis.averageOrderValue.timeFrame
+    grossProfit: {
+      ...mockKpis.grossProfit,
+      value: salesDashboard?.average_order_value?.value != null ? money(salesDashboard.average_order_value.value) : (mockKpis.grossProfit?.value || '₹0.00'),
+      change: salesDashboard ? 'AOV calculation' : (mockKpis.grossProfit?.change || '0%'),
+      timeFrame: salesDashboard ? 'selected period' : (mockKpis.grossProfit?.timeFrame || 'vs last month')
     }
   };
   const revenueTrendData = (salesDashboard?.trend || []).length
