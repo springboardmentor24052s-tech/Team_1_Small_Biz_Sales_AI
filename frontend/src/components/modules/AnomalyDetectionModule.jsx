@@ -202,6 +202,16 @@ export const AnomalyDetectionModule = () => {
                       {item.severity}
                     </span>
                     <span className="text-xs font-mono text-slate-400">{item.anomaly_type}</span>
+                    {item.status === 'acknowledged' && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        Under Investigation
+                      </span>
+                    )}
+                    {item.status === 'resolved' && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        Resolved ✓
+                      </span>
+                    )}
                   </div>
                   <span className="text-xs font-semibold text-slate-400">Score: {item.anomaly_score}</span>
                 </div>
@@ -212,18 +222,31 @@ export const AnomalyDetectionModule = () => {
                 <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 text-xs">
                   <span className="text-slate-500 font-mono">ID: {item.entity_id}</span>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleStatusChange(item.id, 'acknowledge')}
-                      className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md font-medium transition-colors"
-                    >
-                      Acknowledge
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(item.id, 'resolve')}
-                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md font-medium transition-colors flex items-center gap-1"
-                    >
-                      <CheckSquare className="w-3.5 h-3.5" /> Resolve
-                    </button>
+                    {item.status === 'resolved' ? (
+                      <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-lg font-semibold text-xs flex items-center gap-1">
+                        <CheckSquare className="w-3.5 h-3.5" /> Incident Resolved
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleStatusChange(item.id, 'acknowledge')}
+                          disabled={item.status === 'acknowledged'}
+                          className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                            item.status === 'acknowledged'
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30 opacity-70 cursor-not-allowed'
+                              : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                          }`}
+                        >
+                          {item.status === 'acknowledged' ? 'Acknowledged' : 'Acknowledge'}
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(item.id, 'resolve')}
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md font-medium transition-colors flex items-center gap-1 shadow-md shadow-emerald-600/20"
+                        >
+                          <CheckSquare className="w-3.5 h-3.5" /> Resolve
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
