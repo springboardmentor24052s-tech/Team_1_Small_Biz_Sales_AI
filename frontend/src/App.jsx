@@ -5,6 +5,7 @@ import { ToastProvider } from './context/ToastContext';
 import { DataProvider } from './context/DataContext';
 import { useTheme } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { Sparkles } from 'lucide-react';
 
 import { Login } from './components/auth/Login';
 import { BusinessLandingPage } from './components/landing/BusinessLandingPage';
@@ -151,10 +152,24 @@ const MainAppContent = () => {
       {/* Global Toast Alerts */}
       <ToastContainer />
 
+      {/* Floating Persistent AI Copilot Trigger Button */}
+      <button
+        onClick={() => setIsAiModalOpen(true)}
+        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-700 text-white font-bold text-xs shadow-2xl shadow-indigo-600/50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-indigo-400/30 group"
+        title="Open AI Business Copilot"
+      >
+        <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center">
+          <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+        </div>
+        <span>AI Copilot Help</span>
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+      </button>
+
       {/* AI Assistant Modal */}
       <AiAssistantModal
         isOpen={isAiModalOpen}
         onClose={() => setIsAiModalOpen(false)}
+        activeTab={activeTab}
       />
     </div>
   );
