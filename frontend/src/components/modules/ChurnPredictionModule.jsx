@@ -40,8 +40,8 @@ export const ChurnPredictionModule = () => {
   };
 
   const filteredCustomers = customers.filter(c => 
-    c.external_customer_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.retention_recommendation.toLowerCase().includes(searchTerm.toLowerCase())
+    (c.external_customer_id || c.customer_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.retention_recommendation || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (

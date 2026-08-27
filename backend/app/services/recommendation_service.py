@@ -365,7 +365,7 @@ def get_recommendation_analytics(db: Session) -> RecommendationAnalytics:
 def get_recommendation_insights(db: Session) -> RecommendationInsights:
     """Generate data-driven natural-language insights from real product/sales data."""
     products = db.query(Product).all()
-    sales = db.query(SaleTransaction).limit(500).all()
+    sales = db.query(SalesTransaction).limit(500).all()
 
     if not products:
         return RecommendationInsights(
