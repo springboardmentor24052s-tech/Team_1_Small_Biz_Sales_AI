@@ -289,7 +289,7 @@ def get_product_recommendations(
 
         batch_multiplier = 10 if prod.category == "Supplies" else 2
         potential_revenue_val = prod_unit_price * batch_multiplier
-        potential_revenue_str = f"${potential_revenue_val:,.2f}"
+        potential_revenue_str = f"₹{potential_revenue_val:,.2f}"
 
         item = RecommendationItem(
             id=f"REC-{prod.sku or str(prod.id)}",
@@ -409,7 +409,7 @@ def get_recommendation_insights(db: Session) -> RecommendationInsights:
         top_upsell_category = max(upsell_cats, key=upsell_cats.get)
         insights.append(
             f"'{top_upsell_category}' contains the most high-value upsell opportunities "
-            f"({upsell_cats[top_upsell_category]} products priced ≥ $200)."
+            f"({upsell_cats[top_upsell_category]} products priced ≥ ₹200)."
         )
 
     # Low stock alert

@@ -275,7 +275,7 @@ function OwnerKPIs({ recommendations, analytics }) {
         <div className="mt-3">
           <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
             {analytics
-              ? `$${analytics.potential_revenue_boost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              ? `₹${analytics.potential_revenue_boost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               : '--'}
           </h3>
           <div className="flex items-center gap-1 mt-1 text-xs text-emerald-500 font-medium">
@@ -424,7 +424,7 @@ function SalesKPIs({ recommendations, analytics }) {
         <div className="mt-3">
           <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
             {analytics
-              ? `$${analytics.potential_revenue_boost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              ? `₹${analytics.potential_revenue_boost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               : '--'}
           </h3>
           <p className="text-xs text-emerald-500 font-medium mt-1 flex items-center gap-1">

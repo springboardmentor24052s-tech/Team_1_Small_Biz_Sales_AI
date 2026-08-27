@@ -56,5 +56,5 @@ def get_audit_logs():
     return [
         {"id": "LOG-991", "timestamp": "17:18:44", "user": "admin@system.com", "action": "ROLE_PERMISSION_UPDATE", "level": "INFO", "details": "Updated Store Manager stock reorder threshold"},
         {"id": "LOG-990", "timestamp": "17:14:12", "user": "system_ai_engine", "action": "PREDICTIVE_MODEL_TRAIN", "level": "SUCCESS", "details": "Automated sales forecasting model re-indexed with +1,240 records"},
-        {"id": "LOG-989", "timestamp": "16:55:01", "user": "sales@team.com", "action": "DEAL_STAGE_CHANGE", "level": "INFO", "details": "Moved BlueHorizon Cafe to Closing Stage ($8,200)"}
+        {"id": "LOG-989", "timestamp": "16:55:01", "user": "sales@team.com", "action": "DEAL_STAGE_CHANGE", "level": "INFO", "details": "Moved BlueHorizon Cafe to Closing Stage (₹8,200)"}
     ]

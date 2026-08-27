@@ -34,5 +34,5 @@ def get_customers_summary(db: Session = Depends(get_db)):
         "enterprisePlatinum": 42,
         "goldTier": 180,
         "silverTier": 1220,
-        "avgCLV": "$42,500"
+        "avgCLV": "₹42,500"
     }

@@ -108,7 +108,7 @@ def get_anomaly_summary(
                 entity_id="TX-9042",
                 anomaly_score=0.78,
                 title="Unusual Sales Spike Detected",
-                description="Transaction value of $4,850.00 is 3.4x higher than 30-day moving average.",
+                description="Transaction value of ₹4,850.00 is 3.4x higher than 30-day moving average.",
                 status="detected",
                 created_at=now
             ),

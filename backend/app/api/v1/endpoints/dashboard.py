@@ -17,10 +17,10 @@ def get_owner_dashboard(db: Session = Depends(get_db)) -> Dict[str, Any]:
 
     return {
         "kpis": {
-            "totalRevenue": {"value": "$148,520", "change": "+18.4%", "isPositive": True},
+            "totalRevenue": {"value": "₹148,520", "change": "+18.4%", "isPositive": True},
             "totalOrders": {"value": str(sales_count if sales_count > 0 else 1842), "change": "+12.1%", "isPositive": True},
             "totalCustomers": {"value": str(customers_count if customers_count > 0 else 2450), "change": "+8.6%", "isPositive": True},
-            "grossProfit": {"value": "$42,180", "change": "+14.2%", "isPositive": True}
+            "grossProfit": {"value": "₹42,180", "change": "+14.2%", "isPositive": True}
         },
         "salesTrend": [
             {"month": "Jan", "revenue": 68000, "expenses": 42000, "profit": 26000},
@@ -38,17 +38,17 @@ def get_owner_dashboard(db: Session = Depends(get_db)) -> Dict[str, Any]:
             {"name": "Software Licenses", "value": 12, "color": "#f59e0b"}
         ],
         "topProducts": [
-            {"name": "AI POS Terminal X1", "sales": 420, "revenue": "$63,000", "growth": "+24%"},
-            {"name": "Wireless Thermal Printer", "sales": 310, "revenue": "$27,900", "growth": "+18%"},
-            {"name": "Smart Barcode Scanner", "sales": 280, "revenue": "$22,400", "growth": "+12%"},
-            {"name": "Cloud Retail Pro License", "sales": 210, "revenue": "$18,900", "growth": "+30%"}
+            {"name": "AI POS Terminal X1", "sales": 420, "revenue": "₹63,000", "growth": "+24%"},
+            {"name": "Wireless Thermal Printer", "sales": 310, "revenue": "₹27,900", "growth": "+18%"},
+            {"name": "Smart Barcode Scanner", "sales": 280, "revenue": "₹22,400", "growth": "+12%"},
+            {"name": "Cloud Retail Pro License", "sales": 210, "revenue": "₹18,900", "growth": "+30%"}
         ],
         "aiRecommendations": [
             {
                 "id": 1,
                 "title": "Stock Reorder Recommendation",
                 "description": "Predictive analytics forecast 35% higher demand for AI POS Terminal X1 next month due to holiday retail rush.",
-                "impact": "High Impact (+ $12.4k Est. Revenue)",
+                "impact": "High Impact (+ ₹12.4k Est. Revenue)",
                 "type": "warning",
                 "actionLabel": "Generate Supplier PO"
             },
@@ -56,7 +56,7 @@ def get_owner_dashboard(db: Session = Depends(get_db)) -> Dict[str, Any]:
                 "id": 2,
                 "title": "Customer Retargeting Opportunity",
                 "description": "142 recurring business accounts have not ordered in 45 days. AI suggests automated promotional workflow.",
-                "impact": "Medium Impact ($6.8k Retention)",
+                "impact": "Medium Impact (₹6.8k Retention)",
                 "type": "insight",
                 "actionLabel": "Launch Email Campaign"
             }
@@ -79,9 +79,9 @@ def get_manager_dashboard(db: Session = Depends(get_db)) -> Dict[str, Any]:
 def get_sales_dashboard(db: Session = Depends(get_db)) -> Dict[str, Any]:
     return {
         "kpis": {
-            "monthlyTarget": {"value": "$45,000 / $50,000", "percentage": "90%", "isPositive": True},
+            "monthlyTarget": {"value": "₹45,000 / ₹50,000", "percentage": "90%", "isPositive": True},
             "closedDeals": {"value": "34 Deals", "change": "+6 this week", "isPositive": True},
-            "pipelineValue": {"value": "$124,800", "change": "18 Active Leads", "isPositive": True},
+            "pipelineValue": {"value": "₹124,800", "change": "18 Active Leads", "isPositive": True},
             "winRate": {"value": "68.4%", "change": "+4.2% vs avg", "isPositive": True}
         }
     }

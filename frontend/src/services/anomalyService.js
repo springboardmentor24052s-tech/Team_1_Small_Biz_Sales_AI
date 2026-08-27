@@ -1,21 +1,24 @@
-import api from './api';
+import { request } from '../api/client';
 
 export const anomalyService = {
   getAnomalies: async (tenantId, severity, contamination = 0.05) => {
-    const params = { contamination };
-    if (tenantId) params.tenant_id = tenantId;
-    if (severity) params.severity = severity;
-    const response = await api.get('/api/v1/anomalies', { params });
-    return response.data;
+    const params = new URLSearchParams({ contamination });
+    if (tenantId) params.append('tenant_id', tenantId);
+    if (severity) params.append('severity', severity);
+    return await request(`/anomalies?${params.toString()}`);
   },
 
   acknowledgeAnomaly: async (eventId, notes = '') => {
-    const response = await api.post(`/api/v1/anomalies/${eventId}/acknowledge`, { notes });
-    return response.data;
+    return await request(`/anomalies/${eventId}/acknowledge`, {
+      method: 'POST',
+      body: JSON.stringify({ notes })
+    });
   },
 
   resolveAnomaly: async (eventId, notes = '') => {
-    const response = await api.post(`/api/v1/anomalies/${eventId}/resolve`, { notes });
-    return response.data;
+    return await request(`/anomalies/${eventId}/resolve`, {
+      method: 'POST',
+      body: JSON.stringify({ notes })
+    });
   }
 };
