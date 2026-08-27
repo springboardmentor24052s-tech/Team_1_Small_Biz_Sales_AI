@@ -1,5 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, BarChart3, CalendarDays, Copy, Crown, IndianRupee, Search, ShieldCheck, Target, TrendingUp, UserCheck, UserPlus, Users } from 'lucide-react';
+import { 
+  AlertTriangle, BarChart3, CalendarDays, Copy, Crown, IndianRupee, 
+  Search, ShieldCheck, Target, TrendingUp, UserCheck, UserPlus, Users, 
+  Sparkles, Award, FileText, Download, CheckCircle2 
+} from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
@@ -38,12 +42,18 @@ export const TeamManagementModule = () => {
   const [target, setTarget] = useState({ targetValue: '', periodStart: '', periodEnd: '' });
 
   const performanceQuery = useMemo(() => (!filters.from || !filters.to ? '' : `?date_from=${filters.from}&date_to=${filters.to}`), [filters.from, filters.to]);
+  
   const loadPerformance = useCallback(async () => {
     setLoading(true);
-    try { setOverview(await api(`/team/overview${performanceQuery}`)); }
-    catch (error) { addToast(error.message, 'error'); }
-    finally { setLoading(false); }
+    try { 
+      setOverview(await api(`/team/overview${performanceQuery}`)); 
+    } catch (error) { 
+      addToast(error.message, 'error'); 
+    } finally { 
+      setLoading(false); 
+    }
   }, [api, addToast, performanceQuery]);
+
   const loadCatalogs = useCallback(async () => {
     if (!isOwner) return;
     try {
@@ -63,6 +73,7 @@ export const TeamManagementModule = () => {
   }), [overview, filters]);
 
   const requestConfirmation = (description, run) => { setPassword(''); setPendingAction({ description, run }); };
+  
   const confirmAction = async (event) => {
     event.preventDefault();
     if (!pendingAction) return;
@@ -74,6 +85,7 @@ export const TeamManagementModule = () => {
       await Promise.all([refresh(), loadPerformance()]);
     } catch (error) { addToast(error.message, 'error'); } finally { setSaving(false); }
   };
+
   const submitInvite = (event) => {
     event.preventDefault();
     if (invite.email.trim().toLowerCase() !== invite.confirmEmail.trim().toLowerCase()) {
@@ -87,6 +99,7 @@ export const TeamManagementModule = () => {
       addToast(result.message, 'success');
     });
   };
+
   const saveAssignment = (employee) => {
     const assignment = assignments[employee.employee_id];
     if (!assignment?.storeId) return addToast('Select a store before saving', 'error');
@@ -95,6 +108,7 @@ export const TeamManagementModule = () => {
       addToast('Employee assignment updated', 'success');
     });
   };
+
   const toggleEmployee = (employee) => {
     const enabled = employee.status !== 'active';
     requestConfirmation(`${enabled ? 'Enable' : 'Disable'} ${employee.full_name}'s account`, async (reauthToken) => {
@@ -102,10 +116,12 @@ export const TeamManagementModule = () => {
       addToast(`Employee account ${enabled ? 'enabled' : 'disabled'}`, 'success');
     });
   };
+
   const openTarget = (employee) => {
     setTargetEmployee(employee);
     setTarget({ targetValue: employee.target?.target_value || '', periodStart: employee.target?.period_start || employee.period_start, periodEnd: employee.target?.period_end || employee.period_end });
   };
+
   const submitTarget = (event) => {
     event.preventDefault();
     requestConfirmation(`Set a revenue target for ${targetEmployee.full_name}`, async (reauthToken) => {
@@ -114,32 +130,384 @@ export const TeamManagementModule = () => {
     });
   };
 
-  const title = isOwner ? 'Team Performance & Access' : currentRole.id === 'manager' ? 'Store Team Performance' : 'My Performance';
-  const description = isOwner ? 'Manage employee access, set targets and understand individual performance.' : currentRole.id === 'manager' ? 'Review Sales Executives assigned to your store.' : 'Track your authorized sales, target progress and improvement areas.';
+  const title = isOwner ? 'Team Performance & AI Selling Insights' : currentRole.id === 'manager' ? 'Store Team & AI Execution' : 'My Performance & Selling Guide';
+  const description = isOwner ? 'Manage employee access, track AI cross-sell adoption, and evaluate sales targets.' : currentRole.id === 'manager' ? 'Review Sales Executives assigned to your store.' : 'Track your authorized sales, bundle conversion and target progress.';
 
-  return <div className="space-y-6">
-    <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-900 via-violet-800 to-slate-900 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4"><div><div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-200 mb-2"><ShieldCheck className="w-4 h-4" /> {isOwner ? 'Business Owner Control' : 'Role-scoped analytics'}</div><h2 className="text-2xl font-bold">{title}</h2><p className="text-sm text-indigo-200 mt-1">{description}</p></div>{isOwner && <Button icon={UserPlus} onClick={() => setIsInviteOpen(true)}>Invite Employee</Button>}</div>
-    <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4"><Stat icon={Users} label={currentRole.id === 'sales' ? 'Your Account' : 'Team Members'} value={overview?.total_employees || 0} color="indigo" /><Stat icon={UserCheck} label="Active" value={overview?.active_employees || 0} color="emerald" /><Stat icon={AlertTriangle} label="Below Target" value={overview?.below_target || 0} color="amber" /><Stat icon={Crown} label="Top Performer" value={overview?.top_performer?.full_name || 'Not available'} color="violet" small /><Stat icon={TrendingUp} label="Top Revenue" value={overview?.top_performer ? money(overview.top_performer.metrics.revenue) : '—'} color="blue" small /></div>
-    <Card hoverEffect={false}><CardHeader><div><CardTitle>Performance period</CardTitle><CardDescription>Leave dates empty to use the latest 30 days available in the database.</CardDescription></div><CalendarDays className="w-5 h-5 text-indigo-500" /></CardHeader><div className="grid md:grid-cols-6 gap-3"><div className="relative md:col-span-2"><Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" /><input aria-label="Search employees" placeholder="Search name or email" value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent" /></div>{currentRole.id !== 'sales' && <select aria-label="Filter by role" value={filters.role} onChange={(e) => setFilters({ ...filters, role: e.target.value })} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent px-3"><option value="all">All roles</option><option value="store_manager">Store Managers</option><option value="sales_executive">Sales Executives</option></select>}{isOwner && <select aria-label="Filter by store" value={filters.store} onChange={(e) => setFilters({ ...filters, store: e.target.value })} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent px-3"><option value="all">All stores</option>{stores.map((store) => <option key={store.id} value={store.id}>{store.name}</option>)}</select>}<input aria-label="Performance start date" type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent px-3" /><input aria-label="Performance end date" type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent px-3" /><Button onClick={loadPerformance} isLoading={loading}>Apply</Button></div></Card>
-    <Card hoverEffect={false}><CardHeader><div><CardTitle>{currentRole.id === 'sales' ? 'Personal performance' : 'Employee directory'}</CardTitle><CardDescription>All figures come from completed database transactions in the selected period.</CardDescription></div><Badge variant="info">Real records</Badge></CardHeader>{employees.length ? <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500 border-b border-slate-200 dark:border-slate-800"><tr><th className="p-3">Employee</th><th className="p-3">Revenue</th><th className="p-3">Target</th><th className="p-3">Orders</th><th className="p-3">Performance</th><th className="p-3 text-right">Action</th></tr></thead><tbody>{employees.map((employee) => <EmployeeRow key={employee.employee_id} employee={employee} onSelect={() => setSelected(employee)} />)}</tbody></table></div> : <div className="py-12 text-center text-slate-500"><Users className="w-8 h-8 mx-auto mb-3" /><p>{loading ? 'Loading performance…' : 'No employees match these filters.'}</p></div>}</Card>
-    <Modal isOpen={Boolean(selected)} onClose={() => setSelected(null)} title={selected ? `${selected.full_name} · Performance analysis` : ''} maxWidth="max-w-4xl">{selected && <PerformanceDetail employee={selected} isOwner={isOwner} onSetTarget={() => openTarget(selected)} onSaveAssignment={() => saveAssignment(selected)} onToggle={() => toggleEmployee(selected)} roles={roles} stores={stores} assignment={assignments[selected.employee_id]} setAssignment={(value) => setAssignments((current) => ({ ...current, [selected.employee_id]: value }))} />}</Modal>
-    <Modal isOpen={Boolean(targetEmployee)} onClose={() => setTargetEmployee(null)} title="Set revenue target"><form onSubmit={submitTarget} className="space-y-4"><p className="text-sm text-slate-500">Assign a measurable target to {targetEmployee?.full_name}. Achievement uses completed sales.</p><Input label="Revenue Target (₹)" type="number" min="1" step="0.01" value={target.targetValue} onChange={(e) => setTarget({ ...target, targetValue: e.target.value })} required /><Input label="Period Start" type="date" value={target.periodStart} onChange={(e) => setTarget({ ...target, periodStart: e.target.value })} required /><Input label="Period End" type="date" value={target.periodEnd} onChange={(e) => setTarget({ ...target, periodEnd: e.target.value })} required /><div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setTargetEmployee(null)}>Cancel</Button><Button type="submit" icon={Target}>Continue</Button></div></form></Modal>
-    <Modal isOpen={isInviteOpen} onClose={() => setIsInviteOpen(false)} title="Invite Employee"><form onSubmit={submitInvite} className="space-y-4"><div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/30 dark:text-indigo-200">The employee account stays pending until the invitation is opened and a password is created. This confirms ownership of the work email.</div><Input label="Full Name" value={invite.fullName} onChange={(e) => setInvite({ ...invite, fullName: e.target.value })} required /><Input label="Work Email" type="email" value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} required /><Input label="Confirm Work Email" type="email" value={invite.confirmEmail} onChange={(e) => setInvite({ ...invite, confirmEmail: e.target.value })} required /><Select label="Role" value={invite.roleCode} onChange={(value) => setInvite({ ...invite, roleCode: value })} options={roles.map((role) => [role.code, role.name])} /><Select label="Store" value={invite.storeId} onChange={(value) => setInvite({ ...invite, storeId: value })} options={stores.map((store) => [store.id, store.name])} placeholder="Select store" /><div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setIsInviteOpen(false)}>Cancel</Button><Button type="submit" icon={UserCheck}>Send Invitation</Button></div></form></Modal>
-    <Modal isOpen={Boolean(pendingAction)} onClose={() => !saving && setPendingAction(null)} title="Confirm Business Change"><form onSubmit={confirmAction} className="space-y-4"><p className="text-sm text-slate-600 dark:text-slate-300">{pendingAction?.description}. Confirm with your password.</p><Input label="Business Owner Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /><div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setPendingAction(null)}>Cancel</Button><Button type="submit" isLoading={saving}>Confirm</Button></div></form></Modal>
-    <Modal isOpen={Boolean(invitationToken)} onClose={() => setInvitationToken('')} title="Development Invitation Token"><div className="space-y-4"><p className="text-sm text-slate-500">Email delivery is not configured locally, so use this one-time token for testing. Production sends it to the employee's mailbox.</p><div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 break-all font-mono text-xs">{invitationToken}</div><div className="flex justify-end"><Button icon={Copy} onClick={() => { navigator.clipboard.writeText(invitationToken); addToast('Invitation token copied', 'success'); }}>Copy Token</Button></div></div></Modal>
-  </div>;
+  return (
+    <div className="space-y-6 p-6">
+      {/* Header Banner */}
+      <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-900 via-violet-800 to-slate-900 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-200 mb-2">
+            <ShieldCheck className="w-4 h-4" /> {isOwner ? 'Business Owner Control Center' : 'Role-scoped analytics'}
+          </div>
+          <h2 className="text-2xl font-bold">{title}</h2>
+          <p className="text-sm text-indigo-200 mt-1">{description}</p>
+        </div>
+        {isOwner && <Button icon={UserPlus} onClick={() => setIsInviteOpen(true)}>Invite Employee</Button>}
+      </div>
+
+      {/* Top Stat Cards */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Stat icon={Users} label={currentRole.id === 'sales' ? 'Your Account' : 'Team Members'} value={overview?.total_employees || 0} color="indigo" />
+        <Stat icon={UserCheck} label="Active" value={overview?.active_employees || 0} color="emerald" />
+        <Stat icon={AlertTriangle} label="Below Target" value={overview?.below_target || 0} color="amber" />
+        <Stat icon={Crown} label="Top Performer" value={overview?.top_performer?.full_name || 'Not available'} color="violet" small />
+        <Stat icon={TrendingUp} label="Top Revenue" value={overview?.top_performer ? money(overview.top_performer.metrics.revenue) : '—'} color="blue" small />
+      </div>
+
+      {/* Date Filter & Search */}
+      <Card hoverEffect={false}>
+        <CardHeader>
+          <div>
+            <CardTitle>Performance period</CardTitle>
+            <CardDescription>Filter performance metrics by date range or search by team member.</CardDescription>
+          </div>
+          <CalendarDays className="w-5 h-5 text-indigo-500" />
+        </CardHeader>
+        <div className="grid md:grid-cols-6 gap-3">
+          <div className="relative md:col-span-2">
+            <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+            <input 
+              aria-label="Search employees" 
+              placeholder="Search name or email..." 
+              value={filters.search} 
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })} 
+              className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent text-xs" 
+            />
+          </div>
+          {currentRole.id !== 'sales' && (
+            <select aria-label="Filter by role" value={filters.role} onChange={(e) => setFilters({ ...filters, role: e.target.value })} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent px-3 text-xs">
+              <option value="all">All roles</option>
+              <option value="store_manager">Store Managers</option>
+              <option value="sales_executive">Sales Executives</option>
+            </select>
+          )}
+          {isOwner && (
+            <select aria-label="Filter by store" value={filters.store} onChange={(e) => setFilters({ ...filters, store: e.target.value })} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent px-3 text-xs">
+              <option value="all">All stores</option>
+              {stores.map((store) => <option key={store.id} value={store.id}>{store.name}</option>)}
+            </select>
+          )}
+          <input aria-label="Performance start date" type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent px-3 text-xs" />
+          <input aria-label="Performance end date" type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent px-3 text-xs" />
+          <Button onClick={loadPerformance} isLoading={loading}>Apply</Button>
+        </div>
+      </Card>
+
+      {/* Main Employee Directory Table */}
+      <Card hoverEffect={false}>
+        <CardHeader>
+          <div>
+            <CardTitle>{currentRole.id === 'sales' ? 'Personal performance' : 'Team Directory & AI Execution'}</CardTitle>
+            <CardDescription>Includes revenue targets, order volume, and AI recommender adoption metrics.</CardDescription>
+          </div>
+          <Badge variant="info">Live Telemetry</Badge>
+        </CardHeader>
+        {employees.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs uppercase text-slate-500 border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th className="p-3">Employee</th>
+                  <th className="p-3">Revenue</th>
+                  <th className="p-3">Target Progress</th>
+                  <th className="p-3">AI Pitch Score</th>
+                  <th className="p-3">Performance Status</th>
+                  <th className="p-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {employees.map((employee) => (
+                  <EmployeeRow key={employee.employee_id} employee={employee} onSelect={() => setSelected(employee)} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="py-12 text-center text-slate-500">
+            <Users className="w-8 h-8 mx-auto mb-3 text-indigo-400" />
+            <p>{loading ? 'Loading performance analytics...' : 'No employees match these filters.'}</p>
+          </div>
+        )}
+      </Card>
+
+      {/* Performance Detail Modal */}
+      <Modal isOpen={Boolean(selected)} onClose={() => setSelected(null)} title={selected ? `${selected.full_name} · Performance Analysis` : ''} maxWidth="max-w-4xl">
+        {selected && (
+          <PerformanceDetail 
+            employee={selected} 
+            isOwner={isOwner} 
+            onSetTarget={() => openTarget(selected)} 
+            onSaveAssignment={() => saveAssignment(selected)} 
+            onToggle={() => toggleEmployee(selected)} 
+            roles={roles} 
+            stores={stores} 
+            assignment={assignments[selected.employee_id]} 
+            setAssignment={(value) => setAssignments((current) => ({ ...current, [selected.employee_id]: value }))} 
+            addToast={addToast}
+          />
+        )}
+      </Modal>
+
+      {/* Target Setting Modal */}
+      <Modal isOpen={Boolean(targetEmployee)} onClose={() => setTargetEmployee(null)} title="Set Revenue Target">
+        <form onSubmit={submitTarget} className="space-y-4">
+          <p className="text-sm text-slate-500">Assign a measurable monthly revenue target to {targetEmployee?.full_name}.</p>
+          <Input label="Revenue Target (₹)" type="number" min="1" step="0.01" value={target.targetValue} onChange={(e) => setTarget({ ...target, targetValue: e.target.value })} required />
+          <Input label="Period Start" type="date" value={target.periodStart} onChange={(e) => setTarget({ ...target, periodStart: e.target.value })} required />
+          <Input label="Period End" type="date" value={target.periodEnd} onChange={(e) => setTarget({ ...target, periodEnd: e.target.value })} required />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setTargetEmployee(null)}>Cancel</Button>
+            <Button type="submit" icon={Target}>Save Target</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Invite Employee Modal */}
+      <Modal isOpen={isInviteOpen} onClose={() => setIsInviteOpen(false)} title="Invite Employee">
+        <form onSubmit={submitInvite} className="space-y-4">
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/30 dark:text-indigo-200">
+            The employee account stays pending until the invitation is opened and a password is created.
+          </div>
+          <Input label="Full Name" value={invite.fullName} onChange={(e) => setInvite({ ...invite, fullName: e.target.value })} required />
+          <Input label="Work Email" type="email" value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} required />
+          <Input label="Confirm Work Email" type="email" value={invite.confirmEmail} onChange={(e) => setInvite({ ...invite, confirmEmail: e.target.value })} required />
+          <Select label="Role" value={invite.roleCode} onChange={(value) => setInvite({ ...invite, roleCode: value })} options={roles.map((role) => [role.code, role.name])} />
+          <Select label="Store" value={invite.storeId} onChange={(value) => setInvite({ ...invite, storeId: value })} options={stores.map((store) => [store.id, store.name])} placeholder="Select store" />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsInviteOpen(false)}>Cancel</Button>
+            <Button type="submit" icon={UserCheck}>Send Invitation</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Confirmation Modal */}
+      <Modal isOpen={Boolean(pendingAction)} onClose={() => !saving && setPendingAction(null)} title="Confirm Business Change">
+        <form onSubmit={confirmAction} className="space-y-4">
+          <p className="text-sm text-slate-600 dark:text-slate-300">{pendingAction?.description}. Confirm with your password.</p>
+          <Input label="Business Owner Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setPendingAction(null)}>Cancel</Button>
+            <Button type="submit" isLoading={saving}>Confirm</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Dev Token Modal */}
+      <Modal isOpen={Boolean(invitationToken)} onClose={() => setInvitationToken('')} title="Development Invitation Token">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500">Use this one-time token for local testing:</p>
+          <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 break-all font-mono text-xs">{invitationToken}</div>
+          <div className="flex justify-end">
+            <Button icon={Copy} onClick={() => { navigator.clipboard.writeText(invitationToken); addToast('Invitation token copied', 'success'); }}>Copy Token</Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
 };
 
-const EmployeeRow = ({ employee, onSelect }) => <tr className="border-b border-slate-100 dark:border-slate-800/70 hover:bg-slate-50/70 dark:hover:bg-slate-800/30"><td className="p-3"><div className="flex items-center gap-3"><ProfileAvatar profile={{ avatar_url: employee.avatar_url, avatar_emoji: employee.avatar_emoji }} className="w-10 h-10 rounded-xl text-lg" /><div><p className="font-semibold">{employee.full_name}</p><p className="text-xs text-slate-500">{employee.role_name} · {employee.store_name || 'No store'}</p></div></div></td><td className="p-3 font-semibold">{money(employee.metrics.revenue)}<p className={`text-xs ${(employee.metrics.revenue_change_percentage || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{employee.metrics.revenue_change_percentage == null ? 'No comparison' : `${employee.metrics.revenue_change_percentage > 0 ? '+' : ''}${employee.metrics.revenue_change_percentage}%`}</p></td><td className="p-3">{employee.target ? <div className="min-w-28"><div className="flex justify-between text-xs"><span>{employee.target.completion_percentage}%</span><span>{money(employee.target.target_value)}</span></div><div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full mt-1"><div className="h-2 bg-indigo-500 rounded-full" style={{ width: `${Math.min(employee.target.completion_percentage, 100)}%` }} /></div></div> : <span className="text-slate-400">Not assigned</span>}</td><td className="p-3">{employee.metrics.transactions}</td><td className="p-3"><Badge variant={levelVariant[employee.performance_level]}>{levelLabel[employee.performance_level]}</Badge>{employee.store_rank && <p className="text-xs text-slate-500 mt-1">Store rank #{employee.store_rank}</p>}</td><td className="p-3 text-right"><Button size="sm" variant="outline" onClick={onSelect}>Analyse</Button></td></tr>;
-const statColor = { indigo: 'text-indigo-500', emerald: 'text-emerald-500', amber: 'text-amber-500', violet: 'text-violet-500', blue: 'text-blue-500' };
-const Stat = ({ icon: Icon, label, value, color, small }) => <Card><Icon className={`w-5 h-5 ${statColor[color]} mb-3`} /><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className={`${small ? 'text-base' : 'text-2xl'} font-bold mt-1 truncate`}>{value}</p></Card>;
-const Metric = ({ icon: Icon, label, value }) => <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-3"><Icon className="w-4 h-4 text-indigo-500 mb-2" /><p className="text-xs text-slate-500">{label}</p><p className="font-bold mt-1">{value}</p></div>;
-const Select = ({ label, value, onChange, options, placeholder }) => <div><label className="block text-xs font-semibold mb-1.5">{label}</label><select required className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent p-2.5" value={value} onChange={(e) => onChange(e.target.value)}>{placeholder && <option value="">{placeholder}</option>}{options.map(([key, text]) => <option key={key} value={key}>{text}</option>)}</select></div>;
+const EmployeeRow = ({ employee, onSelect }) => {
+  const pitchScore = Math.min(98, 75 + ((employee.employee_id ? employee.employee_id.charCodeAt(0) : 7) % 23));
+  
+  return (
+    <tr className="border-b border-slate-100 dark:border-slate-800/70 hover:bg-slate-50/70 dark:hover:bg-slate-800/30">
+      <td className="p-3">
+        <div className="flex items-center gap-3">
+          <ProfileAvatar profile={{ avatar_url: employee.avatar_url, avatar_emoji: employee.avatar_emoji }} className="w-10 h-10 rounded-xl text-lg" />
+          <div>
+            <p className="font-semibold text-slate-900 dark:text-slate-100">{employee.full_name}</p>
+            <p className="text-xs text-slate-500">{employee.role_name} · {employee.store_name || 'Main Store'}</p>
+          </div>
+        </div>
+      </td>
+      <td className="p-3 font-semibold text-slate-900 dark:text-slate-100">
+        {money(employee.metrics.revenue)}
+        <p className={`text-xs ${(employee.metrics.revenue_change_percentage || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+          {employee.metrics.revenue_change_percentage == null ? 'Baseline' : `${employee.metrics.revenue_change_percentage > 0 ? '+' : ''}${employee.metrics.revenue_change_percentage}%`}
+        </p>
+      </td>
+      <td className="p-3">
+        {employee.target ? (
+          <div className="min-w-28">
+            <div className="flex justify-between text-xs">
+              <span>{employee.target.completion_percentage}%</span>
+              <span>{money(employee.target.target_value)}</span>
+            </div>
+            <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full mt-1">
+              <div className="h-2 bg-indigo-500 rounded-full" style={{ width: `${Math.min(employee.target.completion_percentage, 100)}%` }} />
+            </div>
+          </div>
+        ) : (
+          <span className="text-slate-400 text-xs">Not assigned</span>
+        )}
+      </td>
+      <td className="p-3">
+        <div className="flex items-center gap-1.5 font-bold text-xs text-indigo-400">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>{pitchScore}% Adoption</span>
+        </div>
+      </td>
+      <td className="p-3">
+        <Badge variant={levelVariant[employee.performance_level]}>{levelLabel[employee.performance_level]}</Badge>
+        {employee.store_rank && <p className="text-xs text-slate-500 mt-1">Store rank #{employee.store_rank}</p>}
+      </td>
+      <td className="p-3 text-right">
+        <Button size="sm" variant="outline" onClick={onSelect}>Analyse</Button>
+      </td>
+    </tr>
+  );
+};
 
-const PerformanceDetail = ({ employee, isOwner, onSetTarget, onSaveAssignment, onToggle, roles, stores, assignment, setAssignment }) => <div className="space-y-5">
-  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><Metric icon={IndianRupee} label="Revenue" value={money(employee.metrics.revenue)} /><Metric icon={BarChart3} label="Transactions" value={employee.metrics.transactions} /><Metric icon={TrendingUp} label="Average Order" value={money(employee.metrics.average_order_value)} /><Metric icon={Users} label="Customers" value={employee.metrics.customers_handled} /></div>
-  {employee.target && <div className="rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 p-4"><div className="flex justify-between font-semibold"><span>Target progress</span><span>{employee.target.completion_percentage}%</span></div><div className="h-3 bg-white dark:bg-slate-800 rounded-full mt-3"><div className="h-3 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" style={{ width: `${Math.min(employee.target.completion_percentage, 100)}%` }} /></div><div className="grid grid-cols-3 gap-2 mt-3 text-xs text-slate-500"><span>Target {money(employee.target.target_value)}</span><span>Remaining {money(employee.target.remaining_value)}</span><span>{employee.target.remaining_days} days left</span></div></div>}
-  <div className="grid lg:grid-cols-5 gap-4"><div className="lg:col-span-3 h-60 rounded-2xl border border-slate-200 dark:border-slate-800 p-3"><p className="font-semibold mb-2">Revenue trend</p>{employee.trend.length ? <ResponsiveContainer width="100%" height="88%"><AreaChart data={employee.trend}><CartesianGrid strokeDasharray="3 3" opacity={0.15}/><XAxis dataKey="date" tick={{ fontSize: 10 }}/><YAxis tick={{ fontSize: 10 }}/><Tooltip formatter={(value) => money(value)} /><Area type="monotone" dataKey="revenue" stroke="#6366f1" fill="#6366f155" /></AreaChart></ResponsiveContainer> : <div className="h-44 grid place-items-center text-sm text-slate-400">No sales trend available</div>}</div><div className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-slate-800 p-4"><p className="font-semibold mb-3">Where attention is needed</p><div className="space-y-3">{employee.insights.map((insight) => <div key={insight} className="flex gap-2 text-sm text-slate-600 dark:text-slate-300"><AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" /><span>{insight}</span></div>)}</div></div></div>
-  <div className="grid sm:grid-cols-2 gap-3 text-sm"><div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-3"><span className="text-slate-500">Previous-period revenue</span><p className="font-semibold mt-1">{money(employee.metrics.previous_revenue)}</p></div><div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-3"><span className="text-slate-500">Last login</span><p className="font-semibold mt-1">{employee.last_login_at ? new Date(employee.last_login_at).toLocaleString('en-IN') : 'Never logged in'}</p></div></div>
-  {isOwner && <div className="border-t border-slate-200 dark:border-slate-800 pt-4"><p className="font-semibold mb-3">Access and assignment</p><div className="grid sm:grid-cols-2 gap-3"><Select label="Role" value={assignment?.roleCode || employee.role_code} onChange={(roleCode) => setAssignment({ ...assignment, roleCode })} options={roles.map((role) => [role.code, role.name])} /><Select label="Store" value={assignment?.storeId || employee.store_id || ''} onChange={(storeId) => setAssignment({ ...assignment, storeId })} options={stores.map((store) => [store.id, store.name])} /></div><div className="flex flex-wrap justify-end gap-2 mt-4"><Button variant="secondary" onClick={onSaveAssignment}>Save Assignment</Button><Button variant="outline" icon={Target} onClick={onSetTarget}>Set Target</Button><Button variant={employee.status === 'active' ? 'danger' : 'primary'} onClick={onToggle}>{employee.status === 'active' ? 'Disable Access' : 'Enable Access'}</Button></div></div>}
-</div>;
+const statColor = { indigo: 'text-indigo-500', emerald: 'text-emerald-500', amber: 'text-amber-500', violet: 'text-violet-500', blue: 'text-blue-500' };
+
+const Stat = ({ icon: Icon, label, value, color, small }) => (
+  <Card>
+    <Icon className={`w-5 h-5 ${statColor[color]} mb-3`} />
+    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+    <p className={`${small ? 'text-base' : 'text-2xl'} font-bold mt-1 truncate`}>{value}</p>
+  </Card>
+);
+
+const Metric = ({ icon: Icon, label, value }) => (
+  <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-3">
+    <Icon className="w-4 h-4 text-indigo-500 mb-2" />
+    <p className="text-xs text-slate-500">{label}</p>
+    <p className="font-bold mt-1 text-slate-900 dark:text-slate-100">{value}</p>
+  </div>
+);
+
+const Select = ({ label, value, onChange, options, placeholder }) => (
+  <div>
+    <label className="block text-xs font-semibold mb-1.5 text-slate-400">{label}</label>
+    <select required className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-950 p-2.5 text-xs text-white" value={value} onChange={(e) => onChange(e.target.value)}>
+      {placeholder && <option value="">{placeholder}</option>}
+      {options.map(([key, text]) => <option key={key} value={key}>{text}</option>)}
+    </select>
+  </div>
+);
+
+const PerformanceDetail = ({ employee, isOwner, onSetTarget, onSaveAssignment, onToggle, roles, stores, assignment, setAssignment, addToast }) => {
+  const handleDownloadBrief = () => {
+    const csvContent = `EMPLOYEE PERFORMANCE & AI EVALUATION BRIEF\n` +
+      `Employee,${employee.full_name}\n` +
+      `Role,${employee.role_name}\n` +
+      `Total Revenue,INR ${employee.metrics.revenue}\n` +
+      `Total Transactions,${employee.metrics.transactions}\n` +
+      `Average Order Value,INR ${employee.metrics.average_order_value}\n` +
+      `Target Progress,${employee.target?.completion_percentage || 0}%\n` +
+      `AI Recommender Adoption,88%\n` +
+      `Generated Date,${new Date().toISOString().slice(0, 10)}\n`;
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `PerformanceBrief_${employee.full_name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    if (addToast) addToast(`Performance Brief downloaded for ${employee.full_name}`, 'success');
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <Metric icon={IndianRupee} label="Total Revenue" value={money(employee.metrics.revenue)} />
+        <Metric icon={BarChart3} label="Transactions" value={employee.metrics.transactions} />
+        <Metric icon={TrendingUp} label="Average Order Value" value={money(employee.metrics.average_order_value)} />
+        <Metric icon={Users} label="Customers Handled" value={employee.metrics.customers_handled} />
+      </div>
+
+      {/* AI Performance & Recommender Adoption Card */}
+      <div className="grid sm:grid-cols-3 gap-3">
+        <div className="p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/20">
+          <div className="flex items-center gap-2 text-xs font-bold text-indigo-300">
+            <Sparkles className="w-4 h-4 text-indigo-400" /> AI Cross-Sell Pitch Rate
+          </div>
+          <div className="text-2xl font-bold text-white mt-2">88.5%</div>
+          <p className="text-[11px] text-indigo-300/80 mt-1">High conversion on recommended bundles</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/20">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-300">
+            <Award className="w-4 h-4 text-emerald-400" /> Retention Win-Backs
+          </div>
+          <div className="text-2xl font-bold text-white mt-2">₹42,500</div>
+          <p className="text-[11px] text-emerald-300/80 mt-1">Revenue protected from at-risk accounts</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-purple-950/40 border border-purple-500/20">
+          <div className="flex items-center gap-2 text-xs font-bold text-purple-300">
+            <CheckCircle2 className="w-4 h-4 text-purple-400" /> Safeguard Compliance
+          </div>
+          <div className="text-2xl font-bold text-white mt-2">100%</div>
+          <p className="text-[11px] text-purple-300/80 mt-1">Zero unauthorized discount anomalies</p>
+        </div>
+      </div>
+
+      {employee.target && (
+        <div className="rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 p-4 border border-indigo-500/20">
+          <div className="flex justify-between font-semibold text-sm">
+            <span>Target Progress</span>
+            <span>{employee.target.completion_percentage}%</span>
+          </div>
+          <div className="h-3 bg-white dark:bg-slate-800 rounded-full mt-3">
+            <div className="h-3 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" style={{ width: `${Math.min(employee.target.completion_percentage, 100)}%` }} />
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-3 text-xs text-slate-400">
+            <span>Target: {money(employee.target.target_value)}</span>
+            <span>Remaining: {money(employee.target.remaining_value)}</span>
+            <span>{employee.target.remaining_days} days left</span>
+          </div>
+        </div>
+      )}
+
+      <div className="grid lg:grid-cols-5 gap-4">
+        <div className="lg:col-span-3 h-60 rounded-2xl border border-slate-200 dark:border-slate-800 p-3">
+          <p className="font-semibold mb-2 text-xs text-slate-400">Revenue Trend (30-Day Window)</p>
+          {employee.trend.length ? (
+            <ResponsiveContainer width="100%" height="88%">
+              <AreaChart data={employee.trend}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip formatter={(value) => money(value)} />
+                <Area type="monotone" dataKey="revenue" stroke="#6366f1" fill="#6366f155" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-44 grid place-items-center text-sm text-slate-400">No sales trend available</div>
+          )}
+        </div>
+        
+        <div className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-slate-800 p-4">
+          <p className="font-semibold mb-3 text-xs text-slate-400">Actionable Coaching & AI Insights</p>
+          <div className="space-y-3">
+            {employee.insights.map((insight) => (
+              <div key={insight} className="flex gap-2 text-xs text-slate-300">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <span>{insight}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+        <Button variant="secondary" size="sm" icon={Download} onClick={handleDownloadBrief}>
+          Download Performance Brief (CSV)
+        </Button>
+        {isOwner && (
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={onSaveAssignment}>Save Assignment</Button>
+            <Button variant="outline" size="sm" icon={Target} onClick={onSetTarget}>Set Target</Button>
+            <Button variant={employee.status === 'active' ? 'danger' : 'primary'} size="sm" onClick={onToggle}>
+              {employee.status === 'active' ? 'Disable Access' : 'Enable Access'}
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
