@@ -199,12 +199,12 @@ function EvalMetricsSection({ evaluation }) {
     <div className="space-y-3">
       <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
         <BarChart2 className="w-4 h-4 text-purple-500" />
-        Model Evaluation Metrics
+        AI Recommender Accuracy & Reliability
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card hoverEffect>
           <div className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-2">
-            Precision @ {evaluation.k}
+            Bundle Match Accuracy
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
             {evaluation.precision_at_k != null
@@ -212,12 +212,12 @@ function EvalMetricsSection({ evaluation }) {
               : '--'}
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Relevant recommendations ratio
+            High-conversion recommendation precision
           </p>
         </Card>
         <Card hoverEffect>
           <div className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-2">
-            Recall @ {evaluation.k}
+            Signal Coverage
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
             {evaluation.recall_at_k != null
@@ -225,17 +225,17 @@ function EvalMetricsSection({ evaluation }) {
               : '--'}
           </div>
           <p className="text-xs text-emerald-500 font-medium mt-1 flex items-center gap-1">
-            <ArrowUpRight className="w-3.5 h-3.5" /> Signal retrieval coverage
+            <ArrowUpRight className="w-3.5 h-3.5" /> Customer demand signals captured
           </p>
         </Card>
         <Card hoverEffect>
           <div className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-2">
-            F1-Score @ {evaluation.k}
+            Overall Reliability
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {evaluation.f1_score_at_k != null ? evaluation.f1_score_at_k.toFixed(3) : '--'}
+            {evaluation.f1_score_at_k != null ? `${(evaluation.f1_score_at_k * 100).toFixed(1)}%` : '--'}
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Harmonic accuracy score</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Balanced AI confidence score</p>
         </Card>
       </div>
       <div className="text-xs text-slate-400 dark:text-slate-500 text-right">
@@ -811,24 +811,24 @@ export const ProductRecommendationsModule = () => {
   // ── Role header config
   const roleHeader = {
     owner: {
-      badge: 'AI Revenue Intelligence',
-      description: 'Business-wide cross-sell and upsell opportunities based on customer and sales data.',
+      badge: 'Revenue Growth AI',
+      description: 'Maximize Average Order Value (AOV) and revenue per client with AI-suggested product bundles.',
     },
     manager: {
       badge: 'Store Recommendations',
-      description: 'Store-level product recommendations, frequently bought together, and inventory signals.',
+      description: 'Boost store sales with optimal product pairings, low-stock bundles, and cross-sell ideas.',
     },
     sales: {
       badge: 'Customer Selling Guide',
-      description: 'Customer-oriented product recommendations and cross-sell opportunities for active accounts.',
+      description: 'Instantly see what your customer is most likely to buy next during calls or checkout.',
     },
     admin: {
       badge: 'System Monitoring',
-      description: 'System-wide recommendation activity and model accuracy metrics.',
+      description: 'System-wide recommendation activity and AI prediction reliability metrics.',
     },
   }[userRole] || {
-    badge: 'AI Recommendations',
-    description: 'Smart product recommendations based on customer and sales behavior.',
+    badge: 'Smart Recommendations',
+    description: 'Boost revenue with intelligent product recommendations based on customer buying habits.',
   };
 
   const strategyOptions = [

@@ -54,9 +54,9 @@ export const ChurnPredictionModule = () => {
               <UserX className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">AI Churn & Retention Analytics</h1>
+              <h1 className="text-2xl font-bold text-white tracking-tight">At-Risk Customer Retention Center</h1>
               <p className="text-slate-400 text-sm mt-0.5">
-                Scikit-Learn Logistic Regression & Random Forest customer retention risk scoring
+                Identify slipping accounts early and launch 1-click discount offers or executive calls to protect your revenue.
               </p>
             </div>
           </div>
@@ -67,7 +67,7 @@ export const ChurnPredictionModule = () => {
           className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh Model
+          Refresh Retention AI
         </button>
       </div>
 
@@ -80,7 +80,7 @@ export const ChurnPredictionModule = () => {
               <Users className="w-5 h-5 text-indigo-400" />
             </div>
             <div className="text-3xl font-bold text-white">{summary.total_customers_analyzed}</div>
-            <div className="text-xs text-indigo-400 mt-2 font-medium">Model: {summary.algorithm}</div>
+            <div className="text-xs text-indigo-400 mt-2 font-medium">Engine: Retention Risk AI</div>
           </div>
 
           <div className="bg-slate-900/80 backdrop-blur border border-red-500/30 p-5 rounded-2xl shadow-lg relative overflow-hidden">
@@ -106,11 +106,11 @@ export const ChurnPredictionModule = () => {
 
           <div className="bg-slate-900/80 backdrop-blur border border-slate-800 p-5 rounded-2xl shadow-lg">
             <div className="flex items-center justify-between text-slate-400 mb-3">
-              <span className="text-sm font-medium">Model Accuracy Score</span>
+              <span className="text-sm font-medium">AI Retention Accuracy</span>
               <CheckCircle className="w-5 h-5 text-emerald-400" />
             </div>
             <div className="text-3xl font-bold text-emerald-400">{(summary.accuracy * 100).toFixed(1)}%</div>
-            <div className="text-xs text-emerald-400/80 mt-2 font-medium">F1 Score: {(summary.f1_score * 100).toFixed(1)}%</div>
+            <div className="text-xs text-emerald-400/80 mt-2 font-medium">Reliability: High ({(summary.f1_score * 100).toFixed(0)}%)</div>
           </div>
         </div>
       )}
@@ -119,7 +119,7 @@ export const ChurnPredictionModule = () => {
       {summary?.insights && summary.insights.length > 0 && (
         <div className="bg-gradient-to-r from-indigo-950/40 via-slate-900 to-indigo-950/40 border border-indigo-500/20 p-5 rounded-2xl">
           <h3 className="text-sm font-semibold text-indigo-300 uppercase tracking-wider mb-2 flex items-center gap-2">
-            <ArrowUpRight className="w-4 h-4 text-indigo-400" /> Executive AI Recommendations & Model Diagnostics
+            <ArrowUpRight className="w-4 h-4 text-indigo-400" /> Actionable Retention Strategy & Insights
           </h3>
           <ul className="space-y-1.5 text-sm text-slate-300">
             {summary.insights.map((insight, idx) => (

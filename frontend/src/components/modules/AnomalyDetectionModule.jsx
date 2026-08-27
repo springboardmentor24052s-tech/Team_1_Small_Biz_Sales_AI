@@ -56,9 +56,9 @@ export const AnomalyDetectionModule = () => {
               <Activity className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">Isolation Forest Anomaly Detection</h1>
+              <h1 className="text-2xl font-bold text-white tracking-tight">Business Safeguards & Fraud Protection</h1>
               <p className="text-slate-400 text-sm mt-0.5">
-                Real-time operational fraud alerts, inventory shrinkage, and forecast residual scanning
+                Automated safeguards scanning for unusual sales spikes, rapid stock depletion, and inventory leaks.
               </p>
             </div>
           </div>
@@ -69,7 +69,7 @@ export const AnomalyDetectionModule = () => {
           className="flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-rose-600/20 disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Run Detection Scan
+          Run Safeguard Scan
         </button>
       </div>
 
@@ -78,11 +78,11 @@ export const AnomalyDetectionModule = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-slate-900/80 backdrop-blur border border-slate-800 p-5 rounded-2xl shadow-lg">
             <div className="flex items-center justify-between text-slate-400 mb-3">
-              <span className="text-sm font-medium">Flagged Anomalies</span>
+              <span className="text-sm font-medium">Flagged Incidents</span>
               <AlertTriangle className="w-5 h-5 text-amber-400" />
             </div>
             <div className="text-3xl font-bold text-white">{summary.total_anomalies_detected}</div>
-            <div className="text-xs text-slate-400 mt-2 font-medium">Model: {summary.algorithm}</div>
+            <div className="text-xs text-slate-400 mt-2 font-medium">Engine: Automated Safeguard AI</div>
           </div>
 
           <div className="bg-slate-900/80 backdrop-blur border border-rose-500/30 p-5 rounded-2xl shadow-lg relative overflow-hidden">
@@ -119,7 +119,7 @@ export const AnomalyDetectionModule = () => {
       {summary?.insights && summary.insights.length > 0 && (
         <div className="bg-gradient-to-r from-rose-950/30 via-slate-900 to-rose-950/30 border border-rose-500/20 p-5 rounded-2xl">
           <h3 className="text-sm font-semibold text-rose-300 uppercase tracking-wider mb-2 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-rose-400" /> ML Isolation Forest Insights & Sensitivity Rules
+            <Activity className="w-4 h-4 text-rose-400" /> Automated Risk Analysis & Recommendations
           </h3>
           <ul className="space-y-1.5 text-sm text-slate-300">
             {summary.insights.map((insight, idx) => (
@@ -154,15 +154,15 @@ export const AnomalyDetectionModule = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400">Contamination Rate:</span>
+            <span className="text-xs text-slate-400">Alert Sensitivity:</span>
             <select
               value={contamination}
               onChange={(e) => setContamination(parseFloat(e.target.value))}
               className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-rose-500"
             >
-              <option value="0.02">2% (Strict)</option>
-              <option value="0.05">5% (Balanced Standard)</option>
-              <option value="0.10">10% (High Sensitivity)</option>
+              <option value="0.02">Strict Safeguard (2%)</option>
+              <option value="0.05">Balanced Standard (5%)</option>
+              <option value="0.10">High Sensitivity (10%)</option>
             </select>
           </div>
         </div>
