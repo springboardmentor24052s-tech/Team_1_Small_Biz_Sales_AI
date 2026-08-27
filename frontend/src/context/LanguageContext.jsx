@@ -6,6 +6,7 @@ const TRANSLATIONS = {
   hi: {
     // Navigation & Sidebar
     'Dashboard': 'डैशबोर्ड',
+    'AI Chat System': 'एआई चैट सिस्टम',
     'Sales Deals': 'बिक्री सौदे',
     'Inventory': 'स्टॉक इन्वेंटरी',
     'Customers': 'ग्राहक',

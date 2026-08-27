@@ -30,6 +30,7 @@ import { BusinessSetupModule } from './components/modules/BusinessSetupModule';
 import { ProductRecommendationsModule } from './components/modules/ProductRecommendationsModule';
 import { ChurnPredictionModule } from './components/modules/ChurnPredictionModule';
 import { AnomalyDetectionModule } from './components/modules/AnomalyDetectionModule';
+import { AiChatModule } from './components/modules/AiChatModule';
 
 const MainAppContent = () => {
   const { isAuthenticated, isInitializing, currentRole, profile } = useAuth();
@@ -106,6 +107,8 @@ const MainAppContent = () => {
         return <ChurnPredictionModule />;
       case 'anomalies':
         return <AnomalyDetectionModule />;
+      case 'ai_chat':
+        return <AiChatModule />;
       case 'reports':
         return <ReportsModule />;
       case 'components':
