@@ -14,6 +14,11 @@ from app.core.config import settings
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    from app.bootstrap import bootstrap
+    try:
+        bootstrap()
+    except Exception:
+        pass
     yield
 
 
