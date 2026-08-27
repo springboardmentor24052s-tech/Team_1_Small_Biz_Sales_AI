@@ -45,13 +45,13 @@ export const OwnerDashboard = ({ onNavigate }) => {
     ...mockKpis,
     totalRevenue: {
       ...mockKpis.totalRevenue,
-      value: salesDashboard ? money(salesDashboard.revenue.value) : mockKpis.totalRevenue.value,
+      value: salesDashboard?.revenue?.value != null ? money(salesDashboard.revenue.value) : mockKpis.totalRevenue.value,
       change: salesDashboard ? 'Live database' : mockKpis.totalRevenue.change,
       timeFrame: salesDashboard ? 'selected period' : mockKpis.totalRevenue.timeFrame
     },
     totalOrders: {
       ...mockKpis.totalOrders,
-      value: salesDashboard?.transaction_count.value ?? mockKpis.totalOrders.value,
+      value: salesDashboard?.transaction_count?.value ?? mockKpis.totalOrders.value,
       change: salesDashboard ? 'Imported orders' : mockKpis.totalOrders.change,
       timeFrame: salesDashboard ? 'selected period' : mockKpis.totalOrders.timeFrame
     },
@@ -63,7 +63,7 @@ export const OwnerDashboard = ({ onNavigate }) => {
     },
     averageOrderValue: {
       ...mockKpis.averageOrderValue,
-      value: salesDashboard ? money(salesDashboard.average_order_value.value) : mockKpis.averageOrderValue.value,
+      value: salesDashboard?.average_order_value?.value != null ? money(salesDashboard.average_order_value.value) : mockKpis.averageOrderValue.value,
       change: salesDashboard ? 'AOV calculation' : mockKpis.averageOrderValue.change,
       timeFrame: salesDashboard ? 'selected period' : mockKpis.averageOrderValue.timeFrame
     }
