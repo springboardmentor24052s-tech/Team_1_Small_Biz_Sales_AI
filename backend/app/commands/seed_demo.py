@@ -89,7 +89,19 @@ def main() -> None:
             if role_code == RoleCode.ADMINISTRATOR:
                 user.mfa_secret = ADMIN_MFA_SECRET
                 user.mfa_enabled = True
+            if role_code == RoleCode.BUSINESS_OWNER:
+                owner_id = user.id
             created.append({"role": role.name, "email": email})
+        
+        # Auto-seed sample products, sales, inventory and recommendations for demo tenant
+        try:
+            from app.services.onboarding import seed_business_sample
+            owner_user = db.scalar(select(User).where(User.tenant_id == tenant.id, User.email == DEMO_ACCOUNTS[RoleCode.BUSINESS_OWNER]))
+            if owner_user:
+                seed_business_sample(db, tenant_id=tenant.id, store_id=store.id, seller_id=owner_user.id)
+        except Exception:
+            pass
+
         db.commit()
         print(
             json.dumps(

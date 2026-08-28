@@ -449,6 +449,8 @@ def seed_business_sample(db: Session, *, tenant_id: UUID, store_id: UUID, seller
                         product_id=product.id,
                         quantity=1 + (index + product_index) // 15,
                         line_amount=line_amount,
+                        created_at=transaction.occurred_at,
+                        updated_at=transaction.occurred_at,
                     )
                 )
     for index in range(24):
