@@ -65,8 +65,9 @@ def _pbkdf2_hash(password: str) -> str:
     return f"$pbkdf2-sha256$100000${salt}${key.hex()}"
 
 
-def hash_password(password: str) -> str:
-    validate_password(password)
+def hash_password(password: str, validate: bool = True) -> str:
+    if validate:
+        validate_password(password)
     if HAS_ARGON2 and _argon2_hasher is not None:
         try:
             return _argon2_hasher.hash(password)
