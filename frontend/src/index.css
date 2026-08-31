@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     --bg-primary: #f8fafc;
@@ -28,6 +30,110 @@ body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
   overflow-x: hidden;
+}
+
+/* Public landing page uses larger reading sizes than the dense dashboards. */
+.marketmind-landing .text-sm {
+  font-size: 1rem;
+  line-height: 1.65rem;
+}
+
+.marketmind-landing .text-xs {
+  font-size: 0.875rem;
+  line-height: 1.35rem;
+}
+
+.marketmind-landing [class*="text-[8px]"],
+.marketmind-landing [class*="text-[9px]"],
+.marketmind-landing [class*="text-[10px]"] {
+  font-size: 0.75rem !important;
+  line-height: 1rem;
+}
+
+.marketmind-landing [class*="text-[11px]"] {
+  font-size: 0.8125rem !important;
+  line-height: 1.1rem;
+}
+
+/* Authenticated workspaces favour readability over ultra-dense admin styling. */
+.marketmind-workspace {
+  --workspace-accent: 79 70 229;
+}
+
+.marketmind-workspace.role-manager { --workspace-accent: 5 150 105; }
+.marketmind-workspace.role-sales { --workspace-accent: 217 119 6; }
+.marketmind-workspace.role-admin { --workspace-accent: 124 58 237; }
+
+.dashboard-canvas {
+  background-image:
+    radial-gradient(circle at 92% 2%, rgb(var(--workspace-accent) / 0.09), transparent 25rem),
+    radial-gradient(circle at 8% 96%, rgb(14 165 233 / 0.05), transparent 30rem);
+  background-attachment: fixed;
+}
+
+.marketmind-workspace .text-xs {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+.marketmind-workspace .text-sm {
+  font-size: 0.9375rem;
+  line-height: 1.5rem;
+}
+
+.marketmind-workspace [class*="text-[10px]"] {
+  font-size: 0.75rem !important;
+  line-height: 1rem;
+}
+
+.marketmind-workspace [class*="text-[11px]"] {
+  font-size: 0.78125rem !important;
+  line-height: 1.1rem;
+}
+
+.marketmind-workspace table th {
+  font-size: 0.8125rem;
+  letter-spacing: 0.035em;
+}
+
+.marketmind-workspace table td {
+  font-size: 0.875rem;
+  line-height: 1.35rem;
+}
+
+.marketmind-workspace input,
+.marketmind-workspace select,
+.marketmind-workspace textarea,
+.marketmind-workspace button {
+  font-size: max(0.8125rem, 1em);
+}
+
+.marketmind-workspace .marketmind-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.marketmind-workspace .marketmind-card::before {
+  position: absolute;
+  inset: 0 auto auto 1.5rem;
+  width: 3rem;
+  height: 2px;
+  border-radius: 999px;
+  background: rgb(var(--workspace-accent) / 0.7);
+  content: '';
+}
+
+.marketmind-workspace .marketmind-card:hover {
+  border-color: rgb(var(--workspace-accent) / 0.35);
+}
+
+.marketmind-workspace.density-compact .marketmind-card {
+  padding: 1.15rem;
+}
+
+@media (max-width: 640px) {
+  .marketmind-workspace .text-xs { font-size: 0.8rem; }
+  .marketmind-workspace .text-sm { font-size: 0.9rem; }
 }
 
 /* Glassmorphism utility classes */

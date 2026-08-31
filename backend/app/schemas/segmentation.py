@@ -16,7 +16,7 @@ class SegmentProfile(BaseModel):
     average_recency_days: float
     average_order_count: float
     average_engagement_score: float
-    average_return_rate: float
+    average_return_rate: float | None
 
 
 class CustomerBehaviorSummary(BaseModel):
@@ -48,9 +48,9 @@ class CustomerSegmentResponse(BaseModel):
     total_revenue: Decimal
     average_order_value: Decimal
     average_basket_size: Decimal
-    active_months: int
-    product_variety: int
-    return_rate: Decimal
+    active_months: int | None
+    product_variety: int | None
+    return_rate: Decimal | None
     purchase_frequency_30d: Decimal
 
 

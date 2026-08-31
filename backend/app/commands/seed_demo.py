@@ -32,7 +32,14 @@ def main() -> None:
         seed_authorization(db)
         tenant = db.scalar(select(Tenant).where(Tenant.slug == args.tenant))
         if not tenant:
-            raise SystemExit(f"Tenant not found: {args.tenant}")
+            tenant = Tenant(
+                name="MarketMind Demo Business",
+                slug=args.tenant,
+                currency="INR",
+                timezone="Asia/Kolkata",
+            )
+            db.add(tenant)
+            db.flush()
         store = db.scalar(
             select(Store).where(
                 Store.tenant_id == tenant.id,
@@ -40,13 +47,25 @@ def main() -> None:
             )
         )
         if not store:
-            raise SystemExit(f"Store not found for tenant: {args.store}")
+            store = Store(
+                tenant_id=tenant.id,
+                name="Main Demo Store",
+                code=args.store,
+                timezone="Asia/Kolkata",
+            )
+            db.add(store)
+            db.flush()
         roles = {role.code: role for role in db.scalars(select(Role)).all()}
         created = []
         for role_code, email in DEMO_ACCOUNTS.items():
+            role = roles[role_code.value]
+            if role_code == RoleCode.ADMINISTRATOR:
+                existing_admin = db.scalar(select(User).where(User.role_id == role.id))
+                if existing_admin:
+                    created.append({"role": role.name, "email": existing_admin.email})
+                    continue
             legacy_email = email.replace(".example.com", ".local")
             user = db.scalar(select(User).where(User.email.in_([email, legacy_email])))
-            role = roles[role_code.value]
             if not user:
                 user = User(
                     tenant_id=tenant.id,
@@ -70,7 +89,19 @@ def main() -> None:
             if role_code == RoleCode.ADMINISTRATOR:
                 user.mfa_secret = ADMIN_MFA_SECRET
                 user.mfa_enabled = True
+            if role_code == RoleCode.BUSINESS_OWNER:
+                owner_id = user.id
             created.append({"role": role.name, "email": email})
+        
+        # Auto-seed sample products, sales, inventory and recommendations for demo tenant
+        try:
+            from app.services.onboarding import seed_business_sample
+            owner_user = db.scalar(select(User).where(User.tenant_id == tenant.id, User.email == DEMO_ACCOUNTS[RoleCode.BUSINESS_OWNER]))
+            if owner_user:
+                seed_business_sample(db, tenant_id=tenant.id, store_id=store.id, seller_id=owner_user.id)
+        except Exception:
+            pass
+
         db.commit()
         print(
             json.dumps(

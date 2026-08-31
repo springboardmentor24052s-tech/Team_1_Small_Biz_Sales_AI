@@ -9,7 +9,9 @@ from preprocessing.forecasting import (
     _metrics,
     _seasonal_naive,
     clean_amazon_revenue,
+    clean_processed_sales,
     train_demand_forecasts,
+    train_personal_revenue_forecasts,
     train_revenue_forecasts,
 )
 
@@ -80,6 +82,32 @@ def _demand_fixture(train_path: Path, eval_path: Path) -> None:
     data.loc[data["dt"] > dates[-8]].to_parquet(eval_path, index=False)
 
 
+def _processed_sales_fixture(path: Path) -> None:
+    dates = pd.date_range("2025-01-01", periods=70, freq="D")
+    rows = [
+        {
+            "order_date": date.date().isoformat(),
+            "transaction_type": "sale",
+            "currency": "INR",
+            "amount": 500 + (index % 7) * 25 + index,
+            "category": "Set",
+            "quality_status": "valid",
+        }
+        for index, date in enumerate(dates)
+    ]
+    rows.append(
+        {
+            "order_date": "2025-02-01",
+            "transaction_type": "cancelled",
+            "currency": "INR",
+            "amount": 9999,
+            "category": "Set",
+            "quality_status": "non_positive_quantity",
+        }
+    )
+    pd.DataFrame(rows).to_csv(path, index=False)
+
+
 class ForecastingTests(unittest.TestCase):
     def test_clean_amazon_revenue_excludes_cancelled_and_negates_returns(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -103,7 +131,7 @@ class ForecastingTests(unittest.TestCase):
         self.assertEqual(len(aggregate), 30)
         self.assertTrue(aggregate["predicted"].ge(0).all())
         self.assertEqual(
-            {"seasonal_naive", "prophet", "xgboost", "random_forest"},
+            {"seasonal_naive", "prophet", "linear_trend", "xgboost", "random_forest"},
             {item["algorithm"] for item in result.report["candidate_metrics"]},
         )
 
@@ -119,6 +147,17 @@ class ForecastingTests(unittest.TestCase):
         self.assertEqual(result.report["modelled_series"], 2)
         self.assertEqual(set(result.predictions["horizon_day"]), set(range(1, 31)))
         self.assertTrue(result.predictions["predicted"].ge(0).all())
+
+    def test_personal_forecast_uses_only_valid_processed_sales(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "sales.csv"
+            _processed_sales_fixture(source)
+            cleaned = clean_processed_sales(source)
+            result = train_personal_revenue_forecasts(source, random_state=7)
+        self.assertEqual(len(cleaned), 70)
+        self.assertEqual(result.report["model_version"], "personal-forecast-v2")
+        self.assertEqual(result.report["source_system"], "marketmind_processed_sales")
+        self.assertEqual(len(result.predictions), 30)
 
     def test_seasonal_naive_and_metrics_are_deterministic(self):
         history = [float(value) for value in range(1, 15)]

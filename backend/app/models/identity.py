@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Table
+from sqlalchemy import JSON, Boolean, Column, Date, DateTime, ForeignKey, String, Table, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -105,6 +105,20 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     locale: Mapped[str] = mapped_column(String(16), default="en-IN", nullable=False)
     timezone: Mapped[str] = mapped_column(String(64), default="Asia/Kolkata", nullable=False)
+    phone_number: Mapped[str | None] = mapped_column(String(24))
+    job_title: Mapped[str | None] = mapped_column(String(100))
+    location: Mapped[str | None] = mapped_column(String(160))
+    bio: Mapped[str | None] = mapped_column(Text)
+    avatar_url: Mapped[str | None] = mapped_column(String(255))
+    avatar_emoji: Mapped[str] = mapped_column(String(16), default="🙂", nullable=False)
+    date_of_birth: Mapped[date | None] = mapped_column(Date)
+    theme_preference: Mapped[str] = mapped_column(String(16), default="system", nullable=False)
+    date_format: Mapped[str] = mapped_column(String(16), default="DD/MM/YYYY", nullable=False)
+    dashboard_density: Mapped[str] = mapped_column(
+        String(16), default="comfortable", nullable=False
+    )
+    email_notifications: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    role_preferences: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
     failed_login_count: Mapped[int] = mapped_column(default=0, nullable=False)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     mfa_secret: Mapped[str | None] = mapped_column(String(64))

@@ -52,14 +52,23 @@ def test_role_dashboard_access_matrix(
         "modules"
     ]
     sales_codes = {module["code"] for module in sales_modules}
-    assert "forecasts" not in sales_codes
+    assert "forecasts" in sales_codes
+    sales_forecast = next(module for module in sales_modules if module["code"] == "forecasts")
+    assert sales_forecast == {
+        "code": "forecasts",
+        "access": "personal",
+        "actions": ["view"],
+    }
     assert "churn" not in sales_codes
     assert "inventory" not in sales_codes
     assert "administration" not in sales_codes
 
     owner_token = login(client, accounts["business_owner"].email)
-    forbidden = client.get("/api/v1/users", headers=auth_header(owner_token))
-    assert forbidden.status_code == 403
+    owner_access = client.get("/api/v1/dashboard/access", headers=auth_header(owner_token)).json()
+    owner_codes = {module["code"] for module in owner_access["modules"]}
+    assert "team_management" in owner_codes
+    allowed = client.get("/api/v1/users", headers=auth_header(owner_token))
+    assert allowed.status_code == 200
 
 
 def test_admin_mfa_is_required_for_privileged_access(
@@ -75,7 +84,7 @@ def test_admin_mfa_is_required_for_privileged_access(
         email="admin@example.com",
     )
     initial_token = login(client, admin.email)
-    blocked = client.get("/api/v1/users", headers=auth_header(initial_token))
+    blocked = client.get("/api/v1/audit", headers=auth_header(initial_token))
     assert blocked.status_code == 403
 
     setup = client.post("/api/v1/auth/mfa/setup", headers=auth_header(initial_token))
@@ -92,5 +101,6 @@ def test_admin_mfa_is_required_for_privileged_access(
     assert confirmed.status_code == 200
 
     mfa_token = login(client, admin.email, pyotp.TOTP(secret).now())
-    allowed = client.get("/api/v1/users", headers=auth_header(mfa_token))
+    allowed = client.get("/api/v1/audit", headers=auth_header(mfa_token))
     assert allowed.status_code == 200
+    assert client.get("/api/v1/users", headers=auth_header(mfa_token)).status_code == 403

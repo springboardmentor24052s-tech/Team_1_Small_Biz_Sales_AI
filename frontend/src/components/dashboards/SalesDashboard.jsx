@@ -14,7 +14,6 @@ import {
   Sparkles,
   PhoneCall,
   Mail,
-  Calendar,
   Layers,
   ArrowRight
 } from 'lucide-react';
@@ -28,7 +27,7 @@ import {
   CartesianGrid
 } from 'recharts';
 
-export const SalesDashboard = () => {
+export const SalesDashboard = ({ onNavigate }) => {
   const { addToast } = useToast();
   const { salesDashboard } = useData();
   const {
@@ -77,6 +76,7 @@ export const SalesDashboard = () => {
     }),
     revenue: Number(point.revenue)
   }));
+  const hasSales = Number(salesDashboard?.transaction_count.value || 0) > 0;
 
   const handleContactLead = (name, method) => {
     addToast(`Initiated ${method} to ${name}`, 'info');
@@ -89,11 +89,11 @@ export const SalesDashboard = () => {
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-200 text-xs font-semibold">
             <Award className="w-3.5 h-3.5 text-amber-400" />
-            <span>Sales Coaching • Planned for Milestone 2</span>
+            <span>Personal Sales Forecast • Live</span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight">Sales Executive Deal Workspace</h2>
           <p className="text-sm text-amber-200">
-            Personal sales KPIs below use your authorised database records. AI coaching will be added in Milestone 2.
+            Personal KPIs use authorised database records. Your 7, 14 and 30-day forecast is available under Reports & Forecasts.
           </p>
         </div>
 
@@ -101,14 +101,16 @@ export const SalesDashboard = () => {
           variant="glass"
           size="sm"
           icon={PhoneCall}
-          disabled
+          onClick={() => onNavigate('reports')}
           className="shrink-0"
         >
-          Available in Milestone 2
+          Open My Forecast
         </Button>
       </div>
 
       <DateRangeFilter />
+
+      {!hasSales && <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20" hoverEffect={false}><h3 className="font-bold">No personal sales records yet</h3><p className="mt-1 text-sm text-slate-500">Sales entered by you or assigned to you during the Business Owner’s import will appear here. Forecasting becomes available after enough dated history is recorded.</p></Card>}
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -172,11 +174,11 @@ export const SalesDashboard = () => {
             <Layers className="w-4 h-4 text-indigo-500" />
             <span>Active Deal Funnel Pipeline</span>
           </h3>
-          <Badge variant="warning">Planned for Milestone 2</Badge>
+          <Badge variant="warning">Pipeline scoring planned for Milestone 3</Badge>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {pipelineStages.map((stg) => (
+          {(hasSales ? pipelineStages : []).map((stg) => (
             <Card key={stg.stage} className={`border-t-4 ${stg.color}`}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{stg.stage}</span>
@@ -186,6 +188,7 @@ export const SalesDashboard = () => {
               <p className="text-[11px] text-slate-400 mt-1">Weighted est. closure</p>
             </Card>
           ))}
+          {!hasSales && <p className="col-span-full rounded-xl border border-dashed border-slate-300 py-8 text-center text-sm text-slate-500 dark:border-slate-700">No deal activity is available for this account.</p>}
         </div>
       </div>
 
@@ -229,7 +232,7 @@ export const SalesDashboard = () => {
           </CardHeader>
 
           <div className="space-y-3">
-            {recentLeads.map((lead) => (
+            {(hasSales ? recentLeads : []).map((lead) => (
               <div
                 key={lead.name}
                 className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-indigo-300 transition-all"
@@ -272,6 +275,7 @@ export const SalesDashboard = () => {
                 </div>
               </div>
             ))}
+            {!hasSales && <p className="py-8 text-center text-sm text-slate-500">Opportunities will appear after customer and sales activity is assigned to you.</p>}
           </div>
         </Card>
       </div>

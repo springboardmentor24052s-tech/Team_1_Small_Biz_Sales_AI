@@ -1,9 +1,15 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext(null);
 
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [themePreference, setThemePreferenceState] = useState(() => {
+    const savedTheme = localStorage.getItem('marketmind-theme');
+    return savedTheme || 'dark';
+  });
+  const isDarkMode = themePreference === 'system'
+    ? window.matchMedia('(prefers-color-scheme: dark)').matches
+    : themePreference === 'dark';
 
   useEffect(() => {
     if (isDarkMode) {
@@ -11,14 +17,20 @@ export const ThemeProvider = ({ children }) => {
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [isDarkMode]);
+    localStorage.setItem('marketmind-theme', themePreference);
+  }, [isDarkMode, themePreference]);
 
   const toggleTheme = () => {
-    setIsDarkMode(prev => !prev);
+    setThemePreferenceState(isDarkMode ? 'light' : 'dark');
   };
 
+  const setThemePreference = useCallback(
+    (preference) => setThemePreferenceState(preference),
+    []
+  );
+
   return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
+    <ThemeContext.Provider value={{ isDarkMode, themePreference, toggleTheme, setThemePreference }}>
       {children}
     </ThemeContext.Provider>
   );

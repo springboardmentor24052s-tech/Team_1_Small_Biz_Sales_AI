@@ -3,8 +3,8 @@ from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import JSON, DateTime, ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
@@ -49,3 +49,47 @@ class SalesTransaction(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         String(20), default=TransactionStatus.COMPLETED, index=True, nullable=False
     )
     notes: Mapped[str | None] = mapped_column(String(500))
+    subtotal_amount: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
+    discount_amount: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
+    tax_amount: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
+    payment_method: Mapped[str | None] = mapped_column(String(30), index=True)
+    customer_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("customers.id", ondelete="SET NULL"), index=True
+    )
+    customer_snapshot: Mapped[dict | None] = mapped_column(JSON)
+
+    line_items: Mapped[list["SalesLineItem"]] = relationship(
+        back_populates="transaction", cascade="all, delete-orphan"
+    )
+
+
+class SalesLineItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Product-level quantity attached to an imported sale.
+
+    Demand models are never trained from the order-level ``item_count`` because it
+    does not identify which product was sold.
+    """
+
+    __tablename__ = "sales_line_items"
+    __table_args__ = (
+        UniqueConstraint(
+            "transaction_id", "product_id", name="uq_sales_line_items_transaction_product"
+        ),
+    )
+
+    tenant_id: Mapped[UUID] = mapped_column(
+        ForeignKey("tenants.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    transaction_id: Mapped[UUID] = mapped_column(
+        ForeignKey("sales_transactions.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    product_id: Mapped[UUID] = mapped_column(
+        ForeignKey("products.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    quantity: Mapped[int] = mapped_column(nullable=False)
+    line_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    unit_price: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
+    discount_amount: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
+
+    transaction: Mapped[SalesTransaction] = relationship(back_populates="line_items")
+    product = relationship("Product", lazy="joined")

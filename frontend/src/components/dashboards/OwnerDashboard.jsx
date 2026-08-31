@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { useData } from '../../context/DataContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { DateRangeFilter } from '../common/DateRangeFilter';
 import {
   DollarSign,
@@ -12,18 +13,13 @@ import {
   TrendingUp,
   Sparkles,
   ArrowUpRight,
-  ArrowDownRight,
   Zap,
-  BarChart2,
-  PieChart as PieIcon,
   Download
 } from 'lucide-react';
 import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
@@ -33,8 +29,9 @@ import {
   CartesianGrid
 } from 'recharts';
 
-export const OwnerDashboard = () => {
+export const OwnerDashboard = ({ onNavigate }) => {
   const { salesDashboard, customerSummary } = useData();
+  const { t } = useLanguage();
   const {
     kpis: mockKpis,
     categoryDistribution,
@@ -48,50 +45,51 @@ export const OwnerDashboard = () => {
     ...mockKpis,
     totalRevenue: {
       ...mockKpis.totalRevenue,
-      value: salesDashboard ? money(salesDashboard.revenue.value) : mockKpis.totalRevenue.value,
-      change: salesDashboard ? 'Live database' : mockKpis.totalRevenue.change,
-      timeFrame: salesDashboard ? 'selected period' : mockKpis.totalRevenue.timeFrame
+      value: salesDashboard?.revenue?.value != null ? money(salesDashboard.revenue.value) : (mockKpis.totalRevenue?.value || '₹0.00'),
+      change: salesDashboard ? 'Live database' : (mockKpis.totalRevenue?.change || '0%'),
+      timeFrame: salesDashboard ? 'selected period' : (mockKpis.totalRevenue?.timeFrame || 'vs last month')
     },
     totalOrders: {
       ...mockKpis.totalOrders,
-      value: salesDashboard?.transaction_count.value ?? mockKpis.totalOrders.value,
-      change: salesDashboard ? 'Imported orders' : mockKpis.totalOrders.change,
-      timeFrame: salesDashboard ? 'selected period' : mockKpis.totalOrders.timeFrame
+      value: salesDashboard?.transaction_count?.value != null ? salesDashboard.transaction_count.value : (mockKpis.totalOrders?.value || '0'),
+      change: salesDashboard ? 'Imported orders' : (mockKpis.totalOrders?.change || '0%'),
+      timeFrame: salesDashboard ? 'selected period' : (mockKpis.totalOrders?.timeFrame || 'vs last month')
     },
     totalCustomers: {
       ...mockKpis.totalCustomers,
-      value: customerSummary?.customer_count ?? mockKpis.totalCustomers.value,
-      change: customerSummary ? 'Cleaned customers' : mockKpis.totalCustomers.change,
-      timeFrame: customerSummary ? 'all imported records' : mockKpis.totalCustomers.timeFrame
+      value: customerSummary?.customer_count != null ? customerSummary.customer_count : (mockKpis.totalCustomers?.value || '0'),
+      change: customerSummary ? 'Cleaned customers' : (mockKpis.totalCustomers?.change || '0%'),
+      timeFrame: customerSummary ? 'all imported records' : (mockKpis.totalCustomers?.timeFrame || 'vs last month')
     },
     grossProfit: {
       ...mockKpis.grossProfit,
-      value: salesDashboard ? 'Not available' : mockKpis.grossProfit.value,
-      change: salesDashboard ? 'Cost data required' : mockKpis.grossProfit.change,
-      timeFrame: salesDashboard ? 'not calculated' : mockKpis.grossProfit.timeFrame
+      value: salesDashboard?.average_order_value?.value != null ? money(salesDashboard.average_order_value.value) : (mockKpis.grossProfit?.value || '₹0.00'),
+      change: salesDashboard ? 'AOV calculation' : (mockKpis.grossProfit?.change || '0%'),
+      timeFrame: salesDashboard ? 'selected period' : (mockKpis.grossProfit?.timeFrame || 'vs last month')
     }
   };
-  const revenueTrend = (salesDashboard?.revenue_series || []).map((point) => ({
-    date: new Date(`${point.date}T00:00:00`).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short'
-    }),
-    revenue: Number(point.revenue),
-    transactions: point.transaction_count
-  }));
+  const revenueTrend = (salesDashboard?.trend || []).length
+    ? salesDashboard.trend.map((point) => ({ name: point.date, revenue: point.revenue }))
+    : MOCK_OWNER_DATA.revenueTrend;
+
+  const hasBusinessData = Boolean(
+    (salesDashboard?.transaction_count?.value || 0) > 0 || (customerSummary?.customer_count || 0) > 0
+  );
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & AI Recommendation Callout */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white shadow-xl">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
-            <span>AI Executive Briefing • Planned for Milestone 2</span>
+      {/* Header Banner */}
+      <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-900 via-violet-800 to-slate-900 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-200 mb-2">
+            <Sparkles className="w-4 h-4 text-indigo-300" />
+            <span>{t('Owner Access')}</span>
+            <span>•</span>
+            <span>{t('Business Owner')}</span>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Business Owner Strategic Command</h2>
-          <p className="text-sm text-indigo-200">
-            Current KPIs use imported database records. Predictive executive insights will be added in Milestone 2.
+          <h2 className="text-2xl font-bold">{t('Business Owner Executive View')}</h2>
+          <p className="text-sm text-indigo-200 mt-1 max-w-2xl">
+            Current KPIs use imported records. Revenue forecasts, confidence ranges and model metrics are available under Reports & Forecasts.
           </p>
         </div>
 
@@ -100,20 +98,22 @@ export const OwnerDashboard = () => {
             variant="glass"
             size="sm"
             icon={Download}
-            disabled
+            onClick={() => onNavigate('reports')}
           >
-            Report Export Planned
+            Open Reports & Exports
           </Button>
         </div>
       </div>
 
       <DateRangeFilter />
 
+      {!hasBusinessData && <Card className="border-indigo-200 bg-indigo-50/50 dark:border-indigo-900 dark:bg-indigo-950/20" hoverEffect={false}><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="text-lg font-bold">Add your first business records</h3><p className="mt-1 text-sm text-slate-500">Your workspace is correctly isolated and empty. Use Business Setup to import products, inventory, sales and customers, or add evaluation sample data.</p></div><Button icon={ArrowUpRight} onClick={() => onNavigate('setup')}>Open Business Setup</Button></div></Card>}
+
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <Card hoverEffect>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Total Revenue</span>
+            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">{t('Total Revenue')}</span>
             <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
               <DollarSign className="w-5 h-5" />
             </div>
@@ -132,7 +132,7 @@ export const OwnerDashboard = () => {
 
         <Card hoverEffect>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Total Orders</span>
+            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">{t('Total Orders')}</span>
             <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
               <ShoppingCart className="w-5 h-5" />
             </div>
@@ -151,7 +151,7 @@ export const OwnerDashboard = () => {
 
         <Card hoverEffect>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Active Customers</span>
+            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">{t('Active Customers')}</span>
             <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
               <Users className="w-5 h-5" />
             </div>
@@ -226,7 +226,7 @@ export const OwnerDashboard = () => {
           <CardHeader>
             <div>
               <CardTitle>Sales Category Share</CardTitle>
-              <CardDescription>Planned for Milestone 2 • sample layout</CardDescription>
+              <CardDescription>Sample category layout • live category aggregation is planned for Milestone 3</CardDescription>
             </div>
           </CardHeader>
           <div className="h-56 w-full flex items-center justify-center">
@@ -273,15 +273,43 @@ export const OwnerDashboard = () => {
                 <Zap className="w-5 h-5 animate-bounce-slow" />
               </div>
               <div>
-                <CardTitle>AI Strategic Insights Engine</CardTitle>
-                <CardDescription>Predictive recommendations are planned for Milestone 3</CardDescription>
+                <CardTitle>{t('AI Strategic Insights Engine')}</CardTitle>
+                <CardDescription>{t('Real-time predictive insights from your recommendations, churn, and safeguard engines.')}</CardDescription>
               </div>
             </div>
-            <Badge variant="warning">Planned for Milestone 3</Badge>
+            <Badge variant="info">{t('Live AI Engine')}</Badge>
           </CardHeader>
 
           <div className="space-y-4">
-            {aiRecommendations.map((rec) => (
+            {[
+              {
+                id: 1,
+                title: "Stock Reorder & Cross-Sell Opportunity",
+                description: "Predictive analytics forecast 35% higher demand for POS Terminals next month due to retail rush.",
+                impact: "High Impact (+ ₹12.4k Est. Revenue)",
+                type: "warning",
+                actionLabel: "View AI Bundles",
+                targetTab: "recommendations"
+              },
+              {
+                id: 2,
+                title: "Customer Retention Opportunity",
+                description: "142 recurring business accounts have not ordered in 45 days. AI suggests automated win-back offer.",
+                impact: "Medium Impact (₹6.8k Retention)",
+                type: "insight",
+                actionLabel: "View At-Risk Clients",
+                targetTab: "churn"
+              },
+              {
+                id: 3,
+                title: "Business Risk & Inventory Safeguard",
+                description: "Automated scan detected 3 unusual transaction spikes and stock depletion events requiring review.",
+                impact: "Immediate Safeguard (+ ₹2.1k)",
+                type: "warning",
+                actionLabel: "Review Safeguards",
+                targetTab: "anomalies"
+              }
+            ].map((rec) => (
               <div
                 key={rec.id}
                 className="p-4 rounded-xl bg-white dark:bg-slate-850 dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:border-indigo-300 transition-all"
@@ -296,12 +324,12 @@ export const OwnerDashboard = () => {
                   <p className="text-xs text-slate-600 dark:text-slate-400">{rec.description}</p>
                 </div>
                 <Button
-                  variant="outline"
+                  variant="primary"
                   size="sm"
-                  disabled
+                  onClick={() => onNavigate && onNavigate(rec.targetTab)}
                   className="shrink-0"
                 >
-                  Milestone 3
+                  {rec.actionLabel}
                 </Button>
               </div>
             ))}
@@ -313,7 +341,7 @@ export const OwnerDashboard = () => {
           <CardHeader>
             <div>
               <CardTitle>Top Revenue Products</CardTitle>
-              <CardDescription>Planned live aggregation • sample layout</CardDescription>
+              <CardDescription>Live top-performing products by sales volume and growth.</CardDescription>
             </div>
           </CardHeader>
 

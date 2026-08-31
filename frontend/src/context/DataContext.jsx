@@ -3,14 +3,14 @@ import { useAuth } from './AuthContext';
 
 const DataContext = createContext(null);
 const DEFAULT_SALES_DATE_RANGE = {
-  from: '2022-03-01',
-  to: '2022-06-30'
+  from: '',
+  to: ''
 };
 
 const moduleCodes = (access) => new Set((access?.modules || []).map((module) => module.code));
 
 export const DataProvider = ({ children }) => {
-  const { isAuthenticated, access, api } = useAuth();
+  const { isAuthenticated, access, api, profile, currentRole } = useAuth();
   const [salesDateRange, setSalesDateRange] = useState(DEFAULT_SALES_DATE_RANGE);
   const [data, setData] = useState({
     salesDashboard: null,
@@ -34,13 +34,23 @@ export const DataProvider = ({ children }) => {
     const assign = {};
 
     if (modules.has('sales')) {
-      const params = new URLSearchParams({
-        date_from: `${requestedRange.from}T00:00:00Z`,
-        date_to: `${requestedRange.to}T23:59:59Z`
-      });
+      const hasManualRange = requestedRange?.from && requestedRange?.to;
+      const preferenceDays = currentRole.id === 'owner'
+        ? profile?.role_preferences?.default_period || '30'
+        : currentRole.id === 'sales'
+          ? profile?.role_preferences?.sales_period || '30'
+          : '30';
+      const params = hasManualRange
+        ? new URLSearchParams({ date_from: `${requestedRange.from}T00:00:00Z`, date_to: `${requestedRange.to}T23:59:59Z` })
+        : new URLSearchParams({ days: preferenceDays });
       requests.push(
         api(`/dashboard/sales?${params}`)
-          .then((value) => { assign.salesDashboard = value; })
+          .then((value) => {
+            assign.salesDashboard = value;
+            if (!hasManualRange) {
+              setSalesDateRange({ from: value.date_from.slice(0, 10), to: value.date_to.slice(0, 10) });
+            }
+          })
       );
       requests.push(
         api('/sales/transactions?limit=200')
@@ -72,7 +82,7 @@ export const DataProvider = ({ children }) => {
         );
       }
     }
-    if (modules.has('administration')) {
+    if (modules.has('team_management')) {
       requests.push(api('/users?limit=200').then((value) => { assign.users = value.items || value; }));
     }
 
@@ -87,8 +97,11 @@ export const DataProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    refresh();
-  }, [isAuthenticated, access?.role]);
+    setSalesDateRange(DEFAULT_SALES_DATE_RANGE);
+    refresh(DEFAULT_SALES_DATE_RANGE);
+    // Role and default-period changes reset the dashboard to the saved preference.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, access?.role, profile?.role_preferences?.default_period, profile?.role_preferences?.sales_period]);
 
   const applySalesDateRange = async (nextRange) => {
     setSalesDateRange(nextRange);

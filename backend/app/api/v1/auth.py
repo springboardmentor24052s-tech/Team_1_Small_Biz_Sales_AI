@@ -42,6 +42,13 @@ from app.services.auth import (
     revoke_user_sessions,
     rotate_refresh_token,
 )
+from app.services.email_delivery import (
+    EmailDeliveryError,
+    email_delivery_configured,
+    require_production_email_delivery,
+    send_password_reset_email,
+    send_verification_email,
+)
 from app.services.identity import normalize_email, slugify
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -53,6 +60,10 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     status_code=status.HTTP_201_CREATED,
 )
 def register(payload: RegisterRequest, request: Request, db: DBSession):
+    try:
+        require_production_email_delivery()
+    except EmailDeliveryError as exc:
+        raise HTTPException(status_code=503, detail="Email delivery is unavailable") from exc
     if find_user_by_email(db, payload.email):
         raise HTTPException(status_code=409, detail="An account with this email already exists")
 
@@ -100,6 +111,12 @@ def register(payload: RegisterRequest, request: Request, db: DBSession):
         user=user,
         purpose=SecurityTokenPurpose.EMAIL_VERIFICATION,
     )
+    try:
+        email_sent = send_verification_email(
+            recipient=user.email, full_name=user.full_name, token=token
+        )
+    except EmailDeliveryError as exc:
+        raise HTTPException(status_code=503, detail="Verification email could not be sent") from exc
     record_audit(
         db,
         event_type="auth.registered",
@@ -109,7 +126,11 @@ def register(payload: RegisterRequest, request: Request, db: DBSession):
     )
     db.commit()
     return DevelopmentTokenResponse(
-        message="Registration succeeded. Verify the email address before signing in.",
+        message=(
+            "Registration succeeded. Check your email for the verification token."
+            if email_sent
+            else "Registration succeeded. Use the development token to verify your email."
+        ),
         token=token if settings.expose_development_tokens and not settings.is_production else None,
     )
 
@@ -183,6 +204,10 @@ def logout(
 
 @router.post("/password-reset/request", response_model=DevelopmentTokenResponse)
 def request_password_reset(payload: PasswordResetRequest, request: Request, db: DBSession):
+    try:
+        require_production_email_delivery()
+    except EmailDeliveryError as exc:
+        raise HTTPException(status_code=503, detail="Email delivery is unavailable") from exc
     user = find_user_by_email(db, payload.email)
     raw_token = None
     if user and user.status != UserStatus.DISABLED:
@@ -191,6 +216,14 @@ def request_password_reset(payload: PasswordResetRequest, request: Request, db: 
             user=user,
             purpose=SecurityTokenPurpose.PASSWORD_RESET,
         )
+        try:
+            send_password_reset_email(
+                recipient=user.email,
+                full_name=user.full_name,
+                token=raw_token,
+            )
+        except EmailDeliveryError:
+            raw_token = None
         record_audit(
             db,
             event_type="auth.password_reset_requested",
@@ -200,7 +233,11 @@ def request_password_reset(payload: PasswordResetRequest, request: Request, db: 
         )
         db.commit()
     return DevelopmentTokenResponse(
-        message="If the account exists, password reset instructions have been issued.",
+        message=(
+            "If the account exists, password reset instructions have been sent by email."
+            if email_delivery_configured()
+            else "If the account exists, a development reset token has been issued."
+        ),
         token=(
             raw_token
             if raw_token and settings.expose_development_tokens and not settings.is_production

@@ -1,32 +1,43 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { ProfileAvatar } from './ProfileAvatar';
 import {
   LayoutDashboard,
   ShoppingBag,
   PackageCheck,
   Users,
+  Activity,
+  ClipboardCheck,
   BarChart3,
   Sparkles,
   Settings,
-  Layers,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck,
-  UserCheck,
-  LogOut
+  LogOut,
+  MessageSquare
 } from 'lucide-react';
 
+import { useLanguage } from '../../context/LanguageContext';
+
 export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }) => {
-  const { currentRole, access, logout } = useAuth();
+  const { currentRole, access, profile, logout } = useAuth();
+  const { t } = useLanguage();
 
   const allowedModules = new Set((access?.modules || []).map((module) => module.code));
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: null },
-    ...(allowedModules.has('sales') ? [{ id: 'sales', label: 'Sales Deals', icon: ShoppingBag, badge: null }] : []),
-    ...(allowedModules.has('inventory') ? [{ id: 'inventory', label: 'Inventory', icon: PackageCheck, badge: currentRole.id === 'manager' ? 'Stock Alerts' : null, badgeColor: 'bg-rose-500 text-white' }] : []),
-    ...(allowedModules.has('customer_segments') ? [{ id: 'customers', label: 'Customers', icon: Users, badge: null }] : []),
-    ...(currentRole.id === 'owner' || currentRole.id === 'admin' ? [{ id: 'reports', label: 'Reports', icon: BarChart3, badge: null }] : []),
-    ...(allowedModules.has('administration') ? [{ id: 'settings', label: 'Settings', icon: Settings, badge: null }] : [])
+    { id: 'dashboard', label: t('Dashboard'), icon: LayoutDashboard, badge: null },
+    { id: 'ai_chat', label: t('AI Chat System'), icon: MessageSquare, badge: 'Copilot', badgeColor: 'bg-gradient-to-r from-indigo-500/30 to-violet-500/30 text-indigo-300' },
+    ...(allowedModules.has('sales') ? [{ id: 'sales', label: t('Sales Deals'), icon: ShoppingBag, badge: null }] : []),
+    ...(allowedModules.has('inventory') ? [{ id: 'inventory', label: t('Inventory'), icon: PackageCheck, badge: currentRole.id === 'manager' ? t('Stock Alerts') : null, badgeColor: 'bg-rose-500 text-white' }] : []),
+    ...(allowedModules.has('customer_segments') ? [{ id: 'customers', label: t('Customers'), icon: Users, badge: null }] : []),
+    { id: 'recommendations', label: t('AI Recommender'), icon: Sparkles, badge: t('Boost'), badgeColor: 'bg-indigo-500/20 text-indigo-300' },
+    { id: 'churn', label: t('Churn Analytics'), icon: Users, badge: t('Retention'), badgeColor: 'bg-rose-500/20 text-rose-300' },
+    { id: 'anomalies', label: t('Anomaly Alerts'), icon: Activity, badge: t('Safeguard'), badgeColor: 'bg-amber-500/20 text-amber-300' },
+    ...(allowedModules.has('business_setup') ? [{ id: 'setup', label: t('Business Setup'), icon: ClipboardCheck, badge: 'Start', badgeColor: 'bg-amber-500/15 text-amber-300' }] : []),
+    ...(allowedModules.has('team_management') ? [{ id: 'team', label: t('Team & Performance'), icon: Users, badge: 'Owner', badgeColor: 'bg-indigo-500/20 text-indigo-300' }] : []),
+    ...(allowedModules.has('team_performance') ? [{ id: 'team', label: currentRole.id === 'sales' ? 'My Performance' : t('Team & Performance'), icon: Activity, badge: currentRole.id === 'manager' ? 'Store' : 'Personal', badgeColor: 'bg-emerald-500/15 text-emerald-300' }] : []),
+    ...(allowedModules.has('forecasts') ? [{ id: 'reports', label: t('Reports & Forecasts'), icon: BarChart3, badge: 'Live', badgeColor: 'bg-emerald-500/15 text-emerald-300' }] : []),
+    { id: 'settings', label: t('Settings'), icon: Settings, badge: null }
   ];
 
   return (
@@ -69,13 +80,9 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <img
-                src={currentRole.avatar}
-                alt={currentRole.name}
-                className="w-7 h-7 rounded-full object-cover border border-indigo-400/30"
-              />
+              <ProfileAvatar profile={profile} fallbackImage={currentRole.avatar} className="w-8 h-8 rounded-full border border-indigo-400/30 text-base" />
               <div className="truncate">
-                <p className="text-xs font-bold text-white truncate">{currentRole.name}</p>
+                <p className="text-xs font-bold text-white truncate">{profile?.full_name || currentRole.name}</p>
               </div>
             </div>
           </div>

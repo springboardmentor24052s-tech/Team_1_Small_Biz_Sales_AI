@@ -1,5 +1,14 @@
 # MarketMind data preparation
 
+The preprocessing package contains repeatable pipelines for both completed milestones. Milestone 1
+creates reviewed sales, inventory and customer samples. Milestone 2 trains customer segmentation,
+business/personal revenue forecasting and store-product demand forecasting artifacts.
+
+Milestone 3 pipelines are planned extensions. They will reuse these cleaned identifiers and
+features for churn labels, customer-product interactions and anomaly signals. Milestone 4 will add
+reproducibility, drift and release checks around the approved models rather than a new business
+model.
+
 This folder prepares the three datasets needed for the first MarketMind milestone:
 
 - marketplace sales for the initial dashboard;
@@ -58,14 +67,48 @@ Run the full Amazon revenue and Parquet demand datasets through chronological mo
 ```powershell
 .\preprocessing\.venv\Scripts\python.exe -m preprocessing.forecasting `
   --amazon "D:\MarketMind\Dataset\archive (9)\Amazon Sale Report.csv" `
+  --personal-sales data\processed\sales_cleaned_sample.csv `
   --demand-train "D:\MarketMind\Dataset\train.parquet" `
   --demand-eval "D:\MarketMind\Dataset\eval.parquet" `
   --output data\generated\forecasting
 ```
 
-Revenue compares Seasonal Naive, Prophet, XGBoost and Random Forest. Demand compares Seasonal
-Naive, XGBoost and Random Forest using lag, calendar, promotion, stock and weather features. The
-selected models generate 7, 14 and 30-day-compatible predictions with lower and upper bounds.
+Revenue compares Seasonal Naive, Prophet, a 56-day weekday-aware Linear Trend candidate, XGBoost
+and Random Forest. Demand compares Seasonal Naive, XGBoost and Random Forest using lag, calendar,
+promotion, stock and weather features. The selected models generate 7, 14 and 30-day-compatible
+predictions with lower and upper bounds.
+When `--personal-sales` is provided, the pipeline also creates a separate seller-scale revenue
+model from valid INR sales and returns in the cleaned application dataset.
+
+`sale_amount` is the source field used for demand modelling. Its dataset documentation does not
+confirm whether it is a quantity, monetary value or index. Forecast files therefore use the unit
+`source_unit`, and downstream screens must not rename it to units sold. Source product IDs are not
+assumed to match inventory SKUs; a separately reviewed mapping CSV is applied during backend import.
+
+Full model artifacts are written to `data/generated/` and ignored by Git. Only deterministic review
+samples, quality reports, code and documentation are versioned. This keeps the repository small and
+prevents local training artifacts from being mistaken for source data.
+
+## Planned Milestone 3 preprocessing
+
+The next pipelines should be added in this order:
+
+1. Build point-in-time churn labels from a documented observation window and later inactivity
+   window. Future records must never enter training features.
+2. Build customer-product baskets from valid sales lines and keep returns, voids, stockouts and
+   unavailable products explicit.
+3. Create anomaly features from sales, inventory movements and forecast residuals, starting with
+   transparent business/statistical baselines.
+4. Use chronological train/validation/test splits, compare every candidate with a simple baseline,
+   and save feature schema, metrics, scope and version with each run.
+5. Publish an artifact only when its quality gate passes; otherwise produce a report explaining the
+   failure and required data.
+
+Recommended compatible models are Logistic Regression followed by Random Forest/XGBoost for
+churn; association rules with popularity/category fallback before item-based collaborative
+filtering for recommendations; and robust thresholds before Isolation Forest for anomaly
+detection. Details are in the
+[Milestone 3 and 4 workflow](../docs/milestone-3-4/milestone-3-4-workflow.md).
 
 ## Contribution
 

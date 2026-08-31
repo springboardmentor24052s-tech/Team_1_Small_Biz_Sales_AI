@@ -13,6 +13,11 @@ class ForecastPoint(BaseModel):
     upper_bound: Decimal
 
 
+class ActualPoint(BaseModel):
+    date: date
+    actual: Decimal
+
+
 class ModelMetric(BaseModel):
     algorithm: str
     mae: float | None = None
@@ -32,8 +37,13 @@ class ForecastResponse(BaseModel):
     scope: str
     scope_id: UUID | None
     algorithm: str
+    data_source: str
+    quality_status: str
+    training_start: date
+    training_end: date
     metrics: ModelMetric
     model_comparison: list[ModelMetric]
+    history: list[ActualPoint]
     series: list[ForecastPoint]
     insights: list[str]
 
@@ -43,9 +53,13 @@ class ProductDemandForecast(BaseModel):
     source_product_id: str
     source_category_id: str
     product_id: UUID | None
+    product_sku: str | None
+    product_name: str | None
+    mapping_status: str
     predicted_demand: Decimal
     available_stock: int | None
     stock_risk: str
+    history: list[ActualPoint]
     series: list[ForecastPoint]
 
 
@@ -60,6 +74,10 @@ class DemandForecastResponse(BaseModel):
     scope: str
     scope_id: UUID
     algorithm: str
+    data_source: str
+    quality_status: str
+    training_start: date
+    training_end: date
     metrics: ModelMetric
     model_comparison: list[ModelMetric]
     total_products: int
@@ -100,3 +118,17 @@ class ForecastMonitoringResponse(BaseModel):
     supported_horizons: list[int]
     models: list[ForecastModelStatus]
     recent_jobs: list[ForecastJobStatus]
+
+
+class ForecastProductOption(BaseModel):
+    product: str
+    category: str
+
+
+class ForecastOptionsResponse(BaseModel):
+    forecast_type: str
+    scope: str
+    scope_id: UUID | None
+    supported_horizons: list[int]
+    categories: list[str]
+    products: list[ForecastProductOption]

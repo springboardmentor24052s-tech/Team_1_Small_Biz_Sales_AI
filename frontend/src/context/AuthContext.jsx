@@ -81,6 +81,8 @@ export const AuthProvider = ({ children }) => {
       }
     };
     restore();
+    // Session restoration runs once using the token captured during provider initialization.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async ({ email, password, mfaCode, rememberMe }) => {
@@ -110,6 +112,12 @@ export const AuthProvider = ({ children }) => {
       body: JSON.stringify({ token })
     });
 
+  const acceptInvitation = ({ token, password }) =>
+    request('/users/accept-invitation', {
+      method: 'POST',
+      body: JSON.stringify({ token, password })
+    });
+
   const requestPasswordReset = (email) =>
     request('/auth/password-reset/request', {
       method: 'POST',
@@ -136,6 +144,30 @@ export const AuthProvider = ({ children }) => {
       saveTokens(refreshed, rememberMe);
       return request(path, { ...options, token: refreshed.access_token });
     }
+  };
+
+  const updateProfile = async (payload) => {
+    const updated = await api('/users/me', {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    });
+    setProfile(updated);
+    setUserEmail(updated.email);
+    return updated;
+  };
+
+  const uploadAvatar = async (file) => {
+    const body = new FormData();
+    body.append('avatar', file);
+    const updated = await api('/users/me/avatar', { method: 'POST', body });
+    setProfile(updated);
+    return updated;
+  };
+
+  const deleteAvatar = async () => {
+    const updated = await api('/users/me/avatar', { method: 'DELETE' });
+    setProfile(updated);
+    return updated;
   };
 
   const logout = async () => {
@@ -172,9 +204,13 @@ export const AuthProvider = ({ children }) => {
     api,
     register,
     verifyEmail,
+    acceptInvitation,
     requestPasswordReset,
     confirmPasswordReset,
-    reauthenticate
+    reauthenticate,
+    updateProfile,
+    uploadAvatar,
+    deleteAvatar
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

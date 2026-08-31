@@ -13,11 +13,12 @@ import numpy as np
 import pandas as pd
 from prophet import Prophet
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from xgboost import XGBRegressor
 
 
-MODEL_VERSION = "forecast-v1"
+MODEL_VERSION = "forecast-v2"
 HORIZONS = (7, 14, 30)
 LAGS = (1, 7, 14, 28)
 
@@ -199,6 +200,27 @@ def _prophet_predict(
     )
 
 
+def _linear_trend_predict(
+    series: pd.Series,
+    dates: pd.DatetimeIndex,
+    *,
+    fit_window: int = 56,
+) -> tuple[np.ndarray, LinearRegression]:
+    timeline = np.arange(len(series), dtype=float)
+    training = pd.DataFrame({"trend": timeline}, index=series.index)
+    future = pd.DataFrame(
+        {"trend": np.arange(len(series), len(series) + len(dates), dtype=float)},
+        index=dates,
+    )
+    for day in range(7):
+        training[f"weekday_{day}"] = (training.index.dayofweek == day).astype(float)
+        future[f"weekday_{day}"] = (future.index.dayofweek == day).astype(float)
+    window = min(fit_window, len(training))
+    model = LinearRegression()
+    model.fit(training.iloc[-window:], series.iloc[-window:].to_numpy(dtype=float))
+    return np.clip(model.predict(future), 0, None), model
+
+
 def _train_single_series(
     series: pd.Series,
     *,
@@ -225,6 +247,12 @@ def _train_single_series(
         candidates.append(
             {"algorithm": "prophet", **_metrics(validation.to_numpy(), prophet_values)}
         )
+
+    trend_values, _ = _linear_trend_predict(training, validation.index)
+    validation_predictions["linear_trend"] = trend_values
+    candidates.append(
+        {"algorithm": "linear_trend", **_metrics(validation.to_numpy(), trend_values)}
+    )
 
     x_train, y_train = _supervised_frame(training)
     for algorithm in ("xgboost", "random_forest"):
@@ -254,6 +282,11 @@ def _train_single_series(
         upper = future + interval_error
     elif algorithm == "prophet":
         future, lower, upper, model = _prophet_predict(series, future_dates)
+        artifact["model"] = model
+    elif algorithm == "linear_trend":
+        future, model = _linear_trend_predict(series, future_dates)
+        lower = np.clip(future - interval_error, 0, None)
+        upper = future + interval_error
         artifact["model"] = model
     else:
         x_full, y_full = _supervised_frame(series)
@@ -285,12 +318,91 @@ def train_revenue_forecasts(
     random_state: int = 42,
 ) -> ForecastOutput:
     cleaned = clean_amazon_revenue(amazon_path)
-    scopes: list[tuple[str, pd.DataFrame]] = [("ALL", cleaned)]
-    scopes.extend(
-        (str(category), group)
-        for category, group in cleaned.groupby("category")
-        if len(group) >= 50
+    return _train_revenue_frame(
+        cleaned,
+        random_state=random_state,
+        model_version=MODEL_VERSION,
+        source_system="amazon_sales",
+        source_target="Amount",
+        data_rule="Cancelled orders excluded; returned, returning, rejected and lost orders subtract revenue.",
+        include_categories=True,
     )
+
+
+def clean_processed_sales(path: Path) -> pd.DataFrame:
+    required = {
+        "order_date",
+        "transaction_type",
+        "currency",
+        "amount",
+        "category",
+        "quality_status",
+    }
+    source = pd.read_csv(path, low_memory=False)
+    missing = sorted(required - set(source.columns))
+    if missing:
+        raise ValueError(
+            f"Processed sales data is missing columns: {', '.join(missing)}"
+        )
+    data = source.loc[:, sorted(required)].copy()
+    data["order_date"] = pd.to_datetime(data["order_date"], errors="coerce")
+    data["amount"] = pd.to_numeric(data["amount"], errors="coerce")
+    data["currency"] = data["currency"].astype("string").str.upper().fillna("")
+    data["category"] = data["category"].astype("string").str.strip().fillna("Unknown")
+    transaction_type = (
+        data["transaction_type"].astype("string").str.casefold().fillna("")
+    )
+    quality = data["quality_status"].astype("string").str.casefold().fillna("")
+    data["net_amount"] = data["amount"]
+    data.loc[transaction_type.eq("return"), "net_amount"] = -data.loc[
+        transaction_type.eq("return"), "amount"
+    ].abs()
+    data = data.loc[
+        transaction_type.isin(["sale", "return"])
+        & quality.eq("valid")
+        & data["order_date"].notna()
+        & data["net_amount"].notna()
+        & data["currency"].eq("INR")
+    ].copy()
+    if data.empty:
+        raise ValueError("Processed sales data contains no valid INR transactions")
+    return data
+
+
+def train_personal_revenue_forecasts(
+    processed_sales_path: Path,
+    *,
+    random_state: int = 42,
+) -> ForecastOutput:
+    cleaned = clean_processed_sales(processed_sales_path)
+    return _train_revenue_frame(
+        cleaned,
+        random_state=random_state,
+        model_version="personal-forecast-v2",
+        source_system="marketmind_processed_sales",
+        source_target="amount",
+        data_rule="Only valid INR sales and returns from the authorised imported sales history are used.",
+        include_categories=False,
+    )
+
+
+def _train_revenue_frame(
+    cleaned: pd.DataFrame,
+    *,
+    random_state: int,
+    model_version: str,
+    source_system: str,
+    source_target: str,
+    data_rule: str,
+    include_categories: bool,
+) -> ForecastOutput:
+    scopes: list[tuple[str, pd.DataFrame]] = [("ALL", cleaned)]
+    if include_categories:
+        scopes.extend(
+            (str(category), group)
+            for category, group in cleaned.groupby("category")
+            if len(group) >= 50
+        )
     prediction_rows: list[dict[str, Any]] = []
     scope_reports: list[dict[str, Any]] = []
     scope_artifacts: dict[str, Any] = {}
@@ -335,11 +447,11 @@ def train_revenue_forecasts(
 
     aggregate = next(item for item in scope_reports if item["category"] == "ALL")
     report = {
-        "model_version": MODEL_VERSION,
+        "model_version": model_version,
         "forecast_type": "revenue",
-        "source_system": "amazon_sales",
+        "source_system": source_system,
         "target": "daily_net_revenue_inr",
-        "source_target": "Amount",
+        "source_target": source_target,
         "unit": "INR",
         "granularity": "day",
         "horizons": list(HORIZONS),
@@ -352,12 +464,12 @@ def train_revenue_forecasts(
         "training_start": aggregate["training_start"],
         "training_end": aggregate["training_end"],
         "scope_reports": scope_reports,
-        "data_rule": "Cancelled orders excluded; returned, returning, rejected and lost orders subtract revenue.",
+        "data_rule": data_rule,
     }
     return ForecastOutput(
         predictions=pd.DataFrame(prediction_rows),
         report=report,
-        artifact={"model_version": MODEL_VERSION, "scopes": scope_artifacts},
+        artifact={"model_version": model_version, "scopes": scope_artifacts},
     )
 
 
@@ -619,6 +731,11 @@ def train_demand_forecasts(
         "evaluation_end": evaluation["dt"].max().date().isoformat(),
         "interval_error": round(interval_error, 6),
         "data_rule": "sale_amount is treated as demand, not revenue, pending final source-unit approval.",
+        "target_definition": (
+            "Daily store-product sale_amount from the supplied Parquet source. The provider has "
+            "not confirmed whether it represents quantity, value, or an index, so outputs must "
+            "remain labelled source_unit and must not be presented as physical units sold."
+        ),
     }
     return ForecastOutput(
         predictions=output,
@@ -647,6 +764,11 @@ def parse_args() -> argparse.Namespace:
         description="Train MarketMind Milestone 2 forecasts."
     )
     parser.add_argument("--amazon", required=True, type=Path)
+    parser.add_argument(
+        "--personal-sales",
+        type=Path,
+        help="Optional cleaned sales CSV used to train the demo Sales Executive forecast",
+    )
     parser.add_argument("--demand-train", required=True, type=Path)
     parser.add_argument("--demand-eval", required=True, type=Path)
     parser.add_argument(
@@ -665,6 +787,13 @@ def main() -> None:
         raise ValueError("max-demand-series must be at least 1")
     revenue = train_revenue_forecasts(args.amazon, random_state=args.random_state)
     write_output(revenue, args.output, "revenue")
+    personal = None
+    if args.personal_sales:
+        personal = train_personal_revenue_forecasts(
+            args.personal_sales,
+            random_state=args.random_state,
+        )
+        write_output(personal, args.output, "personal_revenue")
     demand = train_demand_forecasts(
         args.demand_train,
         args.demand_eval,
@@ -676,6 +805,7 @@ def main() -> None:
         json.dumps(
             {
                 "revenue": revenue.report,
+                "personal_revenue": personal.report if personal else None,
                 "demand": demand.report,
             },
             indent=2,

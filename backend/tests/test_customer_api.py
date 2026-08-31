@@ -90,7 +90,8 @@ def test_customer_access_is_business_summary_or_assigned(
         "/api/v1/customers",
         headers=auth_header(login(client, manager.email)),
     )
-    assert manager_list.status_code == 403
+    assert manager_list.status_code == 200
+    assert manager_list.json()["total"] == 0
 
     assigned_response = client.get(
         "/api/v1/customers",

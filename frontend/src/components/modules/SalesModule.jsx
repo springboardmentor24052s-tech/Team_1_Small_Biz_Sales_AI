@@ -7,7 +7,7 @@ import { Modal } from '../ui/Modal';
 import { useToast } from '../../context/ToastContext';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { ShoppingBag, Search, Plus, FileText, Download, Pencil, Ban } from 'lucide-react';
+import { ShoppingBag, Search, Plus, FileText, Download, Pencil, Ban, PackagePlus, Trash2 } from 'lucide-react';
 
 const emptyForm = () => ({
   externalReference: '',
@@ -15,6 +15,11 @@ const emptyForm = () => ({
   currency: 'INR',
   totalAmount: '',
   itemCount: '1',
+  customerReference: '',
+  paymentMethod: 'upi',
+  orderDiscount: '0',
+  taxAmount: '0',
+  items: [{ productId: '', quantity: '1', unitPrice: '', discountAmount: '0' }],
   notes: ''
 });
 
@@ -27,6 +32,7 @@ export const SalesModule = () => {
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [isSaving, setIsSaving] = useState(false);
+  const [catalog, setCatalog] = useState([]);
 
   const permissions = useMemo(
     () => new Set(profile?.role?.permissions || []),
@@ -49,14 +55,23 @@ export const SalesModule = () => {
     `${deal.displayReference} ${deal.source_system}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const openCreate = () => {
+  const orderSummary = useMemo(() => {
+    const subtotal = form.items.reduce((sum, item) => sum + Math.max(0, Number(item.unitPrice || 0) * Number(item.quantity || 0) - Number(item.discountAmount || 0)), 0);
+    const total = subtotal - Number(form.orderDiscount || 0) + Number(form.taxAmount || 0);
+    return { subtotal, total, quantity: form.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0) };
+  }, [form.items, form.orderDiscount, form.taxAmount]);
+
+  const openCreate = async () => {
     if (!canCreate) {
       addToast('Your role or store assignment does not allow transaction creation.', 'danger');
       return;
     }
-    setSelected(null);
-    setForm(emptyForm());
-    setModalMode('create');
+    try {
+      setCatalog(await api('/sales/catalog'));
+      setSelected(null);
+      setForm(emptyForm());
+      setModalMode('create');
+    } catch (error) { addToast(error.message, 'danger'); }
   };
 
   const openEdit = (transaction) => {
@@ -87,12 +102,24 @@ export const SalesModule = () => {
         await api('/sales/transactions', {
           method: 'POST',
           body: JSON.stringify({
-            ...payload,
+            external_reference: payload.external_reference,
+            occurred_at: payload.occurred_at,
             store_id: profile.store_id,
-            currency: form.currency.toUpperCase()
+            currency: form.currency.toUpperCase(),
+            payment_method: form.paymentMethod,
+            customer_reference: form.customerReference.trim() || null,
+            order_discount: Number(form.orderDiscount || 0),
+            tax_amount: Number(form.taxAmount || 0),
+            notes: payload.notes,
+            items: form.items.map((item) => ({
+              product_id: item.productId,
+              quantity: Number(item.quantity),
+              unit_price: Number(item.unitPrice),
+              discount_amount: Number(item.discountAmount || 0)
+            }))
           })
         });
-        addToast('Sales transaction created.', 'success');
+        addToast('Sale recorded. Inventory and customer totals were updated.', 'success');
       } else {
         await api(`/sales/transactions/${selected.id}`, {
           method: 'PATCH',
@@ -108,6 +135,10 @@ export const SalesModule = () => {
       setIsSaving(false);
     }
   };
+
+  const updateLine = (index, field, value) => setForm((current) => ({ ...current, items: current.items.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item) }));
+  const addLine = () => setForm((current) => ({ ...current, items: [...current.items, { productId: '', quantity: '1', unitPrice: '', discountAmount: '0' }] }));
+  const removeLine = (index) => setForm((current) => ({ ...current, items: current.items.filter((_, itemIndex) => itemIndex !== index) }));
 
   const voidTransaction = async () => {
     setIsSaving(true);
@@ -216,7 +247,7 @@ export const SalesModule = () => {
                       >
                         View
                       </Button>
-                      {canUpdate && deal.status !== 'voided' && (
+                      {canUpdate && deal.status !== 'voided' && !deal.line_items?.length && (
                         <Button variant="ghost" size="sm" icon={Pencil} onClick={() => openEdit(deal)}>
                           Edit
                         </Button>
@@ -263,7 +294,31 @@ export const SalesModule = () => {
             onChange={(event) => setForm({ ...form, occurredAt: event.target.value })}
             required
           />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {modalMode === 'create' ? <>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Input id="transactionCustomer" label="Customer Reference (optional)" placeholder="CUSTOMER-001" value={form.customerReference} onChange={(event) => setForm({ ...form, customerReference: event.target.value })} />
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Payment Method<select value={form.paymentMethod} onChange={(event) => setForm({ ...form, paymentMethod: event.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-transparent p-2.5 text-sm dark:border-slate-700"><option value="upi">UPI</option><option value="cash">Cash</option><option value="card">Card</option><option value="bank_transfer">Bank transfer</option><option value="other">Other</option></select></label>
+            </div>
+            <div className="space-y-3 rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+              <div className="flex items-center justify-between"><div><p className="text-sm font-bold">Products sold</p><p className="text-xs text-slate-500">Stock is checked and deducted only after the whole order is valid.</p></div><Button type="button" size="sm" variant="outline" icon={PackagePlus} onClick={addLine}>Add Product</Button></div>
+              {form.items.map((item, index) => {
+                const selectedProduct = catalog.find((product) => product.product_id === item.productId);
+                return <div key={index} className="grid gap-2 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50 sm:grid-cols-12">
+                  <label className="text-xs font-semibold sm:col-span-5">Product / SKU<select required value={item.productId} onChange={(event) => updateLine(index, 'productId', event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm dark:border-slate-700 dark:bg-slate-900"><option value="">Select product</option>{catalog.map((product) => <option key={product.product_id} value={product.product_id} disabled={form.items.some((line, lineIndex) => lineIndex !== index && line.productId === product.product_id)}>{product.name} · {product.sku} · stock {product.available_stock}</option>)}</select>{selectedProduct && <p className="mt-1 text-[11px] text-slate-500">Available: {selectedProduct.available_stock}</p>}</label>
+                  <div className="sm:col-span-2"><Input label="Quantity" type="number" min="1" max={selectedProduct?.available_stock || undefined} value={item.quantity} onChange={(event) => updateLine(index, 'quantity', event.target.value)} required /></div>
+                  <div className="sm:col-span-2"><Input label="Unit Price (₹)" type="number" min="0.01" step="0.01" value={item.unitPrice} onChange={(event) => updateLine(index, 'unitPrice', event.target.value)} required /></div>
+                  <div className="sm:col-span-2"><Input label="Line Discount (₹)" type="number" min="0" step="0.01" value={item.discountAmount} onChange={(event) => updateLine(index, 'discountAmount', event.target.value)} /></div>
+                  <div className="flex items-end sm:col-span-1"><Button type="button" variant="ghost" icon={Trash2} disabled={form.items.length === 1} onClick={() => removeLine(index)} /></div>
+                </div>;
+              })}
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Input id="transactionDiscount" label="Order Discount (₹)" type="number" min="0" step="0.01" value={form.orderDiscount} onChange={(event) => setForm({ ...form, orderDiscount: event.target.value })} />
+              <Input id="transactionTax" label="Tax (₹)" type="number" min="0" step="0.01" value={form.taxAmount} onChange={(event) => setForm({ ...form, taxAmount: event.target.value })} />
+              <Input id="transactionCurrency" label="Currency" value={form.currency} onChange={(event) => setForm({ ...form, currency: event.target.value })} required />
+            </div>
+            <div className="grid grid-cols-3 gap-3 rounded-xl bg-indigo-50 p-3 text-sm dark:bg-indigo-950/30"><div><p className="text-xs text-slate-500">Units</p><p className="font-bold">{orderSummary.quantity}</p></div><div><p className="text-xs text-slate-500">Subtotal</p><p className="font-bold">₹{orderSummary.subtotal.toLocaleString('en-IN')}</p></div><div><p className="text-xs text-slate-500">Final total</p><p className="font-bold text-indigo-600 dark:text-indigo-300">₹{orderSummary.total.toLocaleString('en-IN')}</p></div></div>
+          </> : <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Input
               id="transactionAmount"
               label="Amount"
@@ -287,7 +342,7 @@ export const SalesModule = () => {
               onChange={(event) => setForm({ ...form, currency: event.target.value })}
               required
             />
-          </div>
+          </div>}
           <Input
             id="transactionNotes"
             label="Notes"
@@ -303,14 +358,16 @@ export const SalesModule = () => {
 
       <Modal isOpen={modalMode === 'view'} onClose={() => setModalMode(null)} title="Transaction Details">
         {selected && (
-          <dl className="grid grid-cols-2 gap-4 text-sm">
+          <div className="space-y-4"><dl className="grid grid-cols-2 gap-4 text-sm">
             <div><dt className="text-slate-500">Reference</dt><dd className="font-semibold">{selected.displayReference}</dd></div>
             <div><dt className="text-slate-500">Source</dt><dd className="font-semibold">{selected.source_system}</dd></div>
             <div><dt className="text-slate-500">Amount</dt><dd className="font-semibold">{selected.amount}</dd></div>
             <div><dt className="text-slate-500">Items</dt><dd className="font-semibold">{selected.item_count}</dd></div>
             <div><dt className="text-slate-500">Status</dt><dd className="font-semibold">{selected.status}</dd></div>
             <div><dt className="text-slate-500">Date</dt><dd className="font-semibold">{new Date(selected.occurred_at).toLocaleString()}</dd></div>
-          </dl>
+            <div><dt className="text-slate-500">Payment</dt><dd className="font-semibold capitalize">{selected.payment_method?.replace('_', ' ') || 'Not recorded'}</dd></div>
+            <div><dt className="text-slate-500">Customer</dt><dd className="font-semibold">{selected.customer_id || 'Walk-in / not recorded'}</dd></div>
+          </dl>{selected.line_items?.length > 0 && <div className="rounded-xl border border-slate-200 dark:border-slate-800"><div className="grid grid-cols-4 bg-slate-50 p-2 text-xs font-bold dark:bg-slate-800"><span>Product</span><span>Qty</span><span>Unit price</span><span>Line total</span></div>{selected.line_items.map((line) => <div key={line.id} className="grid grid-cols-4 border-t border-slate-100 p-2 text-xs dark:border-slate-800"><span>{line.product.name}<small className="block text-slate-500">{line.product.sku}</small></span><span>{line.quantity}</span><span>₹{Number(line.unit_price).toLocaleString('en-IN')}</span><span>₹{Number(line.line_amount).toLocaleString('en-IN')}</span></div>)}</div>}</div>
         )}
       </Modal>
 

@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -6,13 +7,19 @@ from uuid import UUID
 
 import jwt
 import pyotp
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
 from fastapi import HTTPException, status
 
 from app.core.config import settings
 
-password_hasher = PasswordHasher(time_cost=3, memory_cost=65536, parallelism=4)
+# Attempt Argon2 import; fall back to PBKDF2 if DLL blocked on Windows
+try:
+    from argon2 import PasswordHasher
+    from argon2.exceptions import InvalidHashError, VerifyMismatchError
+    _argon2_hasher = PasswordHasher(time_cost=3, memory_cost=65536, parallelism=4)
+    HAS_ARGON2 = True
+except Exception:
+    _argon2_hasher = None
+    HAS_ARGON2 = False
 
 COMMON_PASSWORDS = {
     "123456789012",
@@ -52,16 +59,44 @@ def validate_password(password: str) -> None:
         raise HTTPException(status_code=422, detail="Password must contain a number")
 
 
-def hash_password(password: str) -> str:
-    validate_password(password)
-    return password_hasher.hash(password)
+def _pbkdf2_hash(password: str) -> str:
+    salt = secrets.token_hex(16)
+    key = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000)
+    return f"$pbkdf2-sha256$100000${salt}${key.hex()}"
+
+
+def hash_password(password: str, validate: bool = True) -> str:
+    if validate:
+        validate_password(password)
+    if HAS_ARGON2 and _argon2_hasher is not None:
+        try:
+            return _argon2_hasher.hash(password)
+        except Exception:
+            pass
+    return _pbkdf2_hash(password)
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    try:
-        return password_hasher.verify(password_hash, password)
-    except (VerifyMismatchError, ValueError):
+    if not password_hash:
         return False
+    if password_hash.startswith("$pbkdf2-sha256$"):
+        try:
+            parts = password_hash.split("$")
+            iterations = int(parts[2])
+            salt = parts[3]
+            expected_key = parts[4]
+            key = hashlib.pbkdf2_hmac(
+                "sha256", password.encode("utf-8"), salt.encode("utf-8"), iterations
+            )
+            return hmac.compare_digest(key.hex(), expected_key)
+        except Exception:
+            return False
+    if HAS_ARGON2 and _argon2_hasher is not None:
+        try:
+            return _argon2_hasher.verify(password_hash, password)
+        except Exception:
+            pass
+    return hmac.compare_digest(hashlib.sha256(password.encode("utf-8")).hexdigest(), password_hash)
 
 
 def token_hash(token: str) -> str:
