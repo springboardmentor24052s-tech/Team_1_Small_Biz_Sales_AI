@@ -118,12 +118,12 @@ git checkout Garvitk001
 
 3. Seed demo accounts & evaluation sample data:
    ```bash
-   python -m app.commands.seed_demo
+   .\.venv\Scripts\python.exe -m app.commands.seed_demo
    ```
 
 4. Launch FastAPI Backend:
    ```bash
-   python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+   .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
    ```
    * *Backend API URL:* **`http://127.0.0.1:8000`**
    * *Swagger Interactive Docs:* **`http://127.0.0.1:8000/api/v1/docs`**
