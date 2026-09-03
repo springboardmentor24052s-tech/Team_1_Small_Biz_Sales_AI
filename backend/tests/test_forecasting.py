@@ -112,6 +112,32 @@ def _enable_admin_mfa(client: TestClient, email: str) -> str:
     assert confirmed.status_code == 200
     return login(client, email, pyotp.TOTP(secret).now())
 
+def test_revenue_forecast_rejects_unsupported_horizon(
+    client: TestClient,
+    db: Session,
+    tenant: Tenant,
+    store: Store,
+):
+    owner = create_user(
+        db,
+        tenant=tenant,
+        store=store,
+        role_code="business_owner",
+        email="forecast.invalid-horizon@test.com",
+    )
+
+    headers = auth_header(login(client, owner.email))
+
+    response = client.get(
+        "/api/v1/forecasts/revenue?horizon=10",
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "http_422"
+    assert response.json()["message"] == "horizon must be 7, 14 or 30 days"
+    assert response.json()["retryable"] is False
+
 
 def test_forecast_import_is_repeatable(db: Session, tenant: Tenant, tmp_path):
     predictions, report = _forecast_files(tmp_path, "revenue", "revenue")
