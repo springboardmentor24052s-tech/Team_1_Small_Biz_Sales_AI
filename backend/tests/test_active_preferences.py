@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
@@ -31,7 +31,12 @@ def test_dashboard_period_and_role_alert_preferences_are_applied(
         role_code="sales_executive",
         email="prefs.sales@example.com",
     )
-    for reference, day, amount in [("PREF-OLD", 1, "5000"), ("PREF-NEW", 20, "9000")]:
+
+    now = datetime.now(UTC)
+    for reference, occurred_at, amount in [
+        ("PREF-OLD", now - timedelta(days=10), "5000"),
+        ("PREF-NEW", now, "9000"),
+    ]:
         db.add(
             SalesTransaction(
                 tenant_id=tenant.id,
@@ -39,7 +44,7 @@ def test_dashboard_period_and_role_alert_preferences_are_applied(
                 seller_id=seller.id,
                 source_system="test",
                 external_reference=reference,
-                occurred_at=datetime(2026, 8, day, tzinfo=UTC),
+                occurred_at=occurred_at,
                 currency="INR",
                 total_amount=Decimal(amount),
                 item_count=1,
