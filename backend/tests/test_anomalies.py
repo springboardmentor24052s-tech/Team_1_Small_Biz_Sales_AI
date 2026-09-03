@@ -39,3 +39,31 @@ def test_anomaly_detection_endpoints(
     res_resp = client.post(f"/api/v1/anomalies/{event_id}/resolve", headers=headers)
     assert res_resp.status_code == 200
     assert res_resp.json()["status"] == "resolved"
+
+def test_anomaly_severity_filter(
+    client: TestClient,
+    db: Session,
+    tenant: Tenant,
+    store: Store,
+):
+    owner = create_user(
+        db,
+        tenant=tenant,
+        store=store,
+        role_code="business_owner",
+        email="owner.anomaly.filter@example.com",
+    )
+    headers = auth_header(login(client, owner.email))
+
+    resp = client.get(
+        f"/api/v1/anomalies?tenant_id={tenant.id}&severity=critical",
+        headers=headers,
+    )
+
+    assert resp.status_code == 200
+
+    data = resp.json()
+
+    assert data["total_anomalies_detected"] >= 1
+    assert len(data["items"]) >= 1
+    assert all(item["severity"] == "Critical" for item in data["items"])
