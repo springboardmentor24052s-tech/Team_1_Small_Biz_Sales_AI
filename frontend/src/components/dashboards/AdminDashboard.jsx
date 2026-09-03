@@ -46,7 +46,7 @@ export const AdminDashboard = () => {
         <p className="text-sm text-purple-200 mt-1">Monitor platform security, RBAC policy, datasets, models and audit activity. Business employee accounts are managed by each Business Owner.</p>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card><Activity className="w-5 h-5 text-emerald-500" /><p className="text-xs text-slate-500 mt-3">API Status</p><p className="text-lg font-bold">Connected</p><p className="mt-1 text-xs text-slate-400">Refreshes every {profile?.role_preferences?.monitoring_refresh || 60} seconds</p></Card>
         <Card><Cpu className="w-5 h-5 text-purple-500" /><p className="text-xs text-slate-500 mt-3">Forecast Engine</p><p className="text-lg font-bold">Monitoring enabled</p></Card>
         <Card><Database className="w-5 h-5 text-blue-500" /><p className="text-xs text-slate-500 mt-3">Platform Events</p><p className="text-lg font-bold">{logs.length} recent</p></Card>

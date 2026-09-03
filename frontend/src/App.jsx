@@ -38,10 +38,12 @@ const MainAppContent = () => {
   const [publicView, setPublicView] = useState('landing');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   useEffect(() => {
     setActiveTab('dashboard');
+    setIsMobileMenuOpen(false);
   }, [currentRole.id]);
 
   useEffect(() => {
@@ -126,12 +128,14 @@ const MainAppContent = () => {
 
   return (
     <div className={`marketmind-workspace role-${currentRole.id} ${profile?.dashboard_density === 'compact' ? 'density-compact' : ''} min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 transition-colors duration-300 flex`}>
-      {/* Collapsible Sidebar */}
+      {/* Collapsible Responsive Sidebar */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
 
       {/* Top Header Navbar */}
@@ -139,15 +143,16 @@ const MainAppContent = () => {
         isCollapsed={isCollapsed}
         onOpenAiModal={() => setIsAiModalOpen(true)}
         onNavigate={setActiveTab}
+        onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       />
 
       {/* Dynamic Main Workspace Container */}
       <main
-        className={`dashboard-canvas flex-1 pt-20 pb-12 px-4 sm:px-8 transition-all duration-300 ${
-          isCollapsed ? 'ml-20' : 'ml-64'
+        className={`dashboard-canvas flex-1 pt-20 pb-12 px-3 sm:px-6 md:px-8 transition-all duration-300 ml-0 min-w-0 ${
+          isCollapsed ? 'md:ml-20' : 'md:ml-64'
         }`}
       >
-        <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+        <div className="max-w-7xl mx-auto space-y-6 animate-fade-in min-w-0">
           {renderMainContent()}
         </div>
       </main>

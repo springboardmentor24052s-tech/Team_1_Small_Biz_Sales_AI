@@ -61,7 +61,7 @@ def test_scoped_alerts_and_customer_360_use_linked_business_records(
             reorder_level=5,
         )
     )
-    now = utcnow()
+    now = utcnow().replace(hour=14, minute=0, second=0)
     amounts = [Decimal("1000"), Decimal("900"), Decimal("800"), Decimal("700")]
     days_ago = [55, 45, 35, 10]
     for index, (amount, age) in enumerate(zip(amounts, days_ago, strict=True)):
@@ -106,21 +106,24 @@ def test_scoped_alerts_and_customer_360_use_linked_business_records(
     )
     db.commit()
 
+    from unittest.mock import patch
+
     owner_headers = auth_header(login(client, owner.email))
     manager_headers = auth_header(login(client, manager.email))
     seller_headers = auth_header(login(client, seller.email))
 
-    owner_items = client.get("/api/v1/notifications", headers=owner_headers).json()["items"]
-    owner_categories = {entry["category"] for entry in owner_items}
-    assert {"inventory", "target", "customers"} <= owner_categories
+    with patch("app.api.v1.notifications.utcnow", return_value=now):
+        owner_items = client.get("/api/v1/notifications", headers=owner_headers).json()["items"]
+        owner_categories = {entry["category"] for entry in owner_items}
+        assert {"inventory", "target", "customers"} <= owner_categories
 
-    manager_items = client.get("/api/v1/notifications", headers=manager_headers).json()["items"]
-    assert "manager-stock-risk" in {entry["id"] for entry in manager_items}
-    assert "customers" in {entry["category"] for entry in manager_items}
+        manager_items = client.get("/api/v1/notifications", headers=manager_headers).json()["items"]
+        assert "manager-stock-risk" in {entry["id"] for entry in manager_items}
+        assert "customers" in {entry["category"] for entry in manager_items}
 
-    seller_items = client.get("/api/v1/notifications", headers=seller_headers).json()["items"]
-    assert "target" in {entry["category"] for entry in seller_items}
-    assert "customers" in {entry["category"] for entry in seller_items}
+        seller_items = client.get("/api/v1/notifications", headers=seller_headers).json()["items"]
+        assert "target" in {entry["category"] for entry in seller_items}
+        assert "customers" in {entry["category"] for entry in seller_items}
 
     for headers in (owner_headers, manager_headers, seller_headers):
         response = client.get(f"/api/v1/customers/{customer.id}/insights", headers=headers)

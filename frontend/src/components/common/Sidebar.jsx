@@ -19,7 +19,7 @@ import {
 
 import { useLanguage } from '../../context/LanguageContext';
 
-export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }) => {
+export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMobileMenuOpen }) => {
   const { currentRole, access, profile, logout } = useAuth();
   const { t } = useLanguage();
 
@@ -41,69 +41,92 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
   ];
 
   return (
-    <aside
-      className={`fixed top-0 left-0 z-40 h-screen bg-slate-900 border-r border-slate-800 text-slate-300 transition-all duration-300 flex flex-col justify-between ${
-        isCollapsed ? 'w-20' : 'w-64'
-      }`}
-    >
-      {/* Top Header & Brand Logo */}
-      <div>
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-500/30">
-              <Sparkles className="w-5 h-5 animate-pulse" />
-            </div>
-            {!isCollapsed && (
-              <div className="truncate">
-                <h1 className="text-base font-bold text-white tracking-tight truncate">MarketMind AI</h1>
-                <p className="text-[10px] text-indigo-400 font-semibold tracking-wider uppercase">Enterprise v2.4</p>
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-xs md:hidden animate-fade-in"
+          onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed top-0 left-0 z-50 md:z-40 h-screen bg-slate-900 border-r border-slate-800 text-slate-300 transition-all duration-300 flex flex-col justify-between ${
+          isCollapsed ? 'w-20' : 'w-64'
+        } ${
+          isMobileMenuOpen
+            ? 'translate-x-0 shadow-2xl'
+            : '-translate-x-full md:translate-x-0'
+        }`}
+      >
+        {/* Top Header & Brand Logo */}
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800 shrink-0">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-500/30">
+                <Sparkles className="w-5 h-5 animate-pulse" />
               </div>
-            )}
+              {!isCollapsed && (
+                <div className="truncate">
+                  <h1 className="text-base font-bold text-white tracking-tight truncate">MarketMind AI</h1>
+                  <p className="text-[10px] text-indigo-400 font-semibold tracking-wider uppercase">Enterprise v2.4</p>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="hidden md:block p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            >
+              {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
+              className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              title="Close Menu"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
           </div>
 
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-            title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          >
-            {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-          </button>
-        </div>
-
-        {/* Current Active Role Switcher Card */}
-        {!isCollapsed && (
-          <div className="m-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Active Workspace View</span>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${currentRole.badgeColor}`}>
-                {currentRole.badge}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <ProfileAvatar profile={profile} fallbackImage={currentRole.avatar} className="w-8 h-8 rounded-full border border-indigo-400/30 text-base" />
-              <div className="truncate">
-                <p className="text-xs font-bold text-white truncate">{profile?.full_name || currentRole.name}</p>
+          {/* Current Active Role Switcher Card */}
+          {!isCollapsed && (
+            <div className="m-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-2 shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Active Workspace View</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${currentRole.badgeColor}`}>
+                  {currentRole.badge}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ProfileAvatar profile={profile} fallbackImage={currentRole.avatar} className="w-8 h-8 rounded-full border border-indigo-400/30 text-base" />
+                <div className="truncate">
+                  <p className="text-xs font-bold text-white truncate">{profile?.full_name || currentRole.name}</p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Navigation Links */}
-        <nav className="p-3 space-y-1.5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
-                  isActive
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/70'
-                }`}
-                title={isCollapsed ? item.label : undefined}
-              >
+          {/* Navigation Links */}
+          <nav className="p-3 space-y-1.5 overflow-y-auto flex-1 min-h-0">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    if (setIsMobileMenuOpen) setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold'
+                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/70'
+                  }`}
+                  title={isCollapsed ? item.label : undefined}
+                >
                 <div className="flex items-center gap-3">
                   <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-400'}`} />
                   {!isCollapsed && <span className="truncate">{item.label}</span>}
@@ -125,7 +148,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
       </div>
 
       {/* Bottom User Info & Logout */}
-      <div className="p-3 border-t border-slate-800 space-y-2">
+      <div className="p-3 border-t border-slate-800 space-y-2 shrink-0">
         {!isCollapsed ? (
           <div className="space-y-2">
             <button
@@ -147,5 +170,6 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
         )}
       </div>
     </aside>
+  </>
   );
 };

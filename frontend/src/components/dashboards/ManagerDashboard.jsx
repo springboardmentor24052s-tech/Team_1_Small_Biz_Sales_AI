@@ -203,7 +203,7 @@ export const ManagerDashboard = () => {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       {/* Alert Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-2xl bg-gradient-to-r from-rose-950/60 via-slate-900 to-slate-900 border border-rose-500/30 text-slate-100 shadow-xl gap-4">
         <div className="space-y-1">

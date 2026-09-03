@@ -280,7 +280,7 @@ export const Login = ({ initialMode = 'login', onBack }) => {
       </div>
 
       {/* Right side: Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-slate-900">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-12 bg-slate-900">
         <div className="w-full max-w-md space-y-8 [&_input]:text-base [&_label]:text-sm">
           {onBack && (
             <button

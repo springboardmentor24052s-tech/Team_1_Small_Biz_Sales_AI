@@ -183,7 +183,7 @@ export const AiAssistantModal = ({ isOpen, onClose, activeTab = 'dashboard' }) =
         </div>
 
         {/* Chat Stream Window */}
-        <div className="h-80 overflow-y-auto space-y-3 p-4 rounded-xl bg-slate-950 border border-slate-800">
+        <div className="h-64 sm:h-80 overflow-y-auto space-y-3 p-3 sm:p-4 rounded-xl bg-slate-950 border border-slate-800">
           {chatHistory.map((msg, index) => (
             <div
               key={index}

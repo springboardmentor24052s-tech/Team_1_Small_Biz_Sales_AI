@@ -12,12 +12,13 @@ import {
   Sparkles,
   ChevronDown,
   LogOut,
-  Languages
+  Languages,
+  Menu
 } from 'lucide-react';
 
 import { useLanguage } from '../../context/LanguageContext';
 
-export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
+export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate, onToggleMobileMenu }) => {
   const { currentRole, userEmail, profile, logout, api } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
@@ -113,13 +114,22 @@ export const Navbar = ({ isCollapsed, onOpenAiModal, onNavigate }) => {
 
   return (
     <header
-      className={`fixed top-0 right-0 z-30 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition-all duration-300 flex items-center justify-between px-4 sm:px-6 ${
-        isCollapsed ? 'left-20' : 'left-64'
+      className={`fixed top-0 right-0 z-30 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition-all duration-300 flex items-center justify-between px-3 sm:px-6 left-0 ${
+        isCollapsed ? 'md:left-20' : 'md:left-64'
       }`}
     >
-      {/* Global Search Bar */}
-      <div className="flex items-center gap-3 w-1/3 min-w-[220px]">
-        <div className="relative w-full">
+      {/* Global Search Bar & Mobile Menu Toggle */}
+      <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-md min-w-0 pr-2">
+        <button
+          type="button"
+          onClick={onToggleMobileMenu}
+          className="md:hidden p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+          title="Toggle Navigation Menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
+        <div className="relative w-full min-w-0">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input
             ref={searchInputRef}
