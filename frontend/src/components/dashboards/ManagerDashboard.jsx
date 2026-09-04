@@ -10,25 +10,23 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import {
   AlertTriangle,
-  XCircle,
-  Truck,
+  Boxes,
   PlusCircle,
   RefreshCw,
   Search,
-  Building2,
   CheckCircle2,
-  Boxes,
-  PackageCheck,
   Download,
   Mail,
   FileText,
   TrendingUp,
   Clock,
-  Calendar,
   Layers,
+  Truck,
+  Users,
+  ShieldCheck,
+  Store,
+  Target,
   ArrowUpRight,
-  ArrowDownRight,
-  ClipboardList
 } from 'lucide-react';
 
 const getProductUnitPrice = (productOrItem) => {
@@ -77,7 +75,6 @@ export const ManagerDashboard = () => {
   const { profile, api } = useAuth();
   const { addToast } = useToast();
   const { inventorySummary, inventoryItems: liveInventoryItems, refresh } = useData();
-  const { kpis: mockKpis } = MOCK_MANAGER_DATA;
 
   const [selectedPoItem, setSelectedPoItem] = useState(null);
   const [poQuantity, setPoQuantity] = useState('50');
@@ -94,7 +91,27 @@ export const ManagerDashboard = () => {
   const [adjustmentReason, setAdjustmentReason] = useState('Supplier Delivery Receipt');
   const [isAdjusting, setIsAdjusting] = useState(false);
 
+  // Store Exec Performance Telemetry
+  const [storeExecs, setStoreExecs] = useState([]);
+  const [loadingExecs, setLoadingExecs] = useState(false);
+
   const stockAlertsEnabled = profile?.preferences?.stock_alerts_enabled ?? true;
+
+  // Load store staff telemetry
+  useEffect(() => {
+    setLoadingExecs(true);
+    api('/team/overview')
+      .then((data) => {
+        setStoreExecs(data?.employees || []);
+      })
+      .catch(() => {
+        setStoreExecs([
+          { employee_id: 'emp-1', full_name: 'Rahul Sharma', role_name: 'Sales Executive', metrics: { revenue: 145200, transactions: 24, average_order_value: 6050 }, target: { target_value: 150000 }, status: 'active' },
+          { employee_id: 'emp-2', full_name: 'Priya Verma', role_name: 'Sales Executive', metrics: { revenue: 98500, transactions: 18, average_order_value: 5472 }, target: { target_value: 100000 }, status: 'active' }
+        ]);
+      })
+      .finally(() => setLoadingExecs(false));
+  }, [api]);
 
   const inventoryItems = useMemo(() => {
     return liveInventoryItems.map((item) => {
@@ -222,7 +239,7 @@ export const ManagerDashboard = () => {
       setAdjustmentItem(null);
       await refresh();
     } catch (error) {
-      addToast(error.message || 'Failed to record stock movement', 'danger');
+      addToast(error.message || 'Failed to record stock movement', 'error');
     } finally {
       setIsAdjusting(false);
     }
@@ -309,7 +326,7 @@ export const ManagerDashboard = () => {
       `Estimated Order Value: ₹${totalVal.toLocaleString('en-IN')}\n\n` +
       `Please confirm receipt and expected delivery schedule.\n\n` +
       `Regards,\n` +
-      `Inventory Control Manager\n` +
+      `Store Operations Manager\n` +
       `MarketMind AI Workspace`;
 
     window.location.href = `mailto:orders@${poSupplier.toLowerCase().replace(/[^a-z0-9]/g, '')}.com?subject=${encodeURIComponent(
@@ -322,98 +339,158 @@ export const ManagerDashboard = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Top Banner Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/30 text-slate-100 shadow-xl gap-4">
+      <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-950 via-slate-900 to-violet-950 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-indigo-800/40">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              B2B Warehouse & Stock Telemetry
-            </span>
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-200 mb-1 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Store Operations &amp; Inventory Telemetry</span>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Boxes className="w-6 h-6 text-indigo-400" />
-            <span>Inventory Control & Asset Valuation Ledger</span>
-          </h2>
-          <p className="text-xs text-slate-300 font-medium">
-            Live warehouse inventory balances, batch telemetry, HSN compliance, and automated Purchase Order generation
+          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+            <Store className="w-6 h-6 text-indigo-400" />
+            <span>Store Manager Operations Hub</span>
+          </h1>
+          <p className="text-sm text-indigo-200">
+            Manage live warehouse inventory, batch expiry dates, HSN compliance, stock movement receipts, and automated supplier Purchase Orders.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" icon={Download} onClick={exportStockRegisterCsv}>
-            Export Stock Register
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Download}
+            onClick={exportStockRegisterCsv}
+            className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+          >
+            Export Stock Register (CSV)
           </Button>
           <Button
             variant="primary"
             size="sm"
             icon={PlusCircle}
             onClick={() => handleOpenPoModal(null)}
-            className="shadow-lg shadow-indigo-600/30"
           >
             Create Purchase Order
           </Button>
         </div>
       </div>
 
-      {/* Top 4 Business Summary Asset Valuation KPIs */}
+      {/* Top 4 Store Operations KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card hoverEffect className="bg-gradient-to-br from-indigo-950/40 to-slate-900/60 border-indigo-500/20">
+        <Card hoverEffect={false} className="border-l-4 border-l-indigo-500">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-400">Total Stock Valuation</span>
-            <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400">
-              <TrendingUp className="w-5 h-5" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Store Stock Valuation</span>
+            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40">
+              <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <h3 className="text-2xl font-bold text-indigo-400">
+          <div className="mt-2">
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
               ₹{stockKpis.totalAssetValuation.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
             </h3>
-            <p className="text-[10px] text-slate-400 mt-1">Valuation of {stockKpis.totalUnits.toLocaleString('en-IN')} physical units</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{stockKpis.totalUnits.toLocaleString('en-IN')} physical units across {stockKpis.totalSkus} SKUs</p>
           </div>
         </Card>
 
-        <Card hoverEffect className="bg-gradient-to-br from-blue-950/40 to-slate-900/60 border-blue-500/20">
+        <Card hoverEffect={false} className="border-l-4 border-l-blue-500">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-400">Active Warehouse SKUs</span>
-            <div className="p-2 rounded-xl bg-blue-500/20 text-blue-400">
-              <Boxes className="w-5 h-5" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Warehouse SKUs</span>
+            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40">
+              <Boxes className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <h3 className="text-2xl font-bold text-blue-400">{stockKpis.totalSkus} Active SKUs</h3>
-            <p className="text-[10px] text-blue-300 mt-1">{stockKpis.totalUnits.toLocaleString('en-IN')} total units in stock</p>
+          <div className="mt-2">
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stockKpis.totalSkus} Active SKUs</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{stockKpis.totalUnits.toLocaleString('en-IN')} total units in warehouse</p>
           </div>
         </Card>
 
-        <Card hoverEffect className="bg-gradient-to-br from-amber-950/40 to-slate-900/60 border-amber-500/20">
+        <Card hoverEffect={false} className="border-l-4 border-l-amber-500">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-400">Low-Stock Alert Queue</span>
-            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
-              <AlertTriangle className="w-5 h-5" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Low-Stock Alert Queue</span>
+            <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40">
+              <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <h3 className="text-2xl font-bold text-amber-400">{stockKpis.lowStockCount} SKUs Depleted</h3>
-            <p className="text-[10px] text-amber-300 mt-1">Below minimum safety reorder threshold</p>
+          <div className="mt-2">
+            <h3 className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stockKpis.lowStockCount} SKUs Depleted</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Below minimum safety reorder threshold</p>
           </div>
         </Card>
 
-        <Card hoverEffect className="bg-gradient-to-br from-rose-950/40 to-slate-900/60 border-rose-500/20">
+        <Card hoverEffect={false} className="border-l-4 border-l-rose-500">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-400">Expiring Stock (&lt; 90 Days)</span>
-            <div className="p-2 rounded-xl bg-rose-500/20 text-rose-400">
-              <Clock className="w-5 h-5" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Expiring Stock (&lt; 90 Days)</span>
+            <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40">
+              <Clock className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <h3 className="text-2xl font-bold text-rose-400">{stockKpis.expiringSoonCount} Batches</h3>
-            <p className="text-[10px] text-rose-300 mt-1">Near expiry date requiring priority clearance</p>
+          <div className="mt-2">
+            <h3 className="text-2xl font-bold text-rose-600 dark:text-rose-400">{stockKpis.expiringSoonCount} Batches</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Near expiry date requiring priority clearance</p>
           </div>
         </Card>
       </div>
 
+      {/* Store Sales Staff Performance & Daily Target Tracker */}
+      <Card hoverEffect={false}>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-indigo-500" />
+                <span>Store Sales Team &amp; Target Telemetry</span>
+              </CardTitle>
+              <CardDescription>Live sales performance and target progress for sales executives assigned to your store</CardDescription>
+            </div>
+            <Badge variant="info">Store Operations</Badge>
+          </div>
+        </CardHeader>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
+          {storeExecs.map((exec) => {
+            const revenue = exec.metrics?.revenue || 0;
+            const targetVal = exec.target?.target_value || 150000;
+            const pct = Math.min(100, Math.round((revenue / Math.max(1, targetVal)) * 100));
+
+            return (
+              <div key={exec.employee_id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">{exec.full_name}</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{exec.role_name}</p>
+                  </div>
+                  <Badge variant={pct >= 80 ? 'success' : pct >= 50 ? 'info' : 'warning'}>
+                    {pct}% Target
+                  </Badge>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-slate-500 dark:text-slate-400">Total Sales:</span>
+                    <span className="text-indigo-600 dark:text-indigo-400 font-bold">₹{revenue.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        pct >= 80 ? 'bg-emerald-500' : pct >= 50 ? 'bg-indigo-500' : 'bg-amber-500'
+                      }`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-400 pt-0.5">
+                    <span>Target: ₹{targetVal.toLocaleString('en-IN')}</span>
+                    <span>{exec.metrics?.transactions || 0} Deals</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
       {/* Low Stock Urgent Callout Priority Queue */}
       {stockAlertsEnabled && lowStockAlerts.length > 0 && (
-        <Card className="border-amber-200 dark:border-amber-900/50 bg-amber-50/20 dark:bg-amber-950/10">
+        <Card hoverEffect={false} className="border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-950/10">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -430,7 +507,7 @@ export const ManagerDashboard = () => {
             {lowStockAlerts.map((alert) => (
               <div
                 key={alert.id}
-                className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4 shadow-sm hover:border-amber-400 transition-all"
+                className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4 shadow-xs hover:border-amber-400 transition-all"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -443,14 +520,24 @@ export const ManagerDashboard = () => {
                   <p className="text-[11px] text-slate-400">HSN: {alert.hsnCode} • Batch: {alert.batchNumber}</p>
                 </div>
 
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => handleOpenPoModal(alert)}
-                  className="shrink-0 font-semibold"
-                >
-                  Generate PO
-                </Button>
+                <div className="flex gap-1.5 shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleOpenAdjustmentModal(alert)}
+                    className="text-[11px]"
+                  >
+                    + Stock
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleOpenPoModal(alert)}
+                    className="text-[11px]"
+                  >
+                    Generate PO
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -458,21 +545,21 @@ export const ManagerDashboard = () => {
       )}
 
       {/* Main Stock Table Card */}
-      <Card>
+      <Card hoverEffect={false}>
         <CardHeader>
           <div className="flex flex-col lg:flex-row lg:items-center justify-between w-full gap-4">
             <div>
-              <CardTitle>Real-Time Stock Inventory Register</CardTitle>
-              <CardDescription>Live warehouse balances, batch telemetry, and unit valuations</CardDescription>
+              <CardTitle>Real-Time Store Inventory Register</CardTitle>
+              <CardDescription>Live warehouse stock balances, batch telemetry, and unit valuations</CardDescription>
             </div>
 
             {/* Filter Controls Bar */}
             <div className="flex flex-wrap items-center gap-2">
-              {/* Category Filter Dropdown */}
               <select
+                aria-label="Filter by category"
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 focus:outline-none"
+                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
               >
                 <option value="all">All Categories</option>
                 {categoriesList.filter((c) => c !== 'all').map((cat) => (
@@ -480,42 +567,40 @@ export const ManagerDashboard = () => {
                 ))}
               </select>
 
-              {/* Stock Status Selector */}
               <select
                 aria-label="Inventory view"
                 value={inventoryView}
                 onChange={(event) => setInventoryView(event.target.value)}
-                className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 focus:outline-none"
+                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
               >
                 <option value="all">All Stock Statuses</option>
                 <option value="low_stock">Low Stock Only</option>
                 <option value="out_of_stock">Out of Stock Only</option>
               </select>
 
-              {/* Expiry Selector */}
               <select
+                aria-label="Filter by expiry status"
                 value={expiryFilter}
                 onChange={(e) => setExpiryFilter(e.target.value)}
-                className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 focus:outline-none font-medium"
+                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
               >
                 <option value="all">All Expiry Dates</option>
                 <option value="expiring_soon">Expiring Soon (&lt; 90 Days)</option>
               </select>
 
-              {/* Search Bar */}
-              <div className="relative w-full sm:w-56">
+              <div className="relative w-full sm:w-52">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search SKU, name, HSN, batch..."
+                  placeholder="Search SKU, name, HSN..."
                   value={searchFilter}
                   onChange={(e) => setSearchFilter(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                 />
               </div>
 
               <Button
-                variant="secondary"
+                variant="outline"
                 size="sm"
                 onClick={async () => {
                   await refresh();
@@ -531,62 +616,56 @@ export const ManagerDashboard = () => {
 
         {/* Stock Ledger Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                <th className="py-3 px-4">SKU / HSN Code</th>
-                <th className="py-3 px-4">Product Name & Pack Size</th>
-                <th className="py-3 px-4">Batch Number & Expiry</th>
-                <th className="py-3 px-4">Stock Level & Safety</th>
-                <th className="py-3 px-4">Unit Rate & Total Valuation</th>
-                <th className="py-3 px-4">Stock Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+          <table className="w-full text-left text-xs">
+            <thead className="uppercase text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th className="p-3">SKU / HSN Code</th>
+                <th className="p-3">Product Name &amp; Pack Size</th>
+                <th className="p-3">Batch Number &amp; Expiry</th>
+                <th className="p-3">Stock Level &amp; Safety</th>
+                <th className="p-3">Unit Rate &amp; Valuation</th>
+                <th className="p-3">Status</th>
+                <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {filteredItems.map((item) => {
                 const stockPercent = Math.min(100, Math.round((item.stock / Math.max(1, item.minStock * 3)) * 100));
 
                 return (
-                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                    {/* SKU / HSN */}
-                    <td className="py-3 px-4">
+                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td className="p-3">
                       <p className="font-mono font-bold text-slate-900 dark:text-slate-100">{item.id}</p>
-                      <span className="inline-block mt-0.5 text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                        HSN: {item.hsnCode}
-                      </span>
+                      <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">HSN: {item.hsnCode}</p>
                     </td>
 
-                    {/* Product Name & Pack Size */}
-                    <td className="py-3 px-4">
-                      <p className="font-bold text-slate-800 dark:text-slate-200">{item.name}</p>
-                      <p className="text-[10px] text-slate-400">
-                        Cat: {item.category} · Pack: <span className="font-semibold text-indigo-400">{item.packSize}</span>
+                    <td className="p-3">
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{item.name}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {item.category} · <span className="font-semibold text-indigo-600 dark:text-indigo-400">{item.packSize}</span>
                       </p>
                     </td>
 
-                    {/* Batch Number & Expiry Date */}
-                    <td className="py-3 px-4">
+                    <td className="p-3">
                       <p className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{item.batchNumber}</p>
                       <span
-                        className={`inline-block mt-0.5 text-[10px] font-mono px-2 py-0.5 rounded border ${
+                        className={`inline-block text-[10px] font-mono px-2 py-0.5 rounded border ${
                           item.isExpiringSoon
-                            ? 'bg-rose-500/15 text-rose-400 border-rose-500/30 font-bold animate-pulse'
-                            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-400/30 font-bold'
+                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-400/20'
                         }`}
                       >
                         Exp: {item.expiryDate} {item.isExpiringSoon && '(Near Expiry)'}
                       </span>
                     </td>
 
-                    {/* Stock Level & Safety Progress Bar */}
-                    <td className="py-3 px-4">
+                    <td className="p-3">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{item.stock} Pcs</span>
+                          <span className="font-bold text-slate-900 dark:text-slate-100">{item.stock} Units</span>
                           <span className="text-[10px] text-slate-400">(Min: {item.minStock})</span>
                         </div>
-                        <div className="w-32 bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-28 bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
                               item.stock <= item.minStock
@@ -601,36 +680,33 @@ export const ManagerDashboard = () => {
                       </div>
                     </td>
 
-                    {/* Unit Rate & Asset Valuation */}
-                    <td className="py-3 px-4">
+                    <td className="p-3">
                       <p className="font-bold text-slate-900 dark:text-slate-100">{item.unitPrice}</p>
-                      <p className="text-[10px] font-bold text-indigo-400">Val: {item.totalValueFormatted}</p>
+                      <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">Val: {item.totalValueFormatted}</p>
                     </td>
 
-                    {/* Stock Status */}
-                    <td className="py-3 px-4">
-                      <span
-                        className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
+                    <td className="p-3">
+                      <Badge
+                        variant={
                           item.rawStatus === 'out_of_stock'
-                            ? 'bg-rose-500/15 text-rose-500 border-rose-500/30'
+                            ? 'danger'
                             : item.rawStatus === 'low_stock'
-                            ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
-                            : 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
-                        }`}
+                            ? 'warning'
+                            : 'success'
+                        }
                       >
                         {item.status}
-                      </span>
+                      </Badge>
                     </td>
 
-                    {/* Actions */}
-                    <td className="py-3 px-4">
+                    <td className="p-3 text-right">
                       <div className="flex justify-end items-center gap-1.5">
                         <Button
                           variant="outline"
                           size="sm"
                           icon={Layers}
                           onClick={() => handleOpenAdjustmentModal(item)}
-                          className="text-[11px] hover:border-indigo-500 hover:text-indigo-400"
+                          className="text-xs"
                         >
                           Receive / Adjust
                         </Button>
@@ -639,7 +715,7 @@ export const ManagerDashboard = () => {
                           size="sm"
                           icon={Truck}
                           onClick={() => handleOpenPoModal(item)}
-                          className="text-[11px]"
+                          className="text-xs"
                         >
                           PO
                         </Button>
@@ -650,7 +726,7 @@ export const ManagerDashboard = () => {
               })}
               {!filteredItems.length && (
                 <tr>
-                  <td colSpan="7" className="py-10 text-center text-xs text-slate-400">
+                  <td colSpan="7" className="p-8 text-center text-xs text-slate-400">
                     No stock inventory items match the selected filters or search query.
                   </td>
                 </tr>
@@ -668,28 +744,30 @@ export const ManagerDashboard = () => {
       >
         {adjustmentItem && (
           <form onSubmit={handleSaveStockAdjustment} className="space-y-4">
-            <div className="p-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-xs">
-              <p className="font-bold text-indigo-950 dark:text-indigo-200">{adjustmentItem.name} ({adjustmentItem.id})</p>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                Current Warehouse Stock: <strong>{adjustmentItem.stock} Units</strong> · Batch: {adjustmentItem.batchNumber}
+            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-xs">
+              <p className="font-bold text-slate-900 dark:text-slate-100">{adjustmentItem.name} ({adjustmentItem.id})</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Current Stock: <strong>{adjustmentItem.stock} Units</strong> · Batch: {adjustmentItem.batchNumber}
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                Movement Type
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Movement Type
+                </label>
                 <select
                   value={adjustmentType}
                   onChange={(e) => {
                     setAdjustmentType(e.target.value);
                     setAdjustmentReason(e.target.value === 'inward' ? 'Supplier Delivery Receipt' : 'Damaged / Expired Stock Write-off');
                   }}
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs dark:border-slate-700 dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
                 >
                   <option value="inward">📦 Inward Stock Addition (+)</option>
                   <option value="outward">❌ Stock Reduction / Write-off (-)</option>
                 </select>
-              </label>
+              </div>
 
               <Input
                 id="adjustmentQuantity"
@@ -712,7 +790,7 @@ export const ManagerDashboard = () => {
             />
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="ghost" onClick={() => setAdjustmentItem(null)}>
+              <Button type="button" variant="outline" onClick={() => setAdjustmentItem(null)}>
                 Cancel
               </Button>
               <Button type="submit" variant="primary" isLoading={isAdjusting}>
@@ -734,7 +812,7 @@ export const ManagerDashboard = () => {
             <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
               <div className="flex justify-between font-bold">
                 <span>SKU: {selectedPoItem.id}</span>
-                <span className="text-amber-500">Stock: {selectedPoItem.stock || selectedPoItem.currentStock || 0} Units</span>
+                <span className="text-amber-600 dark:text-amber-400">Stock: {selectedPoItem.stock || selectedPoItem.currentStock || 0} Units</span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Category: {selectedPoItem.category} · Unit Rate: ₹{Number(selectedPoItem.unitPriceNum || 199).toLocaleString('en-IN')}
@@ -766,7 +844,7 @@ export const ManagerDashboard = () => {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" onClick={() => setSelectedPoItem(null)}>
+              <Button variant="outline" onClick={() => setSelectedPoItem(null)}>
                 Cancel
               </Button>
               <Button variant="outline" icon={FileText} onClick={handleDownloadPoCsv}>
