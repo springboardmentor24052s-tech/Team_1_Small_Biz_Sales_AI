@@ -848,7 +848,7 @@ export const SalesModule = () => {
       </Modal>
 
       {/* View Details Modal (Authentic Commercial Bill & Receipt Format) */}
-      <Modal isOpen={modalMode === 'view'} onClose={() => setModalMode(null)} title="B2B Commercial Invoice & Transaction Bill" size="lg">
+      <Modal isOpen={modalMode === 'view'} onClose={() => setModalMode(null)} title="B2B Commercial Invoice & Transaction Bill" size="xl">
         {selected && (() => {
           const cust = getCustomerObj(selected);
           const custName = cust ? (cust.company_name || cust.name) : (selected.customer_reference || 'Walk-in Retail Buyer');
@@ -864,106 +864,104 @@ export const SalesModule = () => {
           ];
 
           return (
-            <div className="space-y-5 text-slate-900 dark:text-slate-100 font-sans text-xs">
-              {/* Receipt Paper Card */}
-              <div className="bg-white text-slate-900 p-5 rounded-2xl border border-slate-300 shadow-md space-y-4">
+            <div className="space-y-4 font-mono text-xs text-slate-900 bg-slate-100 dark:bg-slate-950 p-2 sm:p-4 rounded-xl">
+              {/* White Bill Paper Frame */}
+              <div className="bg-white text-black p-5 rounded-xl border-2 border-slate-900 shadow-2xl space-y-3 font-mono text-[11px] leading-tight">
                 
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-3 border-b-2 border-slate-900 gap-2">
+                <div className="flex justify-between items-start pb-2 border-b-2 border-black gap-2">
                   <div>
-                    <h3 className="font-black text-indigo-900 text-lg tracking-tight flex items-center gap-1.5">
-                      <Building2 className="w-5 h-5 text-indigo-700" />
-                      <span>MARKETMIND DISTRIBUTORS</span>
+                    <h3 className="font-black text-sm text-black tracking-wider uppercase flex items-center gap-1.5">
+                      <Building2 className="w-4 h-4 text-slate-900" />
+                      <span>MARKETMIND DISTRIBUTORS PVT LTD</span>
                     </h3>
-                    <p className="text-[11px] text-slate-600">Wholesale Commercial Sales Receipt & Tax Memo</p>
-                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">GSTIN: 27MARKETMIND123Z9 | State Code: 27</p>
+                    <p className="text-[10px] text-slate-800">Wholesale Commercial Sales Receipt & Tax Memo</p>
+                    <p className="text-[10px] text-slate-800">GSTIN: <span className="font-bold">27MARKETMIND123Z9</span> | State: 27-MH</p>
                   </div>
 
-                  <div className="text-left sm:text-right space-y-0.5">
-                    <span className="inline-block px-2.5 py-0.5 bg-slate-900 text-white font-bold text-[10px] uppercase tracking-wider rounded">
+                  <div className="text-right">
+                    <span className="inline-block px-2 py-0.5 bg-black text-white font-black text-[10px] uppercase tracking-widest">
                       SALES INVOICE
                     </span>
-                    <p className="font-bold font-mono text-slate-900 text-xs mt-1">{selected.displayReference}</p>
-                    <p className="text-[10px] text-slate-600">Date: {new Date(selected.occurred_at).toLocaleString('en-IN')}</p>
+                    <p className="font-bold text-xs mt-1">{selected.displayReference}</p>
+                    <p className="text-[10px]">{new Date(selected.occurred_at).toLocaleString('en-IN')}</p>
                   </div>
                 </div>
 
                 {/* Billed To & Payment Status Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="grid grid-cols-2 gap-3 p-2 border border-black rounded bg-slate-50/50">
                   <div>
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">BILLED TO CLIENT:</span>
-                    <p className="font-bold text-slate-900 text-xs mt-0.5">{custName}</p>
-                    <p className="text-[10px] text-slate-600">GSTIN: <span className="font-mono font-bold">{cust?.gstin || 'N/A'}</span></p>
-                    <p className="text-[10px] text-slate-600">Route: {cust?.territory_route || 'Direct Route'}</p>
+                    <p className="font-black text-[9px] uppercase tracking-wider text-slate-700">BILLED TO CLIENT:</p>
+                    <p className="font-bold text-xs uppercase">{custName}</p>
+                    <p className="text-[10px]">GSTIN: <span className="font-bold">{cust?.gstin || 'N/A'}</span></p>
+                    <p className="text-[10px]">Route: {cust?.territory_route || 'Direct Route'}</p>
                   </div>
 
-                  <div className="sm:text-right space-y-1">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">COMMERCIAL LEDGER:</span>
-                    <p className="text-[10px] text-slate-700">Payment Status: <span className="font-bold uppercase text-emerald-700">{selected.payment_status || 'PAID'}</span></p>
-                    <p className="text-[10px] text-slate-700">Method: <span className="font-semibold">{selected.payment_method?.toUpperCase() || 'UPI'}</span></p>
-                    <p className="text-[10px] text-slate-600">Terms: {selected.credit_terms || 'Net 30'}</p>
+                  <div className="text-right">
+                    <p className="font-black text-[9px] uppercase tracking-wider text-slate-700">COMMERCIAL LEDGER:</p>
+                    <p className="text-[10px]">Status: <span className="font-bold uppercase text-black">[{selected.payment_status || 'PAID'}]</span></p>
+                    <p className="text-[10px]">Method: <span className="font-bold">{selected.payment_method?.toUpperCase() || 'UPI'}</span></p>
+                    <p className="text-[10px]">Terms: {selected.credit_terms || 'Net 30'}</p>
                   </div>
                 </div>
 
-                {/* Itemized Table with Correct Unit Price Math */}
-                <div className="border border-slate-300 rounded-lg overflow-hidden">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-900 text-white font-bold text-[10px]">
-                      <tr>
-                        <th className="p-2">#</th>
-                        <th className="p-2">Item / Product Name</th>
-                        <th className="p-2 text-center">Qty</th>
-                        <th className="p-2 text-right">Unit Price (₹)</th>
-                        <th className="p-2 text-right">Line Total (₹)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200">
-                      {lines.map((line, idx) => {
-                        const qty = Number(line.quantity || 1);
-                        let lineTotal = Number(line.line_amount || 0);
-                        let unitPrice = Number(line.unit_price || 0);
+                {/* Itemized Table with Monospace Billing Math */}
+                <table className="w-full text-left border-collapse border border-black text-[10px]">
+                  <thead className="bg-slate-200 text-black font-bold uppercase border-b border-black">
+                    <tr>
+                      <th className="p-1 border-r border-black text-center w-6">#</th>
+                      <th className="p-1 border-r border-black">Item Description & SKU</th>
+                      <th className="p-1 border-r border-black text-center">Qty</th>
+                      <th className="p-1 border-r border-black text-right">Rate (₹)</th>
+                      <th className="p-1 text-right">Line Total (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black">
+                    {lines.map((line, idx) => {
+                      const qty = Number(line.quantity || 1);
+                      let lineTotal = Number(line.line_amount || 0);
+                      let unitPrice = Number(line.unit_price || 0);
 
-                        if (unitPrice === 0 && lineTotal > 0) {
-                          unitPrice = lineTotal / qty;
-                        } else if (lineTotal === 0 && unitPrice > 0) {
-                          lineTotal = unitPrice * qty;
-                        } else if (unitPrice === 0 && lineTotal === 0) {
-                          unitPrice = totalAmt / totalQty;
-                          lineTotal = unitPrice * qty;
-                        }
+                      if (unitPrice === 0 && lineTotal > 0) {
+                        unitPrice = lineTotal / qty;
+                      } else if (lineTotal === 0 && unitPrice > 0) {
+                        lineTotal = unitPrice * qty;
+                      } else if (unitPrice === 0 && lineTotal === 0) {
+                        unitPrice = totalAmt / totalQty;
+                        lineTotal = unitPrice * qty;
+                      }
 
-                        return (
-                          <tr key={line.id || idx} className="hover:bg-slate-50 text-[11px]">
-                            <td className="p-2 text-slate-500">{idx + 1}</td>
-                            <td className="p-2">
-                              <p className="font-bold text-slate-900">{line.product?.name || 'Product Item'}</p>
-                              <p className="text-[9px] text-slate-500 font-mono">SKU: {line.product?.sku || 'SKU-001'}</p>
-                            </td>
-                            <td className="p-2 text-center font-semibold text-slate-900">{qty} Pcs</td>
-                            <td className="p-2 text-right font-mono text-slate-800">
-                              ₹{unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                            <td className="p-2 text-right font-bold font-mono text-slate-900">
-                              ₹{lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                      return (
+                        <tr key={line.id || idx}>
+                          <td className="p-1 border-r border-black text-center">{idx + 1}</td>
+                          <td className="p-1 border-r border-black font-bold">
+                            {line.product?.name || 'Wholesale Product SKU'}
+                            <span className="block text-[9px] text-slate-700 font-normal">[{line.product?.sku || 'SKU-001'}]</span>
+                          </td>
+                          <td className="p-1 border-r border-black text-center font-bold">{qty} Pcs</td>
+                          <td className="p-1 border-r border-black text-right">
+                            {unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                          <td className="p-1 text-right font-bold">
+                            {lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
 
-                {/* Financial Summary */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-3 rounded-xl bg-indigo-50/80 border border-indigo-200">
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase">TOTAL ITEMS: {totalQty} Units</p>
-                    <p className="text-xs font-bold text-indigo-950">Subtotal: ₹{taxableSub.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-                    <p className="text-[10px] text-slate-600">Incl. CGST 9% (₹{cgstAmt.toFixed(2)}) + SGST 9% (₹{sgstAmt.toFixed(2)})</p>
+                {/* Financial Summary Box */}
+                <div className="flex justify-between items-center p-2 border-2 border-black rounded bg-slate-50/50">
+                  <div>
+                    <p className="text-[9px] font-bold text-slate-700">TOTAL UNITS: {totalQty} Pcs</p>
+                    <p className="text-[10px]">Subtotal: ₹{taxableSub.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                    <p className="text-[9px] text-slate-700">Incl. CGST 9% (₹{cgstAmt.toFixed(2)}) + SGST 9% (₹{sgstAmt.toFixed(2)})</p>
                   </div>
 
-                  <div className="sm:text-right">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase">GRAND INVOICE TOTAL</p>
-                    <p className="text-lg font-black font-mono text-indigo-950">
+                  <div className="text-right">
+                    <p className="text-[9px] font-bold uppercase text-slate-700">INVOICE TOTAL</p>
+                    <p className="text-base font-black">
                       ₹{totalAmt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -972,7 +970,7 @@ export const SalesModule = () => {
               </div>
 
               {/* Modal Actions */}
-              <div className="flex justify-end gap-2 pt-1">
+              <div className="flex justify-end gap-2 pt-1 no-print">
                 <Button
                   variant="outline"
                   size="sm"
@@ -981,11 +979,11 @@ export const SalesModule = () => {
                     setModalMode(null);
                     openInvoiceModal(selected);
                   }}
-                  className="bg-indigo-600 text-white hover:bg-indigo-700 border-none shadow-md"
+                  className="bg-indigo-600 text-white hover:bg-indigo-700 border-none shadow-md font-sans text-xs"
                 >
-                  Open Statutory GST Invoice
+                  Open Official A5 Landscape GST Invoice
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setModalMode(null)}>
+                <Button variant="ghost" size="sm" onClick={() => setModalMode(null)} className="font-sans text-xs">
                   Close
                 </Button>
               </div>

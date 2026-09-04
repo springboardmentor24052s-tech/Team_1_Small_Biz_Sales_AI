@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { Printer, Building2, Phone, Mail, ShieldCheck, CheckCircle2, AlertTriangle, Clock, QrCode } from 'lucide-react';
+import { Printer, Building2, Phone, Mail, CheckCircle2, AlertTriangle, Clock, QrCode } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 export const numberToWordsIN = (num) => {
@@ -34,8 +34,7 @@ export const B2bInvoiceModal = ({ isOpen, onClose, transaction, customer }) => {
   const companyName = customer?.company_name || transaction.customer_snapshot?.company_name || transaction.customer_reference || 'Apex Wholesale & Retail Partner';
   const gstin = customer?.gstin || transaction.customer_snapshot?.gstin || '27AAAAA0000A1Z5';
   const contactPhone = customer?.contact_phone || '+91 98765 43210';
-  const contactEmail = customer?.contact_email || 'billing@retailpartner.in';
-  const route = customer?.territory_route || 'Central Wholesale Corridor';
+  const route = customer?.territory_route || 'Central Wholesale Route';
 
   const totalAmount = Number(transaction.total_amount || 0);
   const cgst = Number(transaction.cgst_amount || (totalAmount * 0.09));
@@ -53,187 +52,186 @@ export const B2bInvoiceModal = ({ isOpen, onClose, transaction, customer }) => {
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('B2B Statutory GST Tax Invoice')} size="xl">
-      <div className="space-y-6 text-slate-900 dark:text-slate-100 print:text-black print:bg-white font-sans text-xs">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('B2B Statutory GST Tax Invoice (A5 Landscape)')} size="2xl">
+      {/* Embedded CSS for A5 Landscape Printing & Billing Monospace Fonts */}
+      <style>{`
+        @media print {
+          @page {
+            size: A5 landscape !important;
+            margin: 4mm !important;
+          }
+          body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            font-family: 'Consolas', 'Courier New', Courier, monospace !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .a5-bill-container {
+            border: 2px solid #000000 !important;
+            padding: 8px !important;
+            box-shadow: none !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+        }
+      `}</style>
+
+      <div className="space-y-4 font-mono text-xs text-slate-900 bg-slate-100 dark:bg-slate-950 p-2 sm:p-4 rounded-xl">
         
         {/* Top Control Bar (Hidden in Print) */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 print:hidden">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-300 dark:border-slate-800 no-print">
           <div className="flex items-center gap-2">
-            <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 border ${
-              transaction.payment_status === 'overdue' ? 'bg-rose-500/15 text-rose-500 border-rose-500/30' :
-              transaction.payment_status === 'unpaid' ? 'bg-amber-500/15 text-amber-500 border-amber-500/30' :
-              'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+            <span className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 border ${
+              transaction.payment_status === 'overdue' ? 'bg-rose-500/15 text-rose-600 border-rose-500/30' :
+              transaction.payment_status === 'unpaid' ? 'bg-amber-500/15 text-amber-600 border-amber-500/30' :
+              'bg-emerald-500/15 text-emerald-600 border-emerald-500/30'
             }`}>
               {transaction.payment_status === 'overdue' && <AlertTriangle className="w-3.5 h-3.5" />}
               {transaction.payment_status === 'unpaid' && <Clock className="w-3.5 h-3.5" />}
               {transaction.payment_status === 'paid' && <CheckCircle2 className="w-3.5 h-3.5" />}
-              <span>{transaction.payment_status === 'overdue' ? 'OVERDUE PAYMENT' : transaction.payment_status === 'unpaid' ? 'CREDIT LEDGER (UNPAID)' : 'PAID TAX INVOICE'}</span>
+              <span>{transaction.payment_status === 'overdue' ? 'OVERDUE PAYMENT' : transaction.payment_status === 'unpaid' ? 'UNPAID CREDIT' : 'PAID TAX INVOICE'}</span>
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Payment Method: <strong>{transaction.payment_method?.toUpperCase() || 'UPI / BANK'}</strong></span>
+            <span className="text-[11px] text-slate-600 dark:text-slate-400 font-sans">
+              Format: <strong>A5 Paper (Landscape 210x148mm)</strong>
+            </span>
           </div>
 
-          <Button variant="primary" size="sm" icon={Printer} onClick={handlePrint} className="shadow-lg shadow-indigo-500/20">
-            Print Official GST Bill
+          <Button variant="primary" size="sm" icon={Printer} onClick={handlePrint} className="shadow-md">
+            Print A5 Landscape Bill
           </Button>
         </div>
 
-        {/* Real Bill Paper Sheet Frame */}
-        <div className="bg-white text-slate-900 p-6 rounded-2xl shadow-xl border border-slate-300 print:shadow-none print:border-black print:p-0 space-y-6">
+        {/* A5 Landscape Bill Paper Sheet (White Background & Dot-Matrix Billing Monospace Font) */}
+        <div className="a5-bill-container bg-white text-black p-5 rounded-xl border-2 border-slate-900 shadow-2xl space-y-3 font-mono text-[11px] leading-tight">
           
-          {/* Header Banner */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b-2 border-slate-900 gap-4">
+          {/* Top Header - Supplier & Bill Type */}
+          <div className="flex justify-between items-start pb-2 border-b-2 border-black gap-2">
             <div>
-              <div className="flex items-center gap-2 text-indigo-700 font-black text-xl tracking-tight">
-                <Building2 className="w-6 h-6" />
-                <span>MARKETMIND DISTRIBUTORS PVT LTD</span>
-              </div>
-              <p className="text-xs text-slate-600 font-medium mt-0.5">Authorised B2B Wholesale FMCG & Retail Distribution Network</p>
-              <p className="text-[11px] text-slate-500 mt-1">Plot 45, MIDC Commercial Zone, Andheri East, Mumbai - 400093</p>
-              <p className="text-[11px] text-slate-700 font-semibold mt-0.5">
-                GSTIN: <span className="font-mono text-indigo-900">27MARKETMIND123Z9</span> | State Code: 27 (Maharashtra)
-              </p>
+              <h2 className="font-black text-sm text-black tracking-wider uppercase">
+                MARKETMIND DISTRIBUTORS PVT LTD
+              </h2>
+              <p className="text-[10px] text-slate-800">Authorised B2B Wholesale FMCG & Retail Distribution</p>
+              <p className="text-[10px] text-slate-800">GSTIN: <span className="font-bold">27MARKETMIND123Z9</span> | State Code: 27 (MH)</p>
             </div>
 
-            <div className="text-left sm:text-right border-l-2 sm:border-l-0 sm:pl-0 pl-3 border-indigo-600">
-              <span className="inline-block px-3 py-1 bg-indigo-900 text-white font-black text-xs uppercase tracking-widest rounded">
-                TAX INVOICE
+            <div className="text-right">
+              <span className="inline-block px-2 py-0.5 bg-black text-white font-black text-[10px] tracking-widest uppercase">
+                GST TAX INVOICE
               </span>
-              <p className="text-xs text-slate-700 font-bold mt-2">Invoice No: <span className="font-mono text-indigo-900 text-sm">{invoiceNo}</span></p>
-              <p className="text-[11px] text-slate-600">Invoice Date: <span className="font-semibold">{invDate}</span></p>
-              <p className="text-[11px] text-slate-600">Credit Terms: <span className="font-semibold">{transaction.credit_terms || 'Net 30 Days'}</span></p>
-              <p className="text-[11px] text-rose-700 font-bold">Due Date: <span>{dueDate}</span></p>
+              <p className="font-bold text-xs mt-1">Inv No: <span className="underline">{invoiceNo}</span></p>
+              <p className="text-[10px]">Inv Date: {invDate} | Due: {dueDate}</p>
             </div>
           </div>
 
-          {/* Billed To / Consignee Information */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">BILLED TO (BUYER DETAILS):</span>
-              <h4 className="text-sm font-bold text-slate-900">{companyName}</h4>
-              <p className="text-[11px] text-slate-700">GSTIN: <span className="font-mono font-bold text-indigo-900">{gstin}</span></p>
-              <p className="text-[11px] text-slate-600">Delivery Route: <span className="font-semibold">{route}</span></p>
-              <p className="text-[11px] text-slate-600 flex items-center gap-1"><Phone className="w-3 h-3 text-slate-400" /> {contactPhone}</p>
-              <p className="text-[11px] text-slate-600 flex items-center gap-1"><Mail className="w-3 h-3 text-slate-400" /> {contactEmail}</p>
+          {/* 2-Column Details Row (Billed To & Dispatch Info) */}
+          <div className="grid grid-cols-2 gap-3 p-2 border border-black rounded bg-slate-50/50">
+            <div>
+              <p className="font-black text-[9px] uppercase tracking-wider text-slate-700">BILLED TO (RETAILER/BUYER):</p>
+              <p className="font-bold text-xs uppercase">{companyName}</p>
+              <p className="text-[10px]">GSTIN: <span className="font-bold">{gstin}</span></p>
+              <p className="text-[10px]">Route: {route} | Ph: {contactPhone}</p>
             </div>
 
-            <div className="space-y-1 sm:text-right">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">DISPATCH & PAYMENT LEDGER:</span>
-              <p className="text-[11px] text-slate-700">Dispatched Via: <span className="font-semibold">Distributor Route Vehicle</span></p>
-              <p className="text-[11px] text-slate-700">Payment Mode: <span className="font-semibold">{transaction.payment_method?.toUpperCase() || 'UPI'}</span></p>
-              <p className="text-[11px] text-slate-700">Payment Status: <span className="font-bold text-emerald-700 uppercase">{transaction.payment_status || 'PAID'}</span></p>
-              <p className="text-[11px] text-slate-600 font-mono">Place of Supply: 27-Maharashtra</p>
+            <div className="text-right">
+              <p className="font-black text-[9px] uppercase tracking-wider text-slate-700">DISPATCH & LEDGER DETAILS:</p>
+              <p className="text-[10px]">Payment Method: <span className="font-bold">{transaction.payment_method?.toUpperCase() || 'UPI / BANK'}</span></p>
+              <p className="text-[10px]">Credit Terms: <span className="font-bold">{transaction.credit_terms || 'Net 30 Days'}</span></p>
+              <p className="text-[10px]">Status: <span className="font-bold text-black uppercase">[{transaction.payment_status || 'PAID'}]</span></p>
             </div>
           </div>
 
-          {/* Itemized Particulars Table */}
-          <div className="overflow-x-auto border border-slate-300 rounded-lg">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-900 text-white font-bold text-[11px] border-b border-slate-900">
-                <tr>
-                  <th className="p-2.5 w-10 text-center">#</th>
-                  <th className="p-2.5">Item Description & SKU</th>
-                  <th className="p-2.5">HSN/SAC</th>
-                  <th className="p-2.5">Batch / Lot</th>
-                  <th className="p-2.5 text-center">Qty</th>
-                  <th className="p-2.5 text-right">Unit Price (₹)</th>
-                  <th className="p-2.5 text-right">Taxable Amount (₹)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {rawLineItems.map((item, idx) => {
-                  const qty = Number(item.quantity || 1);
-                  let calculatedRate = Number(item.unit_price || 0);
-                  let lineTotal = Number(item.line_amount || 0);
+          {/* Itemized Billing Table (Fits A5 Landscape) */}
+          <table className="w-full text-left border-collapse border border-black text-[10px]">
+            <thead className="bg-slate-200 text-black font-bold uppercase border-b border-black">
+              <tr>
+                <th className="p-1 border-r border-black text-center w-6">#</th>
+                <th className="p-1 border-r border-black">Item Description & SKU</th>
+                <th className="p-1 border-r border-black text-center">HSN</th>
+                <th className="p-1 border-r border-black text-center">Qty</th>
+                <th className="p-1 border-r border-black text-right">Rate (₹)</th>
+                <th className="p-1 text-right">Taxable Amt (₹)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-black">
+              {rawLineItems.map((item, idx) => {
+                const qty = Number(item.quantity || 1);
+                let calculatedRate = Number(item.unit_price || 0);
+                let lineTotal = Number(item.line_amount || 0);
 
-                  if (calculatedRate === 0 && lineTotal > 0) {
-                    calculatedRate = lineTotal / qty;
-                  } else if (lineTotal === 0 && calculatedRate > 0) {
-                    lineTotal = calculatedRate * qty;
-                  } else if (calculatedRate === 0 && lineTotal === 0) {
-                    calculatedRate = taxableSubtotal / totalItemCount;
-                    lineTotal = calculatedRate * qty;
-                  }
+                if (calculatedRate === 0 && lineTotal > 0) {
+                  calculatedRate = lineTotal / qty;
+                } else if (lineTotal === 0 && calculatedRate > 0) {
+                  lineTotal = calculatedRate * qty;
+                } else if (calculatedRate === 0 && lineTotal === 0) {
+                  calculatedRate = taxableSubtotal / totalItemCount;
+                  lineTotal = calculatedRate * qty;
+                }
 
-                  return (
-                    <tr key={item.id || idx} className="hover:bg-slate-50">
-                      <td className="p-2.5 text-center text-slate-500">{idx + 1}</td>
-                      <td className="p-2.5">
-                        <p className="font-bold text-slate-900">{item.product?.name || 'Wholesale Product'}</p>
-                        <p className="text-[10px] text-slate-500 font-mono">SKU: {item.product?.sku || 'SKU-8082'}</p>
-                      </td>
-                      <td className="p-2.5 font-mono text-slate-600">8471</td>
-                      <td className="p-2.5 font-mono text-[11px] text-slate-600">BATCH-2026-X1</td>
-                      <td className="p-2.5 text-center font-bold text-slate-900">{qty} Pcs</td>
-                      <td className="p-2.5 text-right font-mono text-slate-800">
-                        ₹{calculatedRate.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="p-2.5 text-right font-bold font-mono text-slate-900">
-                        ₹{lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                return (
+                  <tr key={item.id || idx}>
+                    <td className="p-1 border-r border-black text-center">{idx + 1}</td>
+                    <td className="p-1 border-r border-black font-bold">
+                      {item.product?.name || 'Wholesale Product SKU'}
+                      <span className="block text-[9px] text-slate-700 font-normal">[{item.product?.sku || 'SKU-001'}]</span>
+                    </td>
+                    <td className="p-1 border-r border-black text-center">8471</td>
+                    <td className="p-1 border-r border-black text-center font-bold">{qty} Pcs</td>
+                    <td className="p-1 border-r border-black text-right">
+                      {calculatedRate.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="p-1 text-right font-bold">
+                      {lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
 
-          {/* Tax Calculation & Amount in Words */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start pt-2">
-            {/* Bank Details & QR */}
-            <div className="md:col-span-7 space-y-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">BANK PAYMENT & REMITTANCE DETAILS</p>
-                  <p className="text-[11px] font-bold text-slate-900 mt-0.5">Account Name: MarketMind Wholesale Pvt Ltd</p>
-                  <p className="text-[11px] text-slate-700">Bank: HDFC Bank · Fort Branch</p>
-                  <p className="text-[11px] text-slate-700 font-mono">A/C No: 50200012345678 · IFSC: HDFC0000060</p>
-                  <p className="text-[11px] text-indigo-900 font-bold font-mono">UPI ID: marketmind.pay@hdfcbank</p>
-                </div>
-                <div className="p-2 bg-white rounded-lg border border-slate-300 flex flex-col items-center">
-                  <QrCode className="w-10 h-10 text-slate-800" />
-                  <span className="text-[8px] font-bold text-slate-500 mt-0.5">SCAN TO PAY</span>
-                </div>
-              </div>
-              
-              <div className="pt-2 border-t border-slate-200">
-                <p className="text-[10px] font-bold text-slate-600">AMOUNT IN WORDS:</p>
-                <p className="text-xs font-black text-indigo-950 italic">{numberToWordsIN(totalAmount)}</p>
+          {/* Bottom Row - Bank Details & Financial Summary */}
+          <div className="grid grid-cols-12 gap-2 pt-1">
+            {/* Bank Remittance & Words (7 Cols) */}
+            <div className="col-span-7 space-y-1 p-2 border border-black rounded text-[9.5px]">
+              <p className="font-bold uppercase text-[9px]">BANK REMITTANCE DETAILS:</p>
+              <p>Bank: HDFC Bank (Fort Branch) | A/C: 50200012345678</p>
+              <p>IFSC: HDFC0000060 | UPI ID: marketmind.pay@hdfcbank</p>
+              <div className="pt-1 border-t border-slate-400">
+                <span className="font-bold">IN WORDS: </span>
+                <span className="italic font-bold text-slate-900">{numberToWordsIN(totalAmount)}</span>
               </div>
             </div>
 
-            {/* Financial Summary Box */}
-            <div className="md:col-span-5 space-y-2 p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200">
-              <div className="flex justify-between text-slate-700 font-medium">
-                <span>Taxable Subtotal:</span>
-                <span className="font-mono font-bold">₹{taxableSubtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            {/* Tax & Total Summary (5 Cols) */}
+            <div className="col-span-5 p-2 border-2 border-black rounded space-y-0.5 text-[10px]">
+              <div className="flex justify-between">
+                <span>Taxable Value:</span>
+                <span className="font-bold">₹{taxableSubtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Central GST (CGST 9%):</span>
-                <span className="font-mono">₹{cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <div className="flex justify-between">
+                <span>CGST (9%):</span>
+                <span>₹{cgst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
-                <span>State GST (SGST 9%):</span>
-                <span className="font-mono">₹{sgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <div className="flex justify-between">
+                <span>SGST (9%):</span>
+                <span>₹{sgst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
-              <div className="pt-2 border-t-2 border-slate-900 flex justify-between items-center">
-                <span className="font-black text-slate-900 text-sm">FINAL INVOICE TOTAL:</span>
-                <span className="font-black font-mono text-indigo-950 text-base">₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <div className="flex justify-between font-black text-xs pt-1 border-t-2 border-black">
+                <span>BILL TOTAL:</span>
+                <span>₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
           </div>
 
-          {/* Footer & Declaration */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-300 text-[10px] text-slate-500">
-            <div className="space-y-1">
-              <p className="font-bold text-slate-700">TERMS & CONDITIONS:</p>
-              <p>1. Goods once sold will not be taken back or exchanged.</p>
-              <p>2. Interest @ 18% p.a. will be charged if payment is delayed beyond credit due date.</p>
-              <p>3. Subject to Mumbai Jurisdiction only. E.&O.E.</p>
+          {/* Footer Terms & Authorization */}
+          <div className="flex justify-between items-end pt-2 text-[9px] border-t border-black">
+            <div>
+              <p className="font-bold">TERMS: 1. Subject to Mumbai Jurisdiction. 2. Interest @ 18% p.a. on late payment. E.&O.E.</p>
             </div>
-            
-            <div className="sm:text-right space-y-8">
-              <p className="font-bold text-slate-800">For MARKETMIND DISTRIBUTORS PVT LTD</p>
-              <p className="text-slate-400 font-semibold pt-4">Authorized Signatory / Stamp</p>
+            <div className="text-right">
+              <p className="font-bold">For MARKETMIND DISTRIBUTORS PVT LTD</p>
+              <p className="pt-4 font-bold">[Authorized Signatory / Stamp]</p>
             </div>
           </div>
 
