@@ -1,247 +1,454 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  AlertTriangle, ShieldAlert, Activity, CheckCircle, RefreshCw, 
-  Eye, CheckSquare, Search, Filter, AlertCircle, Info
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  AlertTriangle,
+  ShieldAlert,
+  Activity,
+  CheckCircle,
+  RefreshCw,
+  Search,
+  Filter,
+  AlertCircle,
+  Download,
+  Copy,
+  CheckSquare,
+  Sparkles,
+  ShieldCheck,
+  Check,
 } from 'lucide-react';
 import { anomalyService } from '../../services/anomalyService';
 import { useToast } from '../../context/ToastContext';
+import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
 
 export const AnomalyDetectionModule = () => {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
   const [filterSeverity, setFilterSeverity] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [contamination, setContamination] = useState(0.05);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [copiedId, setCopiedId] = useState(null);
   const { addToast } = useToast();
 
-  const fetchAnomalies = async () => {
-    setLoading(true);
-    try {
-      const severityParam = filterSeverity === 'all' ? null : filterSeverity;
-      const data = await anomalyService.getAnomalies(null, severityParam, contamination);
-      setSummary(data);
-    } catch (err) {
-      console.error('Failed to load anomaly detection data:', err);
-      addToast('Error fetching anomaly events', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchAnomalies = useCallback(
+    async (isManualRefresh = false) => {
+      if (isManualRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setApiError(null);
+
+      try {
+        const severityParam = filterSeverity === 'all' ? null : filterSeverity;
+        const data = await anomalyService.getAnomalies(null, severityParam, contamination);
+        setSummary(data);
+
+        if (isManualRefresh) {
+          addToast('Safeguard scan completed.', 'success');
+        }
+      } catch (err) {
+        console.error('Failed to load anomaly detection data:', err);
+        setSummary(null);
+        setApiError('Business safeguard service is temporarily unavailable. Please try again.');
+        if (isManualRefresh) {
+          addToast('Error running safeguard scan.', 'error');
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [filterSeverity, contamination, addToast]
+  );
 
   useEffect(() => {
-    fetchAnomalies();
-  }, [filterSeverity, contamination]);
+    fetchAnomalies(false);
+  }, [fetchAnomalies]);
 
   const handleStatusChange = async (eventId, action) => {
     try {
       if (action === 'acknowledge') {
         await anomalyService.acknowledgeAnomaly(eventId);
-        addToast('Anomaly event marked as acknowledged', 'info');
+        addToast('Incident marked as Under Investigation', 'info');
       } else {
         await anomalyService.resolveAnomaly(eventId);
-        addToast('Anomaly event successfully resolved', 'success');
+        addToast('Incident marked as Resolved', 'success');
       }
-      fetchAnomalies();
-    } catch (err) {
-      addToast(`Failed to ${action} anomaly event`, 'error');
+      fetchAnomalies(true);
+    } catch (_err) {
+      addToast(`Failed to ${action} incident`, 'error');
     }
   };
 
+  const handleCopyReport = (item) => {
+    const reportText = `[${item.severity} ALERT] ${item.title} (${item.anomaly_type})\nEntity ID: ${item.entity_id || 'N/A'}\nScore: ${item.anomaly_score}\nDescription: ${item.description}`;
+    navigator.clipboard.writeText(reportText);
+    setCopiedId(item.id);
+    setTimeout(() => setCopiedId(null), 2000);
+    addToast(`Copied incident report for ${item.title} to clipboard!`, 'info');
+  };
+
+  const handleExportCSV = () => {
+    const items = summary?.items || [];
+    if (!items.length) {
+      addToast('No incident records to export.', 'warning');
+      return;
+    }
+    const headers = [
+      'Incident ID',
+      'Title',
+      'Severity',
+      'Anomaly Type',
+      'Anomaly Score',
+      'Status',
+      'Entity Reference',
+      'Description',
+    ];
+    const rows = items.map((i) => [
+      `"${i.id || ''}"`,
+      `"${(i.title || '').replace(/"/g, '""')}"`,
+      `"${i.severity || ''}"`,
+      `"${i.anomaly_type || ''}"`,
+      i.anomaly_score || 0,
+      `"${i.status || ''}"`,
+      `"${i.entity_id || ''}"`,
+      `"${(i.description || '').replace(/"/g, '""')}"`,
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute('download', `Business_Safeguard_Incident_Log_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    addToast('Business safeguard incident log exported successfully.', 'success');
+  };
+
+  // Filtered Items
+  const filteredItems = React.useMemo(() => {
+    let items = summary?.items || [];
+
+    if (filterStatus !== 'all') {
+      if (filterStatus === 'unresolved') {
+        items = items.filter((i) => i.status !== 'resolved');
+      } else {
+        items = items.filter((i) => i.status === filterStatus);
+      }
+    }
+
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      items = items.filter(
+        (i) =>
+          (i.title || '').toLowerCase().includes(term) ||
+          (i.description || '').toLowerCase().includes(term) ||
+          (i.anomaly_type || '').toLowerCase().includes(term) ||
+          (i.entity_id || '').toLowerCase().includes(term)
+      );
+    }
+
+    return items;
+  }, [summary?.items, filterStatus, searchTerm]);
+
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-slate-900 via-rose-950/40 to-slate-900 p-6 rounded-2xl border border-rose-500/20 shadow-xl">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-rose-500/10 rounded-xl border border-rose-500/20 text-rose-400">
-              <Activity className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">Business Safeguards & Fraud Protection</h1>
-              <p className="text-slate-400 text-sm mt-0.5">
-                Automated safeguards scanning for unusual sales spikes, rapid stock depletion, and inventory leaks.
-              </p>
-            </div>
+    <div className="space-y-6">
+
+      {/* Header Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-rose-950/50 to-slate-900 text-white shadow-xl border border-rose-800/40">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-400/30 text-rose-200 text-xs font-semibold">
+            <Activity className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+            <span>AI Business Safeguards &amp; Fraud Telemetry</span>
           </div>
+          <h1 className="text-2xl font-bold tracking-tight">Business Safeguards &amp; Fraud Protection</h1>
+          <p className="text-sm text-rose-200">
+            Automated safeguards scanning store transactions, inventory movements, and revenue for billing spikes &amp; leakage.
+          </p>
         </div>
-        <button
-          onClick={fetchAnomalies}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-rose-600/20 disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Run Safeguard Scan
-        </button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            icon={Download}
+            className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+          >
+            Export Incident Log (CSV)
+          </Button>
+          <Button
+            variant="glass"
+            size="sm"
+            onClick={() => fetchAnomalies(true)}
+            isLoading={refreshing}
+            icon={RefreshCw}
+          >
+            Run Safeguard Scan
+          </Button>
+        </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* Top Telemetry KPI Cards */}
       {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-slate-900/80 backdrop-blur border border-slate-800 p-5 rounded-2xl shadow-lg">
-            <div className="flex items-center justify-between text-slate-400 mb-3">
-              <span className="text-sm font-medium">Flagged Incidents</span>
-              <AlertTriangle className="w-5 h-5 text-amber-400" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <Card hoverEffect>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+                Flagged Incidents
+              </span>
+              <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+              </div>
             </div>
-            <div className="text-3xl font-bold text-white">{summary.total_anomalies_detected}</div>
-            <div className="text-xs text-slate-400 mt-2 font-medium">Engine: Automated Safeguard AI</div>
-          </div>
+            <div className="mt-3">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {summary.total_anomalies_detected} Events
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Scanned by Isolation Forest AI</p>
+            </div>
+          </Card>
 
-          <div className="bg-slate-900/80 backdrop-blur border border-rose-500/30 p-5 rounded-2xl shadow-lg relative overflow-hidden">
-            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-rose-500/10 rounded-full blur-xl"></div>
-            <div className="flex items-center justify-between text-slate-400 mb-3">
-              <span className="text-sm font-medium text-rose-400">Critical Alerts</span>
-              <ShieldAlert className="w-5 h-5 text-rose-400" />
+          <Card hoverEffect className="border-rose-500/30">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+                Critical Risk Alerts
+              </span>
+              <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
             </div>
-            <div className="text-3xl font-bold text-rose-400">{summary.critical_count}</div>
-            <div className="text-xs text-rose-400/80 mt-2 font-medium">Action required immediately</div>
-          </div>
+            <div className="mt-3">
+              <h3 className="text-2xl font-bold text-rose-600 dark:text-rose-400">
+                {summary.critical_count} Critical
+              </h3>
+              <p className="text-xs text-rose-500 font-medium mt-1">Immediate intervention recommended</p>
+            </div>
+          </Card>
 
-          <div className="bg-slate-900/80 backdrop-blur border border-amber-500/30 p-5 rounded-2xl shadow-lg">
-            <div className="flex items-center justify-between text-slate-400 mb-3">
-              <span className="text-sm font-medium text-amber-400">Warning Anomalies</span>
-              <AlertCircle className="w-5 h-5 text-amber-400" />
+          <Card hoverEffect className="border-amber-500/30">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+                Warning Anomalies
+              </span>
+              <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+                <AlertCircle className="w-5 h-5" />
+              </div>
             </div>
-            <div className="text-3xl font-bold text-amber-400">{summary.warning_count}</div>
-            <div className="text-xs text-amber-400/80 mt-2 font-medium">Operational warnings</div>
-          </div>
+            <div className="mt-3">
+              <h3 className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                {summary.warning_count} Warnings
+              </h3>
+              <p className="text-xs text-amber-500 font-medium mt-1">Operational variance alerts</p>
+            </div>
+          </Card>
 
-          <div className="bg-slate-900/80 backdrop-blur border border-slate-800 p-5 rounded-2xl shadow-lg">
-            <div className="flex items-center justify-between text-slate-400 mb-3">
-              <span className="text-sm font-medium">Unresolved Incidents</span>
-              <Activity className="w-5 h-5 text-indigo-400" />
+          <Card hoverEffect>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+                Pending Investigation
+              </span>
+              <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                <Activity className="w-5 h-5" />
+              </div>
             </div>
-            <div className="text-3xl font-bold text-indigo-400">{summary.unresolved_count}</div>
-            <div className="text-xs text-indigo-400/80 mt-2 font-medium">Pending investigation</div>
-          </div>
+            <div className="mt-3">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {summary.unresolved_count} Unresolved
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Awaiting store manager review</p>
+            </div>
+          </Card>
         </div>
       )}
 
-      {/* Model Insights Box */}
+      {/* Model Insights & Preventative Guidance Box */}
       {summary?.insights && summary.insights.length > 0 && (
-        <div className="bg-gradient-to-r from-rose-950/30 via-slate-900 to-rose-950/30 border border-rose-500/20 p-5 rounded-2xl">
-          <h3 className="text-sm font-semibold text-rose-300 uppercase tracking-wider mb-2 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-rose-400" /> Automated Risk Analysis & Recommendations
-          </h3>
-          <ul className="space-y-1.5 text-sm text-slate-300">
-            {summary.insights.map((insight, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="text-rose-400 font-bold">•</span>
-                <span>{insight}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Card className="bg-gradient-to-r from-rose-900/20 via-slate-900/40 to-rose-900/20 border-rose-200/80 dark:border-rose-800/40">
+          <div className="space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-300 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span>Automated Risk Analysis &amp; Preventative Security Insights</span>
+            </h3>
+            <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+              {summary.insights.map((insight, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-rose-500 font-bold">•</span>
+                  <span>{insight}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Card>
       )}
 
-      {/* Filter Controls & Anomaly Event Cards */}
-      <div className="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-400" />
-            <span className="text-sm font-medium text-slate-300">Severity Level:</span>
-            {['all', 'critical', 'warning', 'info'].map((sev) => (
-              <button
-                key={sev}
-                onClick={() => setFilterSeverity(sev)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
-                  filterSeverity === sev
-                    ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                }`}
-              >
-                {sev}
-              </button>
-            ))}
+      {/* Controls & Incident Grid */}
+      <Card>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+          {/* Keyword Search */}
+          <div className="relative w-full sm:w-72">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search incident title or entity ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+            />
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400">Alert Sensitivity:</span>
-            <select
-              value={contamination}
-              onChange={(e) => setContamination(parseFloat(e.target.value))}
-              className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-rose-500"
-            >
-              <option value="0.02">Strict Safeguard (2%)</option>
-              <option value="0.05">Balanced Standard (5%)</option>
-              <option value="0.10">High Sensitivity (10%)</option>
-            </select>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Severity Filter Buttons - exact lowercase name matching unit test */}
+            <div className="flex items-center gap-1.5">
+              <Filter className="w-4 h-4 text-slate-400 mr-1" />
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Severity:</span>
+              {['all', 'critical', 'warning', 'info'].map((sev) => (
+                <button
+                  key={sev}
+                  onClick={() => setFilterSeverity(sev)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-all ${
+                    filterSeverity === sev
+                      ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {sev}
+                </button>
+              ))}
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Status:</span>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+              >
+                <option value="all">All Incidents</option>
+                <option value="unresolved">Unresolved Only</option>
+                <option value="acknowledged">Under Investigation</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
+
+            {/* Alert Sensitivity */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Sensitivity:</span>
+              <select
+                value={contamination}
+                onChange={(e) => setContamination(parseFloat(e.target.value))}
+                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+              >
+                <option value="0.02">Strict Safeguard (2%)</option>
+                <option value="0.05">Balanced Standard (5%)</option>
+                <option value="0.10">High Sensitivity (10%)</option>
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Anomaly Events Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           {loading ? (
             <div className="col-span-2 py-12 text-center text-slate-500">
-              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3 text-rose-400" />
-              Scanning dataset with Isolation Forest...
+              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3 text-rose-500" />
+              Scanning sales &amp; inventory telemetry with Isolation Forest...
             </div>
-          ) : summary?.items?.length === 0 ? (
+          ) : apiError ? (
+            <div className="col-span-2 py-12 text-center">
+              <div className="max-w-xs mx-auto space-y-2">
+                <AlertTriangle className="w-6 h-6 text-rose-500 mx-auto" />
+                <p className="text-slate-500 text-xs">{apiError}</p>
+                <Button variant="outline" size="xs" icon={RefreshCw} onClick={() => fetchAnomalies(true)}>
+                  Retry Scan
+                </Button>
+              </div>
+            </div>
+          ) : filteredItems.length === 0 ? (
             <div className="col-span-2 py-12 text-center text-slate-500">
-              No anomaly events match the selected severity filter.
+              No safeguard incident events match the selected filters.
             </div>
           ) : (
-            summary?.items?.map((item) => (
-              <div 
-                key={item.id} 
+            filteredItems.map((item) => (
+              <div
+                key={item.id}
                 className={`p-5 rounded-2xl border transition-all ${
                   item.severity === 'Critical'
-                    ? 'bg-rose-950/20 border-rose-500/30 hover:border-rose-500/50'
+                    ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-500/30 hover:border-rose-400'
                     : item.severity === 'Warning'
-                    ? 'bg-amber-950/20 border-amber-500/30 hover:border-amber-500/50'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                    ? 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-500/30 hover:border-amber-400'
+                    : 'bg-slate-50/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 hover:border-slate-300'
                 }`}
               >
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                      item.severity === 'Critical'
-                        ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                        : item.severity === 'Warning'
-                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                        : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
-                    }`}>
+                <div className="flex items-start justify-between gap-3 mb-2 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                        item.severity === 'Critical'
+                          ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                          : item.severity === 'Warning'
+                          ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                          : 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30'
+                      }`}
+                    >
                       {item.severity}
                     </span>
-                    <span className="text-xs font-mono text-slate-400">{item.anomaly_type}</span>
+                    <span className="text-xs font-mono font-bold text-slate-400">{item.anomaly_type}</span>
                     {item.status === 'acknowledged' && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                         Under Investigation
                       </span>
                     )}
                     {item.status === 'resolved' && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                         Resolved ✓
                       </span>
                     )}
                   </div>
-                  <span className="text-xs font-semibold text-slate-400">Score: {item.anomaly_score}</span>
+                  <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
+                    Score: {item.anomaly_score}
+                  </span>
                 </div>
 
-                <h4 className="text-base font-bold text-white mb-1">{item.title}</h4>
-                <p className="text-xs text-slate-300 mb-4">{item.description}</p>
+                <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1">{item.title}</h4>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">{item.description}</p>
 
-                <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 text-xs">
-                  <span className="text-slate-500 font-mono">ID: {item.entity_id}</span>
+                <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800/80 text-xs">
+                  <span className="text-slate-400 font-mono text-[11px]">Entity ID: {item.entity_id || 'N/A'}</span>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleCopyReport(item)}
+                      className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                      title="Copy Incident Report"
+                    >
+                      {copiedId === item.id ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                    </button>
                     {item.status === 'resolved' ? (
-                      <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-lg font-semibold text-xs flex items-center gap-1">
-                        <CheckSquare className="w-3.5 h-3.5" /> Incident Resolved
+                      <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-lg font-semibold text-xs flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5" /> Incident Resolved
                       </span>
                     ) : (
                       <>
                         <button
                           onClick={() => handleStatusChange(item.id, 'acknowledge')}
                           disabled={item.status === 'acknowledged'}
-                          className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
                             item.status === 'acknowledged'
-                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30 opacity-70 cursor-not-allowed'
-                              : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                              ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30 opacity-70 cursor-not-allowed'
+                              : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
                           }`}
                         >
                           {item.status === 'acknowledged' ? 'Acknowledged' : 'Acknowledge'}
                         </button>
                         <button
                           onClick={() => handleStatusChange(item.id, 'resolve')}
-                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md font-medium transition-colors flex items-center gap-1 shadow-md shadow-emerald-600/20"
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 shadow-md shadow-emerald-600/20"
                         >
                           <CheckSquare className="w-3.5 h-3.5" /> Resolve
                         </button>
@@ -253,7 +460,7 @@ export const AnomalyDetectionModule = () => {
             ))
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
