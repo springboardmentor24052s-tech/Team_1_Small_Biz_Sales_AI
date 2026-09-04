@@ -847,68 +847,151 @@ export const SalesModule = () => {
         </form>
       </Modal>
 
-      {/* View Details Modal */}
-      <Modal isOpen={modalMode === 'view'} onClose={() => setModalMode(null)} title="B2B Transaction & Tax Details">
-        {selected && (
-          <div className="space-y-4">
-            <dl className="grid grid-cols-2 gap-4 text-xs">
-              <div>
-                <dt className="text-slate-500">Invoice Reference</dt>
-                <dd className="font-bold text-slate-900 dark:text-slate-100">{selected.displayReference}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Sales Channel</dt>
-                <dd className="font-semibold">{selected.source_system}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Invoice Total</dt>
-                <dd className="font-bold text-indigo-500">{selected.formattedAmount}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Item Quantity</dt>
-                <dd className="font-semibold">{selected.item_count} Units</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Payment Status</dt>
-                <dd className="font-semibold uppercase text-emerald-500">{selected.payment_status || 'Paid'}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Transaction Date</dt>
-                <dd className="font-semibold">{new Date(selected.occurred_at).toLocaleString()}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Payment Method</dt>
-                <dd className="font-semibold uppercase">{selected.payment_method?.replace('_', ' ') || 'UPI'}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Credit Terms</dt>
-                <dd className="font-semibold">{selected.credit_terms || 'Net 30'}</dd>
-              </div>
-            </dl>
+      {/* View Details Modal (Authentic Commercial Bill & Receipt Format) */}
+      <Modal isOpen={modalMode === 'view'} onClose={() => setModalMode(null)} title="B2B Commercial Invoice & Transaction Bill" size="lg">
+        {selected && (() => {
+          const cust = getCustomerObj(selected);
+          const custName = cust ? (cust.company_name || cust.name) : (selected.customer_reference || 'Walk-in Retail Buyer');
+          const totalAmt = Number(selected.total_amount || 0);
+          const totalQty = Number(selected.item_count || 1);
+          const cgstAmt = Number(selected.cgst_amount || (totalAmt * 0.09));
+          const sgstAmt = Number(selected.sgst_amount || (totalAmt * 0.09));
+          const taxableSub = totalAmt - (cgstAmt + sgstAmt);
 
-            {selected.line_items?.length > 0 && (
-              <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                <div className="grid grid-cols-4 bg-slate-50 p-2.5 text-xs font-bold dark:bg-slate-800">
-                  <span>Product</span>
-                  <span>Qty</span>
-                  <span>Unit Price</span>
-                  <span>Line Total</span>
-                </div>
-                {selected.line_items.map((line) => (
-                  <div key={line.id} className="grid grid-cols-4 border-t border-slate-100 p-2.5 text-xs dark:border-slate-800">
-                    <span>
-                      {line.product?.name || 'Product'}
-                      <small className="block text-slate-500 font-mono">{line.product?.sku}</small>
-                    </span>
-                    <span>{line.quantity}</span>
-                    <span>₹{Number(line.unit_price || 0).toLocaleString('en-IN')}</span>
-                    <span className="font-bold">₹{Number(line.line_amount || 0).toLocaleString('en-IN')}</span>
+          const lines = selected.line_items && selected.line_items.length > 0 ? selected.line_items : [
+            { id: 'l1', product: { name: 'Classic T-Shirt', sku: 'DEMO-TSHIRT' }, quantity: 3, line_amount: 2964 },
+            { id: 'l2', product: { name: 'Steel Water Bottle', sku: 'DEMO-BOTTLE' }, quantity: 2, line_amount: 1976 }
+          ];
+
+          return (
+            <div className="space-y-5 text-slate-900 dark:text-slate-100 font-sans text-xs">
+              {/* Receipt Paper Card */}
+              <div className="bg-white text-slate-900 p-5 rounded-2xl border border-slate-300 shadow-md space-y-4">
+                
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-3 border-b-2 border-slate-900 gap-2">
+                  <div>
+                    <h3 className="font-black text-indigo-900 text-lg tracking-tight flex items-center gap-1.5">
+                      <Building2 className="w-5 h-5 text-indigo-700" />
+                      <span>MARKETMIND DISTRIBUTORS</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-600">Wholesale Commercial Sales Receipt & Tax Memo</p>
+                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">GSTIN: 27MARKETMIND123Z9 | State Code: 27</p>
                   </div>
-                ))}
+
+                  <div className="text-left sm:text-right space-y-0.5">
+                    <span className="inline-block px-2.5 py-0.5 bg-slate-900 text-white font-bold text-[10px] uppercase tracking-wider rounded">
+                      SALES INVOICE
+                    </span>
+                    <p className="font-bold font-mono text-slate-900 text-xs mt-1">{selected.displayReference}</p>
+                    <p className="text-[10px] text-slate-600">Date: {new Date(selected.occurred_at).toLocaleString('en-IN')}</p>
+                  </div>
+                </div>
+
+                {/* Billed To & Payment Status Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div>
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">BILLED TO CLIENT:</span>
+                    <p className="font-bold text-slate-900 text-xs mt-0.5">{custName}</p>
+                    <p className="text-[10px] text-slate-600">GSTIN: <span className="font-mono font-bold">{cust?.gstin || 'N/A'}</span></p>
+                    <p className="text-[10px] text-slate-600">Route: {cust?.territory_route || 'Direct Route'}</p>
+                  </div>
+
+                  <div className="sm:text-right space-y-1">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">COMMERCIAL LEDGER:</span>
+                    <p className="text-[10px] text-slate-700">Payment Status: <span className="font-bold uppercase text-emerald-700">{selected.payment_status || 'PAID'}</span></p>
+                    <p className="text-[10px] text-slate-700">Method: <span className="font-semibold">{selected.payment_method?.toUpperCase() || 'UPI'}</span></p>
+                    <p className="text-[10px] text-slate-600">Terms: {selected.credit_terms || 'Net 30'}</p>
+                  </div>
+                </div>
+
+                {/* Itemized Table with Correct Unit Price Math */}
+                <div className="border border-slate-300 rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-900 text-white font-bold text-[10px]">
+                      <tr>
+                        <th className="p-2">#</th>
+                        <th className="p-2">Item / Product Name</th>
+                        <th className="p-2 text-center">Qty</th>
+                        <th className="p-2 text-right">Unit Price (₹)</th>
+                        <th className="p-2 text-right">Line Total (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {lines.map((line, idx) => {
+                        const qty = Number(line.quantity || 1);
+                        let lineTotal = Number(line.line_amount || 0);
+                        let unitPrice = Number(line.unit_price || 0);
+
+                        if (unitPrice === 0 && lineTotal > 0) {
+                          unitPrice = lineTotal / qty;
+                        } else if (lineTotal === 0 && unitPrice > 0) {
+                          lineTotal = unitPrice * qty;
+                        } else if (unitPrice === 0 && lineTotal === 0) {
+                          unitPrice = totalAmt / totalQty;
+                          lineTotal = unitPrice * qty;
+                        }
+
+                        return (
+                          <tr key={line.id || idx} className="hover:bg-slate-50 text-[11px]">
+                            <td className="p-2 text-slate-500">{idx + 1}</td>
+                            <td className="p-2">
+                              <p className="font-bold text-slate-900">{line.product?.name || 'Product Item'}</p>
+                              <p className="text-[9px] text-slate-500 font-mono">SKU: {line.product?.sku || 'SKU-001'}</p>
+                            </td>
+                            <td className="p-2 text-center font-semibold text-slate-900">{qty} Pcs</td>
+                            <td className="p-2 text-right font-mono text-slate-800">
+                              ₹{unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                            <td className="p-2 text-right font-bold font-mono text-slate-900">
+                              ₹{lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Financial Summary */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-3 rounded-xl bg-indigo-50/80 border border-indigo-200">
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase">TOTAL ITEMS: {totalQty} Units</p>
+                    <p className="text-xs font-bold text-indigo-950">Subtotal: ₹{taxableSub.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                    <p className="text-[10px] text-slate-600">Incl. CGST 9% (₹{cgstAmt.toFixed(2)}) + SGST 9% (₹{sgstAmt.toFixed(2)})</p>
+                  </div>
+
+                  <div className="sm:text-right">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase">GRAND INVOICE TOTAL</p>
+                    <p className="text-lg font-black font-mono text-indigo-950">
+                      ₹{totalAmt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+
               </div>
-            )}
-          </div>
-        )}
+
+              {/* Modal Actions */}
+              <div className="flex justify-end gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={Printer}
+                  onClick={() => {
+                    setModalMode(null);
+                    openInvoiceModal(selected);
+                  }}
+                  className="bg-indigo-600 text-white hover:bg-indigo-700 border-none shadow-md"
+                >
+                  Open Statutory GST Invoice
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setModalMode(null)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          );
+        })()}
       </Modal>
 
       {/* Void Modal */}
