@@ -54,6 +54,9 @@ export const SalesModule = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [methodFilter, setMethodFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [modalMode, setModalMode] = useState(null);
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -108,7 +111,34 @@ export const SalesModule = () => {
       .includes(searchTerm.toLowerCase());
     const matchesPayment = paymentFilter === 'all' || deal.payment_status === paymentFilter;
     const matchesMethod = methodFilter === 'all' || deal.payment_method === methodFilter;
-    return matchesSearch && matchesPayment && matchesMethod;
+
+    let matchesDate = true;
+    if (deal.occurred_at) {
+      const dealDate = new Date(deal.occurred_at);
+      const now = new Date();
+      if (dateFilter === 'today') {
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        matchesDate = dealDate >= startOfToday;
+      } else if (dateFilter === 'week') {
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        matchesDate = dealDate >= sevenDaysAgo;
+      } else if (dateFilter === 'month') {
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        matchesDate = dealDate >= thirtyDaysAgo;
+      } else if (dateFilter === 'custom') {
+        if (startDate) {
+          const start = new Date(startDate);
+          matchesDate = matchesDate && dealDate >= start;
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          matchesDate = matchesDate && dealDate <= end;
+        }
+      }
+    }
+
+    return matchesSearch && matchesPayment && matchesMethod && matchesDate;
   });
 
   const orderSummary = useMemo(() => {
@@ -414,6 +444,41 @@ export const SalesModule = () => {
               <option value="bank_transfer">Bank Transfer (NEFT)</option>
               <option value="other">Credit Ledger / Other</option>
             </select>
+
+            {/* Date Range Selector */}
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="py-2 px-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-300 focus:outline-none font-medium"
+              >
+                <option value="all">📅 All Time</option>
+                <option value="today">⚡ Today</option>
+                <option value="week">📆 This Week (Last 7 Days)</option>
+                <option value="month">🗓️ This Month (Last 30 Days)</option>
+                <option value="custom">🔍 Custom Date Range</option>
+              </select>
+
+              {dateFilter === 'custom' && (
+                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="py-1 px-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
+                    title="Start Date"
+                  />
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">to</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="py-1 px-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
+                    title="End Date"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Payment Status Ledger Filter Tabs */}
