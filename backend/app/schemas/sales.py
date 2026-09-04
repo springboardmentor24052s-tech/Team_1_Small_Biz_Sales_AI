@@ -55,6 +55,8 @@ class SalesTransactionUpdate(BaseModel):
     occurred_at: datetime | None = None
     total_amount: Decimal | None = Field(default=None, gt=0, max_digits=14, decimal_places=2)
     item_count: int | None = Field(default=None, gt=0, le=10000)
+    payment_status: str | None = Field(default=None, max_length=30)
+    customer_id: UUID | None = None
     notes: str | None = Field(default=None, max_length=500)
 
 
