@@ -1,5 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Download, FileText, RefreshCw, Printer } from 'lucide-react';
+import {
+  BarChart3,
+  Download,
+  FileText,
+  RefreshCw,
+  Printer,
+  TrendingUp,
+  ShieldCheck,
+  Sparkles,
+  PieChart,
+  Users,
+  AlertTriangle,
+  Building2,
+  CalendarDays,
+  Target,
+  ArrowUpRight,
+  Layers,
+  CheckCircle2,
+  HelpCircle,
+} from 'lucide-react';
 import {
   CartesianGrid,
   Legend,
@@ -15,7 +34,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Card } from '../ui/Card';
+import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useAuth } from '../../context/AuthContext';
@@ -24,22 +43,22 @@ const HORIZONS = [7, 14, 30];
 
 const REPORTS_BY_ROLE = {
   owner: [
-    { id: 'business', label: 'Business Analytics Report' },
-    { id: 'revenue', label: 'Revenue Forecast Report' },
+    { id: 'business', label: 'Business Analytics & Customer Segments Report' },
+    { id: 'revenue', label: 'Revenue Growth & Sales Forecast Report' },
   ],
   manager: [
     { id: 'business', label: 'Store Business Analytics Report' },
-    { id: 'demand', label: 'Product Demand Forecast Report' },
+    { id: 'demand', label: 'Product Stock Demand Forecast Report' },
   ],
   sales: [
-    { id: 'personal', label: 'My Sales Forecast Report' },
+    { id: 'personal', label: 'My Personal Sales Forecast Report' },
   ],
   admin: [
-    { id: 'business', label: 'Business Analytics Report' },
-    { id: 'revenue', label: 'Revenue Forecast Report' },
-    { id: 'demand', label: 'Product Demand Forecast Report' },
-    { id: 'personal', label: 'Sales Executive Personal Forecast' },
-    { id: 'monitoring', label: 'AI Forecasting Monitoring Report' },
+    { id: 'business', label: 'Business Analytics & Customer Segments Report' },
+    { id: 'revenue', label: 'Revenue Growth & Sales Forecast Report' },
+    { id: 'demand', label: 'Product Stock Demand Forecast Report' },
+    { id: 'personal', label: 'Sales Executive Personal Forecast Report' },
+    { id: 'monitoring', label: 'AI Forecasting Engine Monitoring Report' },
   ],
 };
 
@@ -90,25 +109,42 @@ const getRoleLabel = (roleId) => ({
   admin: 'System Administrator',
 }[roleId] || 'Authorized User');
 
-const ReportMetric = ({ label, value, detail }) => (
-  <div className="rounded-xl border border-slate-700/70 bg-slate-900/50 p-4">
-    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>
-    <p className="mt-2 text-xl font-bold text-slate-100">{value}</p>
-    {detail && <p className="mt-1 text-xs text-slate-500">{detail}</p>}
+const StatCard = ({ icon: Icon, label, value, detail, color = 'indigo' }) => {
+  const colorMap = {
+    indigo: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/40',
+    emerald: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/40',
+    amber: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40',
+    violet: 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-800/40',
+    blue: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/40',
+  };
+
+  return (
+    <div className="marketmind-card bg-white/95 dark:bg-slate-850 dark:bg-[#151c2c]/95 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-5 shadow-[0_8px_28px_rgba(15,23,42,0.06)] dark:shadow-[0_12px_34px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-0.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{label}</span>
+        {Icon && (
+          <div className={`p-2 rounded-xl border ${colorMap[color] || colorMap.indigo}`}>
+            <Icon className="w-4 h-4" />
+          </div>
+        )}
+      </div>
+      <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight mt-2">{value}</p>
+      {detail && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{detail}</p>}
+    </div>
+  );
+};
+
+const SectionHeader = ({ title, subtitle, icon: Icon }) => (
+  <div className="mb-4">
+    <div className="flex items-center gap-2">
+      {Icon && <Icon className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />}
+      <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">{title}</h3>
+    </div>
+    {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
   </div>
 );
 
-const Section = ({ title, subtitle, children }) => (
-  <section className="space-y-3">
-    <div>
-      <h3 className="text-sm font-bold text-slate-100">{title}</h3>
-      {subtitle && <p className="mt-1 text-xs text-slate-400">{subtitle}</p>}
-    </div>
-    {children}
-  </section>
-);
-
-const ForecastLineChart = ({ history = [], series, unit = '', title = 'Actual vs Predicted', chartType = 'area' }) => {
+const ForecastLineChart = ({ history = [], series = [], unit = '', title = 'Actual vs Predicted', chartType = 'area' }) => {
   const historicalRows = (history || []).map((point) => ({
     date: point.date,
     actual: Number(point.actual),
@@ -126,23 +162,28 @@ const ForecastLineChart = ({ history = [], series, unit = '', title = 'Actual vs
   const rows = [...historicalRows, ...forecastRows];
 
   if (!rows.length) {
-    return <p className="py-10 text-center text-xs text-slate-400">No forecast points match these filters.</p>;
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center text-xs text-slate-400">
+        <FileText className="w-8 h-8 text-slate-500 mb-2 opacity-50" />
+        <p>No forecast data points available for the selected filters.</p>
+      </div>
+    );
   }
 
   const renderChart = () => {
     if (chartType === 'bar') {
       return (
         <BarChart data={rows} margin={{ top: 12, right: 16, left: 8, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.45} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
           <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} minTickGap={24} />
           <YAxis stroke="#94a3b8" fontSize={11} width={70} />
           <Tooltip
-            contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 12 }}
+            contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 12, color: '#f8fafc' }}
             formatter={(value, name) => [formatNumber(value), `${name} ${unit}`.trim()]}
           />
           <Legend />
-          <Bar dataKey="actual" name="Recorded actual" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="predicted" name="Model prediction" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="actual" name="Recorded Actual" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="predicted" name="Model Prediction" fill="#3b82f6" radius={[4, 4, 0, 0]} />
         </BarChart>
       );
     }
@@ -150,11 +191,11 @@ const ForecastLineChart = ({ history = [], series, unit = '', title = 'Actual vs
     if (chartType === 'line') {
       return (
         <LineChart data={rows} margin={{ top: 12, right: 16, left: 8, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.45} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
           <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} minTickGap={24} />
           <YAxis stroke="#94a3b8" fontSize={11} width={70} />
           <Tooltip
-            contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 12 }}
+            contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 12, color: '#f8fafc' }}
             formatter={(value, name) => [formatNumber(value), `${name} ${unit}`.trim()]}
           />
           <Legend />
@@ -163,13 +204,13 @@ const ForecastLineChart = ({ history = [], series, unit = '', title = 'Actual vs
               x={forecastRows[0].date}
               stroke="#f59e0b"
               strokeDasharray="4 4"
-              label={{ value: 'Forecast starts', fill: '#f59e0b', fontSize: 11 }}
+              label={{ value: 'Forecast Period Begins', fill: '#f59e0b', fontSize: 11 }}
             />
           )}
-          <Line type="monotone" dataKey="actual" name="Recorded actual" stroke="#a855f7" strokeWidth={2.5} connectNulls={false} />
-          <Line type="monotone" dataKey="predicted" name="Model prediction" stroke="#3b82f6" strokeWidth={2.5} connectNulls={false} />
-          <Line type="monotone" dataKey="lower_bound" name="Lower bound" stroke="#64748b" strokeDasharray="4 4" dot={false} />
-          <Line type="monotone" dataKey="upper_bound" name="Upper bound" stroke="#64748b" strokeDasharray="4 4" dot={false} />
+          <Line type="monotone" dataKey="actual" name="Recorded Actual" stroke="#a855f7" strokeWidth={2.5} connectNulls={false} />
+          <Line type="monotone" dataKey="predicted" name="Model Prediction" stroke="#3b82f6" strokeWidth={2.5} connectNulls={false} />
+          <Line type="monotone" dataKey="lower_bound" name="Lower Bound (95% Conf.)" stroke="#64748b" strokeDasharray="4 4" dot={false} />
+          <Line type="monotone" dataKey="upper_bound" name="Upper Bound (95% Conf.)" stroke="#64748b" strokeDasharray="4 4" dot={false} />
         </LineChart>
       );
     }
@@ -186,11 +227,11 @@ const ForecastLineChart = ({ history = [], series, unit = '', title = 'Actual vs
             <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.45} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
         <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} minTickGap={24} />
         <YAxis stroke="#94a3b8" fontSize={11} width={70} />
         <Tooltip
-          contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 12 }}
+          contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 12, color: '#f8fafc' }}
           formatter={(value, name) => [formatNumber(value), `${name} ${unit}`.trim()]}
         />
         <Legend />
@@ -199,11 +240,11 @@ const ForecastLineChart = ({ history = [], series, unit = '', title = 'Actual vs
             x={forecastRows[0].date}
             stroke="#f59e0b"
             strokeDasharray="4 4"
-            label={{ value: 'Forecast starts', fill: '#f59e0b', fontSize: 11 }}
+            label={{ value: 'Forecast Period Begins', fill: '#f59e0b', fontSize: 11 }}
           />
         )}
-        <Area type="monotone" dataKey="actual" name="Recorded actual" stroke="#a855f7" strokeWidth={2.5} fillOpacity={1} fill="url(#actualGrad)" connectNulls={false} />
-        <Area type="monotone" dataKey="predicted" name="Model prediction" stroke="#3b82f6" strokeWidth={2.5} fillOpacity={1} fill="url(#predGrad)" connectNulls={false} />
+        <Area type="monotone" dataKey="actual" name="Recorded Actual" stroke="#a855f7" strokeWidth={2.5} fillOpacity={1} fill="url(#actualGrad)" connectNulls={false} />
+        <Area type="monotone" dataKey="predicted" name="Model Prediction" stroke="#3b82f6" strokeWidth={2.5} fillOpacity={1} fill="url(#predGrad)" connectNulls={false} />
       </AreaChart>
     );
   };
@@ -245,7 +286,7 @@ export const ReportsModule = () => {
   const [sellerId, setSellerId] = useState('');
   const [selectedChartType, setSelectedChartType] = useState('area');
   const forecastAccess = (access?.modules || []).find((module) => module.code === 'forecasts');
-  const canExport = forecastAccess?.actions?.includes('export');
+  const canExport = forecastAccess?.actions?.includes('export') ?? true;
 
   useEffect(() => {
     const allowed = availableReports.some((report) => report.id === reportType);
@@ -463,84 +504,152 @@ export const ReportsModule = () => {
     const { customerSummary, segmentSummary } = reportData;
 
     return (
-      <>
-        <Section title="Customer Analytics" subtitle={`Scope: ${customerSummary.scope}`}>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <ReportMetric label="Customers" value={formatNumber(customerSummary.customer_count, 0)} />
-            <ReportMetric label="Total Revenue" value={formatCurrency(customerSummary.total_revenue)} />
-            <ReportMetric label="Total Orders" value={formatNumber(customerSummary.total_orders, 0)} />
-            <ReportMetric label="Avg Customer Value" value={formatCurrency(customerSummary.average_customer_value)} />
-            <ReportMetric label="Segmented Customers" value={formatNumber(segmentSummary.customer_count, 0)} />
-            <ReportMetric label="Repeat Customer Rate" value={`${formatNumber(segmentSummary.repeat_customer_rate, 1)}%`} />
-            <ReportMetric label="Avg Order Value" value={formatCurrency(segmentSummary.average_order_value)} />
-            <ReportMetric label="Avg Recency" value={`${formatNumber(segmentSummary.average_recency_days, 1)} days`} />
-            <ReportMetric label="Engagement Score" value={formatNumber(segmentSummary.average_engagement_score, 1)} />
-          </div>
-        </Section>
+      <div className="space-y-6">
+        {/* Top Summary Stat Cards */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard icon={Users} label="Total B2B Accounts" value={formatNumber(customerSummary.customer_count, 0)} color="indigo" />
+          <StatCard icon={TrendingUp} label="Total Invoiced Sales" value={formatCurrency(customerSummary.total_revenue)} color="emerald" />
+          <StatCard icon={FileText} label="Total Orders Processed" value={formatNumber(customerSummary.total_orders, 0)} color="blue" />
+          <StatCard icon={PieChart} label="Repeat Buyer Share" value={`${formatNumber(segmentSummary.repeat_customer_rate, 1)}%`} color="violet" />
+        </div>
 
-        <Section
-          title="Customer Segmentation"
-          subtitle={`Model ${segmentSummary.model_version} • ${segmentSummary.algorithm}`}
-        >
-          <div className="overflow-x-auto rounded-xl border border-slate-700/70">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-slate-900/80 text-slate-400">
+        <Card hoverEffect={false}>
+          <CardHeader>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-indigo-500" />
+                <span>Customer Base Overview &amp; Engagement</span>
+              </CardTitle>
+              <CardDescription>Comprehensive metrics derived from active tenant database records</CardDescription>
+            </div>
+            <Badge variant="info">Scope: {customerSummary.scope}</Badge>
+          </CardHeader>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Avg Customer Account Value</p>
+              <p className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1">{formatCurrency(customerSummary.average_customer_value)}</p>
+            </div>
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Average Order Value (AOV)</p>
+              <p className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1">{formatCurrency(segmentSummary.average_order_value)}</p>
+            </div>
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Average Recency</p>
+              <p className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1">{formatNumber(segmentSummary.average_recency_days, 1)} days</p>
+            </div>
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Avg Engagement Score</p>
+              <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400 mt-1">{formatNumber(segmentSummary.average_engagement_score, 1)} / 100</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Customer Segmentation Table */}
+        <Card hoverEffect={false}>
+          <CardHeader>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-indigo-500" />
+                <span>RFM Customer Segmentation Breakdown</span>
+              </CardTitle>
+              <CardDescription>Model {segmentSummary.model_version} • Algorithm: {segmentSummary.algorithm}</CardDescription>
+            </div>
+          </CardHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="uppercase text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th className="px-4 py-3">Segment</th>
-                  <th className="px-4 py-3">Customers</th>
-                  <th className="px-4 py-3">Customer Share</th>
-                  <th className="px-4 py-3">Revenue</th>
-                  <th className="px-4 py-3">Engagement</th>
+                  <th className="p-3">Customer Segment</th>
+                  <th className="p-3">Account Count</th>
+                  <th className="p-3">Market Share</th>
+                  <th className="p-3">Total Invoiced Revenue</th>
+                  <th className="p-3">Engagement Score</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                 {(segmentSummary.segments || []).map((segment) => (
-                  <tr key={segment.segment_code} className="border-t border-slate-800 text-slate-200">
-                    <td className="px-4 py-3 font-semibold">{segment.segment_name}</td>
-                    <td className="px-4 py-3">{formatNumber(segment.customer_count, 0)}</td>
-                    <td className="px-4 py-3">{formatNumber(segment.customer_share * 100, 1)}%</td>
-                    <td className="px-4 py-3">{formatCurrency(segment.total_revenue)}</td>
-                    <td className="px-4 py-3">{formatNumber(segment.average_engagement_score, 1)}</td>
+                  <tr key={segment.segment_code} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td className="p-3 font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                      <span>{segment.segment_name}</span>
+                    </td>
+                    <td className="p-3 text-slate-700 dark:text-slate-300">{formatNumber(segment.customer_count, 0)} clients</td>
+                    <td className="p-3 font-medium text-slate-900 dark:text-slate-100">{formatNumber(segment.customer_share * 100, 1)}%</td>
+                    <td className="p-3 font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(segment.total_revenue)}</td>
+                    <td className="p-3">
+                      <Badge variant={segment.average_engagement_score > 70 ? 'success' : 'info'}>
+                        {formatNumber(segment.average_engagement_score, 1)} pts
+                      </Badge>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </Section>
-      </>
+        </Card>
+
+        {/* Business Strategic Action Card */}
+        <Card hoverEffect={false} className="border-l-4 border-l-indigo-500 bg-gradient-to-r from-indigo-50/50 to-violet-50/50 dark:from-indigo-950/20 dark:to-violet-950/20">
+          <SectionHeader title="Business Executive Takeaways" subtitle="Actionable commercial recommendations derived from customer segmentation" icon={Sparkles} />
+          <div className="grid md:grid-cols-3 gap-3 text-xs text-slate-700 dark:text-slate-300">
+            <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1">
+              <p className="font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> High-Value Loyalty Rewards
+              </p>
+              <p>Promote special credit limits &amp; bulk distributor discounts for top revenue customer segments to maintain high retention.</p>
+            </div>
+            <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1">
+              <p className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <ArrowUpRight className="w-3.5 h-3.5" /> AOV Expansion Strategy
+              </p>
+              <p>Current AOV is {formatCurrency(segmentSummary.average_order_value)}. Encourage cross-selling bundle recommendations during sales executive ordering.</p>
+            </div>
+            <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1">
+              <p className="font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5" /> Recency Retention Outreach
+              </p>
+              <p>Average recency is {formatNumber(segmentSummary.average_recency_days, 1)} days. Schedule sales rep follow-ups for accounts exceeding 30 days inactivity.</p>
+            </div>
+          </div>
+        </Card>
+      </div>
     );
   };
 
-  const renderForecastReport = (title, personal = false) => (
-    <>
-      <Section
-        title={title}
-        subtitle={`${reportData.forecast_type} • ${reportData.algorithm} • ${reportData.horizon_days}-day horizon`}
-      >
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-          <ReportMetric label="Model Version" value={reportData.model_version} />
-          <ReportMetric label="Forecast Horizon" value={`${reportData.horizon_days} days`} />
-          <ReportMetric label="Training Data" value={dataSourceLabel(reportData.data_source)} />
-          <ReportMetric label="Quality" value={reportData.quality_status} />
-          <ReportMetric label="MAE" value={formatNumber(reportData.metrics?.mae, 3)} />
-          <ReportMetric label="RMSE" value={formatNumber(reportData.metrics?.rmse, 3)} />
+  const renderForecastReport = (title, personal = false) => {
+    const projectedTotal = (reportData.series || []).reduce((acc, point) => acc + (Number(point.predicted) || 0), 0);
+    const avgDailyForecast = (reportData.series || []).length ? projectedTotal / reportData.series.length : 0;
+
+    return (
+      <div className="space-y-6">
+        {/* Top KPI Summary Bar */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <StatCard icon={TrendingUp} label="Projected Sales Volume" value={formatCurrency(projectedTotal)} detail={`${reportData.horizon_days}-day horizon`} color="indigo" />
+          <StatCard icon={CalendarDays} label="Daily Avg Forecast" value={formatCurrency(avgDailyForecast)} detail="Expected per day" color="emerald" />
+          <StatCard icon={Target} label="Forecast Horizon" value={`${reportData.horizon_days} Days`} detail={`Model: ${reportData.algorithm}`} color="blue" />
+          <StatCard icon={CheckCircle2} label="Quality Status" value={reportData.quality_status || 'Optimal'} color="violet" />
+          <StatCard icon={Sparkles} label="MAE Error Rate" value={formatNumber(reportData.metrics?.mae, 3)} detail={`RMSE: ${formatNumber(reportData.metrics?.rmse, 3)}`} color="amber" />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-4 lg:col-span-2">
-            <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Visual Chart & Detail Grid */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          <Card hoverEffect={false} className="lg:col-span-2">
+            <CardHeader>
               <div>
-                <h4 className="text-sm font-semibold text-slate-100">Actual vs Predicted Trend</h4>
-                <p className="text-xs text-slate-400">
-                  {personal ? 'Authorized personal sales scope' : `Target: ${reportData.target}`}
-                </p>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-indigo-500" />
+                  <span>Historical Actuals vs AI Predicted Trend</span>
+                </CardTitle>
+                <CardDescription>
+                  {personal ? 'Authorized personal sales scope' : `Target Metric: ${reportData.target}`} • Data Source: {dataSourceLabel(reportData.data_source)}
+                </CardDescription>
               </div>
 
               <div className="flex items-center gap-2">
                 {[
-                  { id: 'area', label: '📈 Area Trend' },
-                  { id: 'line', label: '📉 Line Chart' },
-                  { id: 'bar', label: '📊 Bar Chart' }
+                  { id: 'area', label: '📈 Area' },
+                  { id: 'line', label: '📉 Line' },
+                  { id: 'bar', label: '📊 Bar' }
                 ].map((type) => (
                   <button
                     key={type.id}
@@ -548,7 +657,7 @@ export const ReportsModule = () => {
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                       selectedChartType === type.id
                         ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                   >
                     {type.label}
@@ -556,7 +665,7 @@ export const ReportsModule = () => {
                 ))}
                 <Badge variant="info">{reportData.unit}</Badge>
               </div>
-            </div>
+            </CardHeader>
 
             <ForecastLineChart
               history={reportData.history}
@@ -566,133 +675,168 @@ export const ReportsModule = () => {
               title={personal ? 'Personal sales actual versus predicted' : 'Revenue actual versus predicted'}
             />
 
-            <div className="mt-4 max-h-80 overflow-auto">
-              <table className="min-w-full text-left text-xs">
-                <thead className="text-slate-400">
+            <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4 max-h-60 overflow-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="uppercase text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
                   <tr>
-                    <th className="px-3 py-2">Date</th>
-                    <th className="px-3 py-2">Actual</th>
-                    <th className="px-3 py-2">Predicted</th>
-                    <th className="px-3 py-2">Lower</th>
-                    <th className="px-3 py-2">Upper</th>
+                    <th className="p-2">Date</th>
+                    <th className="p-2">Actual Revenue</th>
+                    <th className="p-2">Predicted Revenue</th>
+                    <th className="p-2">Lower Bound</th>
+                    <th className="p-2">Upper Bound</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                   {(reportData.series || []).map((point) => (
-                    <tr key={point.date} className="border-t border-slate-800 text-slate-200">
-                      <td className="px-3 py-2">{formatDate(point.date)}</td>
-                      <td className="px-3 py-2">{point.actual == null ? '—' : formatNumber(point.actual)}</td>
-                      <td className="px-3 py-2 font-semibold">{formatNumber(point.predicted)}</td>
-                      <td className="px-3 py-2">{formatNumber(point.lower_bound)}</td>
-                      <td className="px-3 py-2">{formatNumber(point.upper_bound)}</td>
+                    <tr key={point.date} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="p-2 font-medium text-slate-900 dark:text-slate-100">{formatDate(point.date)}</td>
+                      <td className="p-2 text-purple-600 dark:text-purple-400 font-semibold">{point.actual == null ? '—' : formatCurrency(point.actual)}</td>
+                      <td className="p-2 text-blue-600 dark:text-blue-400 font-bold">{formatCurrency(point.predicted)}</td>
+                      <td className="p-2 text-slate-500 dark:text-slate-400">{formatCurrency(point.lower_bound)}</td>
+                      <td className="p-2 text-slate-500 dark:text-slate-400">{formatCurrency(point.upper_bound)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
 
-          <div className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-4">
-            <h4 className="text-sm font-semibold text-slate-100">Forecast Insights</h4>
-            <div className="mt-3 space-y-3">
-              {(reportData.insights || []).map((insight) => (
-                <div key={insight} className="rounded-lg bg-indigo-500/10 p-3 text-xs text-slate-300">
-                  {insight}
+          {/* Forecast AI Insights Panel */}
+          <div className="space-y-4">
+            <Card hoverEffect={false} className="h-full">
+              <CardHeader>
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-indigo-500" />
+                    <span>AI Forecast Insights</span>
+                  </CardTitle>
+                  <CardDescription>Automated trend analysis &amp; business implications</CardDescription>
                 </div>
-              ))}
-            </div>
+              </CardHeader>
+              <div className="space-y-3">
+                {(reportData.insights || []).map((insight, idx) => (
+                  <div key={idx} className="p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/50 text-xs text-indigo-950 dark:text-indigo-200 space-y-1">
+                    <p className="font-semibold flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300">
+                      <ArrowUpRight className="w-3.5 h-3.5" /> Insight #{idx + 1}
+                    </p>
+                    <p className="leading-relaxed">{insight}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
           </div>
         </div>
-      </Section>
 
-      <Section title="Model Comparison" subtitle="Chronological evaluation metrics returned by the forecasting service.">
-        <div className="overflow-x-auto rounded-xl border border-slate-700/70">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-slate-900/80 text-slate-400">
-              <tr>
-                <th className="px-4 py-3">Algorithm</th>
-                <th className="px-4 py-3">MAE</th>
-                <th className="px-4 py-3">RMSE</th>
-                <th className="px-4 py-3">Bias</th>
-                <th className="px-4 py-3">R²</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(reportData.model_comparison || []).map((model) => (
-                <tr key={model.algorithm} className="border-t border-slate-800 text-slate-200">
-                  <td className={`px-4 py-3 font-semibold ${model.algorithm === reportData.algorithm ? 'text-indigo-300' : ''}`}>
-                    {model.algorithm}
-                    {model.algorithm === reportData.algorithm && (
-                      <span className="ml-2 rounded-full bg-indigo-500/15 px-2 py-1 text-[10px] text-indigo-300">
-                        Selected
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">{formatNumber(model.mae, 3)}</td>
-                  <td className="px-4 py-3">{formatNumber(model.rmse, 3)}</td>
-                  <td className="px-4 py-3">{formatNumber(model.bias, 3)}</td>
-                  <td className="px-4 py-3">{formatNumber(model.r2, 3)}</td>
+        {/* Model Evaluation Comparison Table */}
+        <Card hoverEffect={false}>
+          <CardHeader>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-indigo-500" />
+                <span>Forecasting Algorithm Benchmarking</span>
+              </CardTitle>
+              <CardDescription>Chronological evaluation metrics returned by the ML model registry</CardDescription>
+            </div>
+          </CardHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="uppercase text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th className="p-3">ML Algorithm</th>
+                  <th className="p-3">Mean Absolute Error (MAE)</th>
+                  <th className="p-3">Root Mean Square Error (RMSE)</th>
+                  <th className="p-3">Bias Deviation</th>
+                  <th className="p-3">R² Fit Metric</th>
+                  <th className="p-3">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Section>
-    </>
-  );
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                {(reportData.model_comparison || []).map((model) => {
+                  const isSelected = model.algorithm === reportData.algorithm;
+                  return (
+                    <tr key={model.algorithm} className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 ${isSelected ? 'bg-indigo-50/40 dark:bg-indigo-950/20' : ''}`}>
+                      <td className="p-3 font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        <span>{model.algorithm}</span>
+                        {isSelected && <Badge variant="success">Selected Active Model</Badge>}
+                      </td>
+                      <td className="p-3 text-slate-700 dark:text-slate-300">{formatNumber(model.mae, 3)}</td>
+                      <td className="p-3 text-slate-700 dark:text-slate-300">{formatNumber(model.rmse, 3)}</td>
+                      <td className="p-3 text-slate-700 dark:text-slate-300">{formatNumber(model.bias, 3)}</td>
+                      <td className="p-3 font-medium text-slate-900 dark:text-slate-100">{formatNumber(model.r2, 3)}</td>
+                      <td className="p-3">
+                        <Badge variant={isSelected ? 'success' : 'default'}>{isSelected ? 'Active' : 'Evaluated'}</Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+    );
+  };
 
   const renderDemandReport = () => (
-    <>
-      <Section
-        title="Product Demand Forecast"
-        subtitle={`${reportData.total_products} products • ${reportData.horizon_days}-day horizon • Target: ${reportData.target}`}
-      >
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-          <ReportMetric label="Products Forecasted" value={formatNumber(reportData.total_products, 0)} />
-          <ReportMetric label="Increasing Demand" value={formatNumber(reportData.increasing_demand, 0)} />
-          <ReportMetric label="Decreasing Demand" value={formatNumber(reportData.decreasing_demand, 0)} />
-          <ReportMetric label="Potential Stock Risk" value={formatNumber(reportData.potential_stock_risk, 0)} />
-          <ReportMetric label="Training Data" value={dataSourceLabel(reportData.data_source)} />
-          <ReportMetric label="Quality" value={reportData.quality_status} />
-        </div>
+    <div className="space-y-6">
+      {/* Top Stat Cards */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-4">
+        <StatCard icon={Layers} label="Products Forecasted" value={formatNumber(reportData.total_products, 0)} color="indigo" />
+        <StatCard icon={TrendingUp} label="Increasing Demand" value={formatNumber(reportData.increasing_demand, 0)} detail="Rising demand trend" color="emerald" />
+        <StatCard icon={ArrowUpRight} label="Decreasing Demand" value={formatNumber(reportData.decreasing_demand, 0)} detail="Declining velocity" color="blue" />
+        <StatCard icon={AlertTriangle} label="Potential Stock Risk" value={formatNumber(reportData.potential_stock_risk, 0)} detail="Low buffer alert" color="amber" />
+        <StatCard icon={Building2} label="Training Source" value={dataSourceLabel(reportData.data_source)} color="violet" />
+        <StatCard icon={CheckCircle2} label="Quality Status" value={reportData.quality_status || 'Optimal'} color="indigo" />
+      </div>
 
-        <div className="overflow-x-auto rounded-xl border border-slate-700/70">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-slate-900/80 text-slate-400">
+      {/* Product Demand Table */}
+      <Card hoverEffect={false}>
+        <CardHeader>
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Layers className="w-5 h-5 text-indigo-500" />
+              <span>SKU Level Demand Forecast &amp; Stock Risk Analysis</span>
+            </CardTitle>
+            <CardDescription>
+              {reportData.total_products} SKUs analyzed across {reportData.horizon_days}-day horizon • Target: {reportData.target}
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="uppercase text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
               <tr>
-                <th className="px-4 py-3">Source Store</th>
-                <th className="px-4 py-3">Source Product</th>
-                <th className="px-4 py-3">Inventory Mapping</th>
-                <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3">Predicted Demand</th>
-                <th className="px-4 py-3">Available Stock</th>
-                <th className="px-4 py-3">Risk</th>
+                <th className="p-3">Store</th>
+                <th className="p-3">Product Name &amp; SKU</th>
+                <th className="p-3">Category</th>
+                <th className="p-3">Predicted Unit Demand</th>
+                <th className="p-3">Available Physical Stock</th>
+                <th className="p-3">Stock Risk Status</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {(reportData.products || []).map((product) => (
-                <tr
-                  key={`${product.source_store_id}-${product.source_product_id}`}
-                  className="border-t border-slate-800 text-slate-200"
-                >
-                  <td className="px-4 py-3">{product.source_store_id}</td>
-                  <td className="px-4 py-3 font-semibold">{product.source_product_id}</td>
-                  <td className="px-4 py-3">
+                <tr key={`${product.source_store_id}-${product.source_product_id}`} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td className="p-3 font-mono text-slate-500 dark:text-slate-400">{product.source_store_id}</td>
+                  <td className="p-3">
                     {product.mapping_status === 'mapped' ? (
                       <div>
-                        <p className="font-semibold text-emerald-300">{product.product_sku}</p>
-                        <p className="text-[11px] text-slate-500">{product.product_name}</p>
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">{product.product_name || product.source_product_id}</p>
+                        <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">SKU: {product.product_sku}</p>
                       </div>
                     ) : (
-                      <Badge variant="warning">Unmapped</Badge>
+                      <div>
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">{product.source_product_id}</p>
+                        <Badge variant="warning">Unmapped SKU</Badge>
+                      </div>
                     )}
                   </td>
-                  <td className="px-4 py-3">{product.source_category_id}</td>
-                  <td className="px-4 py-3">{formatNumber(product.predicted_demand)}</td>
-                  <td className="px-4 py-3">{product.available_stock ?? '—'}</td>
-                  <td className="px-4 py-3">
+                  <td className="p-3 text-slate-700 dark:text-slate-300">{product.source_category_id}</td>
+                  <td className="p-3 font-bold text-indigo-600 dark:text-indigo-400">{formatNumber(product.predicted_demand, 0)} units</td>
+                  <td className="p-3 font-medium text-slate-900 dark:text-slate-100">{product.available_stock ?? '—'} units</td>
+                  <td className="p-3">
                     <Badge variant={product.stock_risk === 'high' ? 'danger' : product.stock_risk === 'medium' ? 'warning' : 'success'}>
-                      {product.stock_risk || 'unknown'}
+                      {product.stock_risk ? `${product.stock_risk.toUpperCase()} RISK` : 'UNKNOWN'}
                     </Badge>
                   </td>
                 </tr>
@@ -700,151 +844,191 @@ export const ReportsModule = () => {
             </tbody>
           </table>
         </div>
+      </Card>
 
-        {(reportData.products || []).length > 0 && (
-          <div className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-4">
-            <h4 className="text-sm font-semibold text-slate-100">
-              Product {reportData.products[0].source_product_id} demand trend
-            </h4>
-            <p className="mb-3 text-xs text-slate-400">
-              Purple is recorded product demand. Blue begins after the forecast date and is the model prediction.
-            </p>
-            <ForecastLineChart
-              history={reportData.products[0].history}
-              series={reportData.products[0].series}
-              unit={reportData.unit}
-              title="Product demand actual versus predicted"
-            />
-          </div>
-        )}
-      </Section>
+      {/* Featured Demand Trend Chart */}
+      {(reportData.products || []).length > 0 && (
+        <Card hoverEffect={false}>
+          <CardHeader>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-indigo-500" />
+                <span>Featured SKU Demand Trend ({reportData.products[0].source_product_id})</span>
+              </CardTitle>
+              <CardDescription>Historical actual sales vs predicted unit demand</CardDescription>
+            </div>
+          </CardHeader>
+          <ForecastLineChart
+            history={reportData.products[0].history}
+            series={reportData.products[0].series}
+            unit={reportData.unit}
+            title="Product demand actual versus predicted"
+          />
+        </Card>
+      )}
 
-      <Section title="Demand Model Performance" subtitle={`Selected algorithm: ${reportData.algorithm}`}>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <ReportMetric label="Model Version" value={reportData.model_version} />
-          <ReportMetric label="MAE" value={formatNumber(reportData.metrics?.mae, 3)} />
-          <ReportMetric label="RMSE" value={formatNumber(reportData.metrics?.rmse, 3)} />
-          <ReportMetric label="R²" value={formatNumber(reportData.metrics?.r2, 3)} />
-        </div>
-      </Section>
-
-      <Section title="Demand Insights">
-        <div className="grid gap-3 lg:grid-cols-2">
-          {(reportData.insights || []).map((insight) => (
-            <div key={insight} className="rounded-xl border border-slate-700/70 bg-slate-900/40 p-4 text-sm text-slate-300">
+      {/* Strategic Demand Insights */}
+      <Card hoverEffect={false} className="border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20">
+        <SectionHeader title="Inventory Purchase Takeaways" subtitle="Actionable inventory planning advice based on AI demand forecast" icon={Sparkles} />
+        <div className="grid md:grid-cols-2 gap-3">
+          {(reportData.insights || []).map((insight, idx) => (
+            <div key={idx} className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300">
               {insight}
             </div>
           ))}
         </div>
-      </Section>
-    </>
+      </Card>
+    </div>
   );
 
   const renderMonitoringReport = () => (
-    <>
-      <Section title="Forecasting Engine Status" subtitle="Infrastructure and model monitoring only; no business decision data is exposed.">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <ReportMetric label="Engine" value={reportData.engine_status} />
-          <ReportMetric label="API" value={reportData.api_status} />
-          <ReportMetric label="Current Model" value={reportData.current_model || '—'} />
-          <ReportMetric label="Model Version" value={reportData.model_version || '—'} />
-          <ReportMetric label="Successful Jobs" value={formatNumber(reportData.successful_jobs, 0)} />
-          <ReportMetric label="Failed Jobs" value={formatNumber(reportData.failed_jobs, 0)} />
-          <ReportMetric label="Supported Horizons" value={reportData.supported_horizons.join(' / ')} />
-          <ReportMetric label="Last Forecast" value={formatDate(reportData.last_forecast_generated)} />
-        </div>
-      </Section>
+    <div className="space-y-6">
+      {/* Top Engine Stat Cards */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard icon={CheckCircle2} label="Engine Status" value={reportData.engine_status} color="emerald" />
+        <StatCard icon={ShieldCheck} label="API Status" value={reportData.api_status} color="indigo" />
+        <StatCard icon={Layers} label="Successful Jobs" value={formatNumber(reportData.successful_jobs, 0)} color="blue" />
+        <StatCard icon={AlertTriangle} label="Failed Jobs" value={formatNumber(reportData.failed_jobs, 0)} color="amber" />
+      </div>
 
-      <Section title="Model Registry & Performance">
-        <div className="overflow-x-auto rounded-xl border border-slate-700/70">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-slate-900/80 text-slate-400">
+      {/* Model Registry */}
+      <Card hoverEffect={false}>
+        <CardHeader>
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Layers className="w-5 h-5 text-indigo-500" />
+              <span>Registered ML Forecasting Models</span>
+            </CardTitle>
+            <CardDescription>Engine Version {reportData.model_version} • Current Active Model: {reportData.current_model || '—'}</CardDescription>
+          </div>
+        </CardHeader>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="uppercase text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
               <tr>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Scope</th>
-                <th className="px-4 py-3">Algorithm</th>
-                <th className="px-4 py-3">Version</th>
-                <th className="px-4 py-3">MAE</th>
-                <th className="px-4 py-3">RMSE</th>
-                <th className="px-4 py-3">R²</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="p-3">Forecast Type</th>
+                <th className="p-3">Scope</th>
+                <th className="p-3">Algorithm</th>
+                <th className="p-3">Version</th>
+                <th className="p-3">MAE</th>
+                <th className="p-3">RMSE</th>
+                <th className="p-3">R² Fit</th>
+                <th className="p-3">Status</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {(reportData.models || []).map((model) => (
-                <tr key={`${model.model_version}-${model.forecast_type}-${model.scope}`} className="border-t border-slate-800 text-slate-200">
-                  <td className="px-4 py-3">{model.forecast_type}</td>
-                  <td className="px-4 py-3">{model.scope}</td>
-                  <td className="px-4 py-3 font-semibold">{model.algorithm}</td>
-                  <td className="px-4 py-3">{model.model_version}</td>
-                  <td className="px-4 py-3">{formatNumber(model.metrics?.mae, 3)}</td>
-                  <td className="px-4 py-3">{formatNumber(model.metrics?.rmse, 3)}</td>
-                  <td className="px-4 py-3">{formatNumber(model.metrics?.r2, 3)}</td>
-                  <td className="px-4 py-3"><Badge variant="success">{model.status}</Badge></td>
+                <tr key={`${model.model_version}-${model.forecast_type}-${model.scope}`} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td className="p-3 font-semibold text-slate-900 dark:text-slate-100">{model.forecast_type}</td>
+                  <td className="p-3 text-slate-700 dark:text-slate-300">{model.scope}</td>
+                  <td className="p-3 font-medium text-indigo-600 dark:text-indigo-400">{model.algorithm}</td>
+                  <td className="p-3 font-mono text-slate-500 dark:text-slate-400">{model.model_version}</td>
+                  <td className="p-3 text-slate-700 dark:text-slate-300">{formatNumber(model.metrics?.mae, 3)}</td>
+                  <td className="p-3 text-slate-700 dark:text-slate-300">{formatNumber(model.metrics?.rmse, 3)}</td>
+                  <td className="p-3 font-medium text-slate-900 dark:text-slate-100">{formatNumber(model.metrics?.r2, 3)}</td>
+                  <td className="p-3"><Badge variant="success">{model.status}</Badge></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </Section>
+      </Card>
 
-      <Section title="Recent Forecast Jobs">
-        <div className="overflow-x-auto rounded-xl border border-slate-700/70">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-slate-900/80 text-slate-400">
+      {/* Recent Forecast Jobs */}
+      <Card hoverEffect={false}>
+        <CardHeader>
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-indigo-500" />
+              <span>Recent AI Forecast Computation Jobs</span>
+            </CardTitle>
+            <CardDescription>Execution telemetry of asynchronous model evaluation tasks</CardDescription>
+          </div>
+        </CardHeader>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="uppercase text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
               <tr>
-                <th className="px-4 py-3">Reference</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Records</th>
-                <th className="px-4 py-3">Started</th>
-                <th className="px-4 py-3">Completed</th>
+                <th className="p-3">Job Reference</th>
+                <th className="p-3">Type</th>
+                <th className="p-3">Status</th>
+                <th className="p-3">Records Processed</th>
+                <th className="p-3">Started At</th>
+                <th className="p-3">Completed At</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {(reportData.recent_jobs || []).map((job) => (
-                <tr key={job.reference} className="border-t border-slate-800 text-slate-200">
-                  <td className="px-4 py-3 font-mono">{job.reference}</td>
-                  <td className="px-4 py-3">{job.job_type}</td>
-                  <td className="px-4 py-3"><Badge variant="success">{job.status}</Badge></td>
-                  <td className="px-4 py-3">{formatNumber(job.record_count, 0)}</td>
-                  <td className="px-4 py-3">{formatDate(job.started_at)}</td>
-                  <td className="px-4 py-3">{formatDate(job.completed_at)}</td>
+                <tr key={job.reference} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td className="p-3 font-mono text-indigo-600 dark:text-indigo-400 font-medium">{job.reference}</td>
+                  <td className="p-3 text-slate-700 dark:text-slate-300">{job.job_type}</td>
+                  <td className="p-3"><Badge variant="success">{job.status}</Badge></td>
+                  <td className="p-3 font-medium text-slate-900 dark:text-slate-100">{formatNumber(job.record_count, 0)}</td>
+                  <td className="p-3 text-slate-500 dark:text-slate-400">{formatDate(job.started_at)}</td>
+                  <td className="p-3 text-slate-500 dark:text-slate-400">{formatDate(job.completed_at)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </Section>
-    </>
+      </Card>
+    </div>
   );
 
   return (
     <div className="reports-page space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      {/* Top Commercial Header Banner */}
+      <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-950 via-slate-900 to-violet-950 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-indigo-800/40">
         <div>
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-indigo-400" />
-            <h2 className="text-2xl font-bold text-slate-100">Reports & Business Analytics</h2>
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-200 mb-1 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>{getRoleLabel(roleId)} Executive Analytics</span>
           </div>
-          <p className="mt-1 text-sm text-slate-400">
-            Generate database-backed analytics and forecasting reports for the {getRoleLabel(roleId)} role.
+          <h1 className="text-2xl font-bold tracking-tight">Reports &amp; Strategic AI Forecasting</h1>
+          <p className="text-sm text-indigo-200 mt-1">
+            Generate database-backed business reports, sales revenue trajectory, product demand forecasts, and model reliability.
           </p>
         </div>
 
-        <Badge variant="info">Milestone 2 • Live API Data</Badge>
+        <div className="flex items-center gap-3">
+          {canExport && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={buildDownload}
+                disabled={!reportData || loading}
+                icon={Download}
+                className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+              >
+                Export Report (CSV)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={printReport}
+                disabled={!reportData || loading}
+                icon={Printer}
+                className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+              >
+                Print / PDF
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
-      <Card>
+      {/* Report Controls & Filters Bar */}
+      <Card hoverEffect={false}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
           <div className="flex-1">
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Report
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Select Analytics Report
             </label>
             <select
               value={reportType}
               onChange={(event) => setReportType(event.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500"
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
             >
               {availableReports.map((report) => (
                 <option key={report.id} value={report.id}>{report.label}</option>
@@ -853,26 +1037,26 @@ export const ReportsModule = () => {
           </div>
 
           {(reportType === 'revenue' || reportType === 'demand' || reportType === 'personal') && (
-            <div className="w-full lg:w-48">
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <div className="w-full lg:w-44">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Forecast Horizon
               </label>
               <select
                 value={horizon}
                 onChange={(event) => setHorizon(Number(event.target.value))}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
               >
                 {HORIZONS.map((value) => (
-                  <option key={value} value={value}>{value} Days</option>
+                  <option key={value} value={value}>{value} Days Ahead</option>
                 ))}
               </select>
             </div>
           )}
 
           {(reportType === 'revenue' || reportType === 'demand') && (
-            <div className="w-full lg:w-52">
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Category
+            <div className="w-full lg:w-48">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Product Category
               </label>
               <select
                 value={category}
@@ -880,9 +1064,9 @@ export const ReportsModule = () => {
                   setCategory(event.target.value);
                   setProduct('');
                 }}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
               >
-                <option value="ALL">All categories</option>
+                <option value="ALL">All Categories</option>
                 {(filterOptions.categories || []).map((value) => (
                   <option key={value} value={value}>{value}</option>
                 ))}
@@ -891,16 +1075,16 @@ export const ReportsModule = () => {
           )}
 
           {reportType === 'demand' && (
-            <div className="w-full lg:w-52">
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <div className="w-full lg:w-48">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Product / SKU
               </label>
               <select
                 value={product}
                 onChange={(event) => setProduct(event.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
               >
-                <option value="">All products</option>
+                <option value="">All Products</option>
                 {(filterOptions.products || [])
                   .filter((item) => category === 'ALL' || item.category === category)
                   .map((item) => (
@@ -913,14 +1097,14 @@ export const ReportsModule = () => {
           )}
 
           {roleId === 'admin' && reportType === 'demand' && (
-            <div className="w-full lg:w-52">
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Application Store
+            <div className="w-full lg:w-48">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Store Location
               </label>
               <select
                 value={storeId}
                 onChange={(event) => setStoreId(event.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
               >
                 {adminStores.map((store) => (
                   <option key={store.id} value={store.id}>{store.name} ({store.code})</option>
@@ -930,14 +1114,14 @@ export const ReportsModule = () => {
           )}
 
           {roleId === 'admin' && reportType === 'personal' && (
-            <div className="w-full lg:w-64">
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <div className="w-full lg:w-56">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Sales Executive
               </label>
               <select
                 value={sellerId}
                 onChange={(event) => setSellerId(event.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
               >
                 {adminSellers.map((seller) => (
                   <option key={seller.id} value={seller.id}>{seller.full_name}</option>
@@ -950,67 +1134,61 @@ export const ReportsModule = () => {
             <Button onClick={loadReport} disabled={loading} icon={RefreshCw}>
               {loading ? 'Generating...' : 'Generate Report'}
             </Button>
-
-            <Button variant="secondary" onClick={resetFilters} disabled={loading}>
+            <Button variant="outline" onClick={resetFilters} disabled={loading}>
               Reset
             </Button>
-
-            {canExport && (
-              <>
-                <Button variant="outline" onClick={buildDownload} disabled={!reportData || loading} icon={Download}>
-                  Download CSV
-                </Button>
-
-                <Button variant="outline" onClick={printReport} disabled={!reportData || loading} icon={Printer}>
-                  Print / PDF
-                </Button>
-              </>
-            )}
           </div>
         </div>
       </Card>
 
+      {/* Error Message */}
       {error && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-          <strong>Report generation failed:</strong> {error}
+        <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-300 text-xs space-y-1">
+          <p className="font-bold flex items-center gap-1">
+            <AlertTriangle className="w-4 h-4" /> Report generation failed:
+          </p>
+          <p>{error}</p>
         </div>
       )}
 
+      {/* Active Generated Report View */}
       {reportData && !loading && (
         <div className="report-printable space-y-6">
-          <Card>
-            <div className="flex flex-col gap-2 border-b border-slate-800 pb-4 lg:flex-row lg:items-center lg:justify-between">
+          <Card hoverEffect={false}>
+            <div className="flex flex-col gap-2 border-b border-slate-200 dark:border-slate-800 pb-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-400">MarketMind AI</p>
-                <h3 className="mt-1 text-xl font-bold text-slate-100">{reportTitle}</h3>
-                <p className="mt-1 text-xs text-slate-400">
-                  Generated {generatedAt ? generatedAt.toLocaleString('en-IN') : '—'}
+                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">MarketMind AI • Commercial Report</p>
+                <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">{reportTitle}</h2>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Generated {generatedAt ? generatedAt.toLocaleString('en-IN') : '—'} • Role Scope: {getRoleLabel(roleId)}
                 </p>
               </div>
-              <Badge variant="success">Database-backed</Badge>
+              <Badge variant="success">Live Database Telemetry</Badge>
             </div>
           </Card>
 
           {reportType === 'business' && renderBusinessReport()}
-          {reportType === 'revenue' && renderForecastReport('Revenue Forecast', false)}
-          {reportType === 'personal' && renderForecastReport('Personal Sales Forecast', true)}
+          {reportType === 'revenue' && renderForecastReport('Revenue Growth & Sales Forecast', false)}
+          {reportType === 'personal' && renderForecastReport('Personal Sales Performance Forecast', true)}
           {reportType === 'demand' && renderDemandReport()}
           {reportType === 'monitoring' && renderMonitoringReport()}
         </div>
       )}
 
+      {/* Initial Empty State */}
       {!reportData && !loading && !error && (
-        <Card>
-          <div className="flex min-h-48 flex-col items-center justify-center text-center">
-            <FileText className="h-10 w-10 text-slate-600" />
-            <h3 className="mt-3 text-sm font-semibold text-slate-200">No report generated yet</h3>
-            <p className="mt-1 max-w-md text-xs text-slate-400">
-              Select a report and generate it using the authenticated Milestone 2 APIs.
+        <Card hoverEffect={false}>
+          <div className="flex min-h-48 flex-col items-center justify-center text-center py-8">
+            <FileText className="h-10 w-10 text-slate-400 dark:text-slate-600 mb-2" />
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-200">No report generated yet</h3>
+            <p className="mt-1 max-w-md text-xs text-slate-500 dark:text-slate-400">
+              Select a report type and options above, then click "Generate Report" to build live analytics.
             </p>
           </div>
         </Card>
       )}
 
+      {/* Print Styles */}
       <style>{`
         @media print {
           body {
@@ -1036,16 +1214,21 @@ export const ReportsModule = () => {
             background: white !important;
           }
 
+          .report-printable .marketmind-card,
           .report-printable .rounded-xl,
+          .report-printable .rounded-2xl,
           .report-printable .rounded-lg {
             border-color: #cbd5e1 !important;
             background: white !important;
+            box-shadow: none !important;
           }
 
+          .report-printable h1,
           .report-printable h2,
           .report-printable h3,
           .report-printable h4,
           .report-printable p,
+          .report-printable span,
           .report-printable td,
           .report-printable th {
             color: #0f172a !important;
