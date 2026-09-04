@@ -13,8 +13,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  LogOut,
-  MessageSquare
+  LogOut
 } from 'lucide-react';
 
 import { useLanguage } from '../../context/LanguageContext';
@@ -26,7 +25,6 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed, 
   const allowedModules = new Set((access?.modules || []).map((module) => module.code));
   const navItems = [
     { id: 'dashboard', label: t('Dashboard'), icon: LayoutDashboard, badge: null },
-    { id: 'ai_chat', label: t('AI Chat System'), icon: MessageSquare, badge: 'Copilot', badgeColor: 'bg-gradient-to-r from-indigo-500/30 to-violet-500/30 text-indigo-300' },
     ...(allowedModules.has('sales') ? [{ id: 'sales', label: t('Sales Deals'), icon: ShoppingBag, badge: null }] : []),
     ...(allowedModules.has('inventory') ? [{ id: 'inventory', label: t('Inventory'), icon: PackageCheck, badge: currentRole.id === 'manager' ? t('Stock Alerts') : null, badgeColor: 'bg-rose-500 text-white' }] : []),
     ...(allowedModules.has('customer_segments') ? [{ id: 'customers', label: t('Customers'), icon: Users, badge: null }] : []),
