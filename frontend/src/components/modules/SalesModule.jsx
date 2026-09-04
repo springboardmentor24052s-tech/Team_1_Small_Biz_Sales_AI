@@ -8,7 +8,7 @@ import { B2bInvoiceModal } from '../common/B2bInvoiceModal';
 import { useToast } from '../../context/ToastContext';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { ShoppingBag, Search, Plus, FileText, Download, Pencil, Ban, PackagePlus, Trash2, Printer, CreditCard } from 'lucide-react';
+import { ShoppingBag, Search, Plus, FileText, Download, Pencil, Ban, PackagePlus, Trash2, Printer } from 'lucide-react';
 
 const emptyForm = () => ({
   externalReference: '',
@@ -26,7 +26,7 @@ const emptyForm = () => ({
 
 export const SalesModule = () => {
   const { addToast } = useToast();
-  const { salesTransactions, customers, refresh } = useData();
+  const { salesTransactions, customers = [], refresh } = useData();
   const { api, profile } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('all');
@@ -43,29 +43,149 @@ export const SalesModule = () => {
     setIsInvoiceOpen(true);
   };
 
-
   const permissions = useMemo(
     () => new Set(profile?.role?.permissions || []),
     [profile?.role?.permissions]
   );
   const canCreate = permissions.has('sales.create') && Boolean(profile?.store_id);
-  const canUpdate =
-    permissions.has('sales.update.store') || permissions.has('sales.update.own');
+  const canUpdate = permissions.has('sales.update.store') || permissions.has('sales.update.own');
   const canVoid = permissions.has('sales.void');
 
-  const deals = salesTransactions.map((transaction) => ({
+  const deals = (salesTransactions || []).map((transaction) => ({
     ...transaction,
-    displayReference: transaction.external_reference || transaction.id.slice(0, 8),
+    displayReference: transaction.external_reference || (transaction.id ? transaction.id.slice(0, 8) : 'REF-001'),
     amount: new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: transaction.currency
-    }).format(Number(transaction.total_amount))
+      currency: transaction.currency || 'INR'
+    }).format(Number(transaction.total_amount || 0))
   }));
+
   const filteredDeals = deals.filter((deal) => {
-    const matchesSearch = `${deal.displayReference} ${deal.source_system}`.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = `${deal.displayReference} ${deal.source_system || ''}`.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPayment = paymentFilter === 'all' || deal.payment_status === paymentFilter;
     return matchesSearch && matchesPayment;
   });
+
+  const orderSummary = useMemo(() => {
+    const subtotal = form.items.reduce((sum, item) => sum + Math.max(0, Number(item.unitPrice || 0) * Number(item.quantity || 0) - Number(item.discountAmount || 0)), 0);
+    const total = subtotal - Number(form.orderDiscount || 0) + Number(form.taxAmount || 0);
+    return { subtotal, total, quantity: form.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0) };
+  }, [form.items, form.orderDiscount, form.taxAmount]);
+
+  const openCreate = async () => {
+    if (!canCreate) {
+      addToast('Your role or store assignment does not allow transaction creation.', 'danger');
+      return;
+    }
+    try {
+      setCatalog(await api('/sales/catalog'));
+      setSelected(null);
+      setForm(emptyForm());
+      setModalMode('create');
+    } catch (error) { addToast(error.message, 'danger'); }
+  };
+
+  const openEdit = (transaction) => {
+    setSelected(transaction);
+    setForm({
+      externalReference: transaction.external_reference || '',
+      occurredAt: new Date(transaction.occurred_at || Date.now()).toISOString().slice(0, 16),
+      currency: transaction.currency || 'INR',
+      totalAmount: String(transaction.total_amount || ''),
+      itemCount: String(transaction.item_count || '1'),
+      notes: transaction.notes || ''
+    });
+    setModalMode('edit');
+  };
+
+  const submitTransaction = async (event) => {
+    event.preventDefault();
+    setIsSaving(true);
+    try {
+      const payload = {
+        external_reference: form.externalReference.trim() || null,
+        occurred_at: new Date(form.occurredAt).toISOString(),
+        total_amount: Number(form.totalAmount),
+        item_count: Number(form.itemCount),
+        notes: form.notes.trim() || null
+      };
+      if (modalMode === 'create') {
+        await api('/sales/transactions', {
+          method: 'POST',
+          body: JSON.stringify({
+            external_reference: payload.external_reference,
+            occurred_at: payload.occurred_at,
+            store_id: profile.store_id,
+            currency: form.currency.toUpperCase(),
+            payment_method: form.paymentMethod,
+            customer_reference: form.customerReference.trim() || null,
+            order_discount: Number(form.orderDiscount || 0),
+            tax_amount: Number(form.taxAmount || 0),
+            notes: payload.notes,
+            items: form.items.map((item) => ({
+              product_id: item.productId,
+              quantity: Number(item.quantity),
+              unit_price: Number(item.unitPrice),
+              discount_amount: Number(item.discountAmount || 0)
+            }))
+          })
+        });
+        addToast('Sale recorded. Inventory and customer totals were updated.', 'success');
+      } else {
+        await api(`/sales/transactions/${selected.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload)
+        });
+        addToast('Sales transaction updated.', 'success');
+      }
+      setModalMode(null);
+      await refresh();
+    } catch (error) {
+      addToast(error.message, 'danger');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const updateLine = (index, field, value) => setForm((current) => ({ ...current, items: current.items.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item) }));
+  const addLine = () => setForm((current) => ({ ...current, items: [...current.items, { productId: '', quantity: '1', unitPrice: '', discountAmount: '0' }] }));
+  const removeLine = (index) => setForm((current) => ({ ...current, items: current.items.filter((_, itemIndex) => itemIndex !== index) }));
+
+  const voidTransaction = async () => {
+    setIsSaving(true);
+    try {
+      const response = await api(`/sales/transactions/${selected.id}/void`, {
+        method: 'POST'
+      });
+      addToast(response.message, 'success');
+      setModalMode(null);
+      await refresh();
+    } catch (error) {
+      addToast(error.message, 'danger');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const exportLedger = () => {
+    const header = ['reference', 'occurred_at', 'amount', 'currency', 'items', 'status'];
+    const rows = deals.map((deal) => [
+      deal.displayReference,
+      deal.occurred_at,
+      deal.total_amount,
+      deal.currency,
+      deal.item_count,
+      deal.status
+    ]);
+    const csv = [header, ...rows]
+      .map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(','))
+      .join('\n');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    link.download = 'marketmind-sales-ledger.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
 
   return (
     <div className="space-y-6">
@@ -175,10 +295,35 @@ export const SalesModule = () => {
                       >
                         View
                       </Button>
+                      {canUpdate && deal.status !== 'voided' && !deal.line_items?.length && (
+                        <Button variant="ghost" size="sm" icon={Pencil} onClick={() => openEdit(deal)}>
+                          Edit
+                        </Button>
+                      )}
+                      {canVoid && deal.status !== 'voided' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={Ban}
+                          onClick={() => {
+                            setSelected(deal);
+                            setModalMode('void');
+                          }}
+                        >
+                          Void
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
               ))}
+              {!filteredDeals.length && (
+                <tr>
+                  <td colSpan="6" className="py-10 text-center text-xs text-slate-400">
+                    No sales transactions match the selected payment filter or search query.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -188,9 +333,8 @@ export const SalesModule = () => {
         isOpen={isInvoiceOpen}
         onClose={() => setIsInvoiceOpen(false)}
         transaction={invoiceTransaction}
-        customer={customers.find((c) => c.id === invoiceTransaction?.customer_id)}
+        customer={(customers || []).find((c) => c.id === invoiceTransaction?.customer_id)}
       />
-
 
       <Modal
         isOpen={modalMode === 'create' || modalMode === 'edit'}
@@ -276,16 +420,33 @@ export const SalesModule = () => {
 
       <Modal isOpen={modalMode === 'view'} onClose={() => setModalMode(null)} title="Transaction Details">
         {selected && (
-          <div className="space-y-4"><dl className="grid grid-cols-2 gap-4 text-sm">
-            <div><dt className="text-slate-500">Reference</dt><dd className="font-semibold">{selected.displayReference}</dd></div>
-            <div><dt className="text-slate-500">Source</dt><dd className="font-semibold">{selected.source_system}</dd></div>
-            <div><dt className="text-slate-500">Amount</dt><dd className="font-semibold">{selected.amount}</dd></div>
-            <div><dt className="text-slate-500">Items</dt><dd className="font-semibold">{selected.item_count}</dd></div>
-            <div><dt className="text-slate-500">Status</dt><dd className="font-semibold">{selected.status}</dd></div>
-            <div><dt className="text-slate-500">Date</dt><dd className="font-semibold">{new Date(selected.occurred_at).toLocaleString()}</dd></div>
-            <div><dt className="text-slate-500">Payment</dt><dd className="font-semibold capitalize">{selected.payment_method?.replace('_', ' ') || 'Not recorded'}</dd></div>
-            <div><dt className="text-slate-500">Customer</dt><dd className="font-semibold">{selected.customer_id || 'Walk-in / not recorded'}</dd></div>
-          </dl>{selected.line_items?.length > 0 && <div className="rounded-xl border border-slate-200 dark:border-slate-800"><div className="grid grid-cols-4 bg-slate-50 p-2 text-xs font-bold dark:bg-slate-800"><span>Product</span><span>Qty</span><span>Unit price</span><span>Line total</span></div>{selected.line_items.map((line) => <div key={line.id} className="grid grid-cols-4 border-t border-slate-100 p-2 text-xs dark:border-slate-800"><span>{line.product.name}<small className="block text-slate-500">{line.product.sku}</small></span><span>{line.quantity}</span><span>₹{Number(line.unit_price).toLocaleString('en-IN')}</span><span>₹{Number(line.line_amount).toLocaleString('en-IN')}</span></div>)}</div>}</div>
+          <div className="space-y-4">
+            <dl className="grid grid-cols-2 gap-4 text-sm">
+              <div><dt className="text-slate-500">Reference</dt><dd className="font-semibold">{selected.displayReference}</dd></div>
+              <div><dt className="text-slate-500">Source</dt><dd className="font-semibold">{selected.source_system}</dd></div>
+              <div><dt className="text-slate-500">Amount</dt><dd className="font-semibold">{selected.amount}</dd></div>
+              <div><dt className="text-slate-500">Items</dt><dd className="font-semibold">{selected.item_count}</dd></div>
+              <div><dt className="text-slate-500">Status</dt><dd className="font-semibold">{selected.status}</dd></div>
+              <div><dt className="text-slate-500">Date</dt><dd className="font-semibold">{new Date(selected.occurred_at).toLocaleString()}</dd></div>
+              <div><dt className="text-slate-500">Payment</dt><dd className="font-semibold capitalize">{selected.payment_method?.replace('_', ' ') || 'Not recorded'}</dd></div>
+              <div><dt className="text-slate-500">Customer</dt><dd className="font-semibold">{selected.customer_id || 'Walk-in / not recorded'}</dd></div>
+            </dl>
+            {selected.line_items?.length > 0 && (
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800">
+                <div className="grid grid-cols-4 bg-slate-50 p-2 text-xs font-bold dark:bg-slate-800">
+                  <span>Product</span><span>Qty</span><span>Unit price</span><span>Line total</span>
+                </div>
+                {selected.line_items.map((line) => (
+                  <div key={line.id} className="grid grid-cols-4 border-t border-slate-100 p-2 text-xs dark:border-slate-800">
+                    <span>{line.product?.name || 'Product'}<small className="block text-slate-500">{line.product?.sku}</small></span>
+                    <span>{line.quantity}</span>
+                    <span>₹{Number(line.unit_price || 0).toLocaleString('en-IN')}</span>
+                    <span>₹{Number(line.line_amount || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </Modal>
 
