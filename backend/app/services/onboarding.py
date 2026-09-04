@@ -369,20 +369,28 @@ def upsert_upload(
 
 def seed_business_sample(db: Session, *, tenant_id: UUID, store_id: UUID, seller_id: UUID):
     product_rows = [
-        ("DEMO-TSHIRT", "Classic T-Shirt", "Apparel", 42, 10),
-        ("DEMO-BOTTLE", "Steel Water Bottle", "Home", 8, 10),
-        ("DEMO-BAG", "Everyday Backpack", "Accessories", 18, 6),
-        ("DEMO-LAMP", "Desk Lamp", "Home", 0, 5),
-        ("DEMO-EARBUDS", "Wireless Earbuds", "Electronics", 25, 8),
+        ("DEMO-TSHIRT", "Classic T-Shirt", "Apparel", 42, 10, "6109", Decimal("599.00"), "BATCH-2026-A1", "2027-12-31"),
+        ("DEMO-BOTTLE", "Steel Water Bottle", "Home", 8, 10, "7323", Decimal("799.00"), "BATCH-2026-B2", "2028-06-30"),
+        ("DEMO-BAG", "Everyday Backpack", "Accessories", 18, 6, "4202", Decimal("1499.00"), "BATCH-2026-C3", "2029-01-15"),
+        ("DEMO-LAMP", "Desk Lamp", "Home", 0, 5, "9405", Decimal("1299.00"), "BATCH-2025-X9", "2026-11-20"),
+        ("DEMO-EARBUDS", "Wireless Earbuds", "Electronics", 25, 8, "8518", Decimal("2499.00"), "BATCH-2026-E5", "2027-08-31"),
     ]
     created_products = created_inventory = created_sales = created_customers = 0
     products = {}
-    for sku, name, category, stock, reorder in product_rows:
+    for sku, name, category, stock, reorder, hsn, mrp, batch_no, exp_date in product_rows:
         product = db.scalar(
             select(Product).where(Product.tenant_id == tenant_id, Product.sku == sku)
         )
         if not product:
-            product = Product(tenant_id=tenant_id, sku=sku, name=name, category=category)
+            product = Product(
+                tenant_id=tenant_id,
+                sku=sku,
+                name=name,
+                category=category,
+                hsn_code=hsn,
+                unit_mrp=mrp,
+                pack_size="12 Units/Box"
+            )
             db.add(product)
             db.flush()
             created_products += 1
@@ -400,11 +408,23 @@ def seed_business_sample(db: Session, *, tenant_id: UUID, store_id: UUID, seller
                     product_id=product.id,
                     stock_quantity=stock,
                     reorder_level=reorder,
+                    batch_number=batch_no,
+                    expiry_date=exp_date
                 )
             )
             created_inventory += 1
     end = datetime.now(UTC).replace(hour=12, minute=0, second=0, microsecond=0)
     product_list = list(products.values())
+
+    # Sample B2B Distributor Companies
+    company_names = [
+        ("Apex Traders & Wholesalers", "27AAAAA0000A1Z5", "Net 30", Decimal("250000.00"), Decimal("45000.00"), "North Zone Route"),
+        ("Bliss Retail Outlets", "27BBBCC1111B1Z2", "Net 15", Decimal("150000.00"), Decimal("12500.00"), "Central Market Route"),
+        ("Crest Commercial Supplies", "07CCCCD2222C1Z9", "Net 30", Decimal("300000.00"), Decimal("89000.00"), "West Express Route"),
+        ("Delta General Stores", "09DDDEE3333D1Z4", "COD", Decimal("50000.00"), Decimal("0.00"), "South Hub Route"),
+        ("Empire Supermarkets Ltd", "19EEEFF4444E1Z1", "Net 45", Decimal("500000.00"), Decimal("120000.00"), "East Coastal Route"),
+    ]
+
     for index in range(45):
         reference = f"SAMPLE-{index + 1:03d}"
         transaction = db.scalar(
@@ -415,6 +435,11 @@ def seed_business_sample(db: Session, *, tenant_id: UUID, store_id: UUID, seller
                 SalesTransaction.external_reference == reference,
             )
         )
+        tot_amt = Decimal(1200 + index * 85)
+        cgst = (tot_amt * Decimal("0.09")).quantize(Decimal("0.01"))
+        sgst = (tot_amt * Decimal("0.09")).quantize(Decimal("0.01"))
+        status_choice = "overdue" if index % 5 == 0 else ("unpaid" if index % 3 == 0 else "paid")
+
         if not transaction:
             transaction = SalesTransaction(
                 tenant_id=tenant_id,
@@ -424,14 +449,24 @@ def seed_business_sample(db: Session, *, tenant_id: UUID, store_id: UUID, seller
                 external_reference=reference,
                 occurred_at=end - timedelta(days=44 - index),
                 currency="INR",
-                total_amount=Decimal(1200 + index * 85),
+                total_amount=tot_amt,
+                tax_amount=cgst + sgst,
+                cgst_amount=cgst,
+                sgst_amount=sgst,
+                igst_amount=Decimal("0.00"),
+                payment_status=status_choice,
+                credit_terms="Net 30",
+                due_date=(end - timedelta(days=44 - index)) + timedelta(days=30),
+                hsn_code="8471",
+                payment_method="Bank Transfer / NEFT" if status_choice == "paid" else "Credit Ledger",
                 item_count=len(product_list),
                 status=TransactionStatus.COMPLETED,
-                notes="Evaluation sample data",
+                notes="B2B Wholesale Distributor Sale",
             )
             db.add(transaction)
             db.flush()
             created_sales += 1
+
         transaction.item_count = len(product_list)
         line_amount = Decimal(transaction.total_amount) / len(product_list)
         for product_index, product in enumerate(product_list):
@@ -453,6 +488,7 @@ def seed_business_sample(db: Session, *, tenant_id: UUID, store_id: UUID, seller
                         updated_at=transaction.occurred_at,
                     )
                 )
+
     for index in range(24):
         identifier = f"SAMPLE-CUSTOMER-{index + 1:02d}"
         exists = db.scalar(
@@ -462,6 +498,7 @@ def seed_business_sample(db: Session, *, tenant_id: UUID, store_id: UUID, seller
                 Customer.external_customer_id == identifier,
             )
         )
+        company_info = company_names[index % len(company_names)]
         if not exists:
             db.add(
                 Customer(
@@ -469,6 +506,14 @@ def seed_business_sample(db: Session, *, tenant_id: UUID, store_id: UUID, seller
                     assigned_seller_id=seller_id,
                     source_system="sample_data",
                     external_customer_id=identifier,
+                    company_name=f"{company_info[0]} #{index+1}",
+                    gstin=f"GSTIN-{index+1:02d}-{company_info[1]}",
+                    contact_phone=f"+91 98765 {10000 + index * 411}",
+                    contact_email=f"accounts.client{index+1}@wholesaler.com",
+                    credit_terms=company_info[2],
+                    credit_limit=company_info[3],
+                    outstanding_balance=company_info[4] if index % 3 != 0 else Decimal("0.00"),
+                    territory_route=company_info[5],
                     last_purchase=end - timedelta(days=index * 7),
                     order_count=1 + index,
                     item_quantity=2 + index,
@@ -478,6 +523,7 @@ def seed_business_sample(db: Session, *, tenant_id: UUID, store_id: UUID, seller
             )
             created_customers += 1
     db.flush()
+
     sample_customers = list(
         db.scalars(
             select(Customer).where(
@@ -505,3 +551,4 @@ def seed_business_sample(db: Session, *, tenant_id: UUID, store_id: UUID, seller
         "sales": created_sales,
         "customers": created_customers,
     }
+

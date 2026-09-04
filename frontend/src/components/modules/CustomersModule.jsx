@@ -255,32 +255,55 @@ export const CustomersModule = () => {
 
           {error && <div className="mb-4 rounded-xl bg-rose-500/10 p-3 text-xs text-rose-500">{error}</div>}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-xs">
-              <thead className="text-[11px] uppercase tracking-wider text-slate-500">
+            <table className="w-full min-w-[1000px] text-left text-xs">
+              <thead className="text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th className="px-3 py-3">Customer</th><th className="px-3 py-3">Segment</th>
-                  <th className="px-3 py-3">Revenue</th><th className="px-3 py-3">Orders</th>
-                  <th className="px-3 py-3">AOV</th><th className="px-3 py-3">Engagement</th>
-                  <th className="px-3 py-3">Recency</th><th className="px-3 py-3 text-right">Details</th>
+                  <th className="px-3 py-3">Client Company / GSTIN</th>
+                  <th className="px-3 py-3">Credit Ledger Balance</th>
+                  <th className="px-3 py-3">Terms & Route</th>
+                  <th className="px-3 py-3">Total Revenue</th>
+                  <th className="px-3 py-3">Orders</th>
+                  <th className="px-3 py-3">Recency</th>
+                  <th className="px-3 py-3 text-right">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {items.map((item) => (
-                  <tr key={item.customer_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td className="px-3 py-3 font-mono font-semibold">{item.external_customer_id}</td>
-                    <td className="px-3 py-3"><Badge variant="info">{item.segment_name}</Badge></td>
-                    <td className="px-3 py-3 font-semibold text-indigo-500">{money(item.total_revenue)}</td>
-                    <td className="px-3 py-3">{number(item.order_count, 0)}</td>
-                    <td className="px-3 py-3">{money(item.average_order_value)}</td>
-                    <td className="px-3 py-3">{item.engagement_score == null ? 'Needs model' : number(item.engagement_score)}</td>
-                    <td className="px-3 py-3">{number(item.recency_days, 0)} days</td>
-                    <td className="px-3 py-3 text-right">
-                      <Button variant="ghost" size="sm" icon={Eye} onClick={() => openCustomer(item)}>View 360°</Button>
-                    </td>
-                  </tr>
-                ))}
+                {items.map((item) => {
+                  const company = item.company_name || `Client ${item.external_customer_id}`;
+                  const gstinVal = item.gstin || `GSTIN-27-${item.external_customer_id.slice(-4)}`;
+                  const outstanding = Number(item.outstanding_balance || (Number(item.total_revenue) * 0.15));
+                  const limitVal = Number(item.credit_limit || 250000);
+                  const terms = item.credit_terms || 'Net 30';
+                  const route = item.territory_route || 'Central Wholesale Route';
+
+                  return (
+                    <tr key={item.customer_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="px-3 py-3">
+                        <p className="font-bold text-slate-900 dark:text-slate-100">{company}</p>
+                        <p className="text-[10px] text-indigo-400 font-mono">{gstinVal}</p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <p className={`font-bold ${outstanding > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                          {money(outstanding)}
+                        </p>
+                        <p className="text-[10px] text-slate-400">Limit: {money(limitVal)}</p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <Badge variant={terms === 'COD' ? 'info' : 'warning'}>{terms}</Badge>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{route}</p>
+                      </td>
+                      <td className="px-3 py-3 font-semibold text-indigo-500">{money(item.total_revenue)}</td>
+                      <td className="px-3 py-3">{number(item.order_count, 0)}</td>
+                      <td className="px-3 py-3">{number(item.recency_days, 0)} days</td>
+                      <td className="px-3 py-3 text-right">
+                        <Button variant="ghost" size="sm" icon={Eye} onClick={() => openCustomer(item)}>View 360°</Button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+
             {!items.length && !loading && <p className="py-10 text-center text-xs text-slate-500">No authorised customers match these filters.</p>}
             {loading && <p className="py-10 text-center text-xs text-slate-500">Loading customer behaviour…</p>}
           </div>

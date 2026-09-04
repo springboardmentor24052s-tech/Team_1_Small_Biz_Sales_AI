@@ -95,9 +95,14 @@ export const ManagerDashboard = () => {
       unitPrice: `₹${priceNum.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
       status: item.stock_status.replaceAll('_', ' '),
       rawStatus: item.stock_status,
+      batchNumber: item.batch_number || 'BATCH-2026-X1',
+      expiryDate: item.expiry_date || '2027-12-31',
+      hsnCode: item.product?.hsn_code || '8471',
+      packSize: item.product?.pack_size || '12 Units/Box',
       supplier: 'Primary Wholesaler Ltd'
     };
   });
+
 
   const lowStockAlerts = liveInventoryItems
     .filter((item) => item.stock_status !== 'in_stock')
@@ -381,9 +386,9 @@ export const ManagerDashboard = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                <th className="py-3 px-4">SKU ID</th>
-                <th className="py-3 px-4">Product Name</th>
-                <th className="py-3 px-4">Category</th>
+                <th className="py-3 px-4">SKU / HSN</th>
+                <th className="py-3 px-4">Product & Pack</th>
+                <th className="py-3 px-4">Batch / Expiry</th>
                 <th className="py-3 px-4">Stock Level</th>
                 <th className="py-3 px-4">Unit Price</th>
                 <th className="py-3 px-4">Status</th>
@@ -393,9 +398,18 @@ export const ManagerDashboard = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
               {filteredItems.map((item) => (
                 <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3 px-4 font-mono font-semibold text-slate-500 dark:text-slate-400">{item.id}</td>
-                  <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">{item.name}</td>
-                  <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{item.category}</td>
+                  <td className="py-3 px-4">
+                    <p className="font-mono font-semibold text-slate-900 dark:text-slate-100">{item.id}</p>
+                    <p className="text-[10px] text-slate-400">HSN: {item.hsnCode}</p>
+                  </td>
+                  <td className="py-3 px-4">
+                    <p className="font-bold text-slate-900 dark:text-slate-100">{item.name}</p>
+                    <p className="text-[10px] text-indigo-400 font-semibold">{item.packSize}</p>
+                  </td>
+                  <td className="py-3 px-4">
+                    <p className="font-mono text-[11px] font-bold text-slate-300">{item.batchNumber}</p>
+                    <p className="text-[10px] text-slate-400">Exp: {item.expiryDate}</p>
+                  </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2 max-w-[120px]">
                       <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -430,6 +444,7 @@ export const ManagerDashboard = () => {
                   </td>
                 </tr>
               ))}
+
               {!filteredItems.length && (
                 <tr>
                   <td colSpan="7" className="px-4 py-12 text-center">

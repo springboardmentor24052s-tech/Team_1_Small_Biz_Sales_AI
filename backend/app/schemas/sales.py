@@ -91,8 +91,16 @@ class SalesTransactionResponse(ORMModel):
     subtotal_amount: Decimal | None
     discount_amount: Decimal | None
     tax_amount: Decimal | None
+    cgst_amount: Decimal | None = None
+    sgst_amount: Decimal | None = None
+    igst_amount: Decimal | None = None
     payment_method: str | None
+    payment_status: str | None = None
+    credit_terms: str | None = None
+    due_date: datetime | None = None
+    hsn_code: str | None = None
     customer_id: UUID | None
+
     line_items: list[SalesLineItemResponse] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime

@@ -18,6 +18,15 @@ class CustomerResponse(ORMModel):
     item_quantity: int
     total_revenue: Decimal
     recency_days: int
+    company_name: str | None = None
+    gstin: str | None = None
+    contact_phone: str | None = None
+    contact_email: str | None = None
+    credit_limit: Decimal | None = None
+    outstanding_balance: Decimal | None = None
+    credit_terms: str | None = None
+    territory_route: str | None = None
+
 
 
 class CustomerList(BaseModel):

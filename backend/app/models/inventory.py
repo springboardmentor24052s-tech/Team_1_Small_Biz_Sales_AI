@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import Boolean, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Boolean, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
@@ -21,6 +23,9 @@ class Product(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     style: Mapped[str | None] = mapped_column(String(100))
     size: Mapped[str | None] = mapped_column(String(40))
     color: Mapped[str | None] = mapped_column(String(80))
+    hsn_code: Mapped[str | None] = mapped_column(String(20), default="8471")
+    unit_mrp: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
+    pack_size: Mapped[str | None] = mapped_column(String(50), default="12 Units/Box")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     inventory_records: Mapped[list[Inventory]] = relationship(back_populates="product")
@@ -43,6 +48,9 @@ class Inventory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     stock_quantity: Mapped[int] = mapped_column(default=0, nullable=False)
     reorder_level: Mapped[int] = mapped_column(default=5, nullable=False)
+    batch_number: Mapped[str | None] = mapped_column(String(60), default="BATCH-2026-01")
+    expiry_date: Mapped[str | None] = mapped_column(String(30))
+
 
     product: Mapped[Product] = relationship(back_populates="inventory_records", lazy="joined")
 

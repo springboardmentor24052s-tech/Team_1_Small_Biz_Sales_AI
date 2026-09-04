@@ -1,7 +1,9 @@
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
 
 from app.schemas.common import ORMModel
 
@@ -14,6 +16,9 @@ class ProductResponse(ORMModel):
     style: str | None
     size: str | None
     color: str | None
+    hsn_code: str | None = None
+    unit_mrp: Decimal | None = None
+    pack_size: str | None = None
 
 
 class InventoryResponse(ORMModel):
@@ -24,7 +29,10 @@ class InventoryResponse(ORMModel):
     stock_quantity: int
     reorder_level: int
     stock_status: str
+    batch_number: str | None = None
+    expiry_date: str | None = None
     product: ProductResponse
+
     created_at: datetime
     updated_at: datetime
 

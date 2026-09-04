@@ -4,10 +4,11 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
+import { B2bInvoiceModal } from '../common/B2bInvoiceModal';
 import { useToast } from '../../context/ToastContext';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { ShoppingBag, Search, Plus, FileText, Download, Pencil, Ban, PackagePlus, Trash2 } from 'lucide-react';
+import { ShoppingBag, Search, Plus, FileText, Download, Pencil, Ban, PackagePlus, Trash2, Printer, CreditCard } from 'lucide-react';
 
 const emptyForm = () => ({
   externalReference: '',
@@ -25,14 +26,23 @@ const emptyForm = () => ({
 
 export const SalesModule = () => {
   const { addToast } = useToast();
-  const { salesTransactions, refresh } = useData();
+  const { salesTransactions, customers, refresh } = useData();
   const { api, profile } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState('all');
   const [modalMode, setModalMode] = useState(null);
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [isSaving, setIsSaving] = useState(false);
   const [catalog, setCatalog] = useState([]);
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+  const [invoiceTransaction, setInvoiceTransaction] = useState(null);
+
+  const openInvoiceModal = (deal) => {
+    setInvoiceTransaction(deal);
+    setIsInvoiceOpen(true);
+  };
+
 
   const permissions = useMemo(
     () => new Set(profile?.role?.permissions || []),
@@ -51,130 +61,11 @@ export const SalesModule = () => {
       currency: transaction.currency
     }).format(Number(transaction.total_amount))
   }));
-  const filteredDeals = deals.filter((deal) =>
-    `${deal.displayReference} ${deal.source_system}`.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const orderSummary = useMemo(() => {
-    const subtotal = form.items.reduce((sum, item) => sum + Math.max(0, Number(item.unitPrice || 0) * Number(item.quantity || 0) - Number(item.discountAmount || 0)), 0);
-    const total = subtotal - Number(form.orderDiscount || 0) + Number(form.taxAmount || 0);
-    return { subtotal, total, quantity: form.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0) };
-  }, [form.items, form.orderDiscount, form.taxAmount]);
-
-  const openCreate = async () => {
-    if (!canCreate) {
-      addToast('Your role or store assignment does not allow transaction creation.', 'danger');
-      return;
-    }
-    try {
-      setCatalog(await api('/sales/catalog'));
-      setSelected(null);
-      setForm(emptyForm());
-      setModalMode('create');
-    } catch (error) { addToast(error.message, 'danger'); }
-  };
-
-  const openEdit = (transaction) => {
-    setSelected(transaction);
-    setForm({
-      externalReference: transaction.external_reference || '',
-      occurredAt: new Date(transaction.occurred_at).toISOString().slice(0, 16),
-      currency: transaction.currency,
-      totalAmount: String(transaction.total_amount),
-      itemCount: String(transaction.item_count),
-      notes: transaction.notes || ''
-    });
-    setModalMode('edit');
-  };
-
-  const submitTransaction = async (event) => {
-    event.preventDefault();
-    setIsSaving(true);
-    try {
-      const payload = {
-        external_reference: form.externalReference.trim() || null,
-        occurred_at: new Date(form.occurredAt).toISOString(),
-        total_amount: Number(form.totalAmount),
-        item_count: Number(form.itemCount),
-        notes: form.notes.trim() || null
-      };
-      if (modalMode === 'create') {
-        await api('/sales/transactions', {
-          method: 'POST',
-          body: JSON.stringify({
-            external_reference: payload.external_reference,
-            occurred_at: payload.occurred_at,
-            store_id: profile.store_id,
-            currency: form.currency.toUpperCase(),
-            payment_method: form.paymentMethod,
-            customer_reference: form.customerReference.trim() || null,
-            order_discount: Number(form.orderDiscount || 0),
-            tax_amount: Number(form.taxAmount || 0),
-            notes: payload.notes,
-            items: form.items.map((item) => ({
-              product_id: item.productId,
-              quantity: Number(item.quantity),
-              unit_price: Number(item.unitPrice),
-              discount_amount: Number(item.discountAmount || 0)
-            }))
-          })
-        });
-        addToast('Sale recorded. Inventory and customer totals were updated.', 'success');
-      } else {
-        await api(`/sales/transactions/${selected.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify(payload)
-        });
-        addToast('Sales transaction updated.', 'success');
-      }
-      setModalMode(null);
-      await refresh();
-    } catch (error) {
-      addToast(error.message, 'danger');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const updateLine = (index, field, value) => setForm((current) => ({ ...current, items: current.items.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item) }));
-  const addLine = () => setForm((current) => ({ ...current, items: [...current.items, { productId: '', quantity: '1', unitPrice: '', discountAmount: '0' }] }));
-  const removeLine = (index) => setForm((current) => ({ ...current, items: current.items.filter((_, itemIndex) => itemIndex !== index) }));
-
-  const voidTransaction = async () => {
-    setIsSaving(true);
-    try {
-      const response = await api(`/sales/transactions/${selected.id}/void`, {
-        method: 'POST'
-      });
-      addToast(response.message, 'success');
-      setModalMode(null);
-      await refresh();
-    } catch (error) {
-      addToast(error.message, 'danger');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const exportLedger = () => {
-    const header = ['reference', 'occurred_at', 'amount', 'currency', 'items', 'status'];
-    const rows = deals.map((deal) => [
-      deal.displayReference,
-      deal.occurred_at,
-      deal.total_amount,
-      deal.currency,
-      deal.item_count,
-      deal.status
-    ]);
-    const csv = [header, ...rows]
-      .map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(','))
-      .join('\n');
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    link.download = 'marketmind-sales-ledger.csv';
-    link.click();
-    URL.revokeObjectURL(link.href);
-  };
+  const filteredDeals = deals.filter((deal) => {
+    const matchesSearch = `${deal.displayReference} ${deal.source_system}`.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPayment = paymentFilter === 'all' || deal.payment_status === paymentFilter;
+    return matchesSearch && matchesPayment;
+  });
 
   return (
     <div className="space-y-6">
@@ -182,10 +73,10 @@ export const SalesModule = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <ShoppingBag className="w-6 h-6 text-indigo-500" />
-            <span>Sales & Transaction Management</span>
+            <span>Sales & B2B Invoice Ledger</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Review imported orders and manage permitted manual transactions
+            Track commercial distributor transactions, credit terms, and generate statutory GST Tax Invoices
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -201,16 +92,33 @@ export const SalesModule = () => {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="relative w-full sm:w-72">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search transaction reference..."
+              placeholder="Search reference or customer..."
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               className="w-full pl-9 pr-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
             />
+          </div>
+
+          {/* Payment Status Ledger Filter Tabs */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+            {['all', 'paid', 'unpaid', 'overdue'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setPaymentFilter(tab)}
+                className={`px-3 py-1.5 rounded-lg font-semibold capitalize transition-all ${
+                  paymentFilter === tab
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                {tab === 'all' ? 'All Transactions' : tab}
+              </button>
+            ))}
           </div>
         </CardHeader>
 
@@ -218,10 +126,10 @@ export const SalesModule = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <th className="py-3 px-4">Reference</th>
-                <th className="py-3 px-4">Source</th>
+                <th className="py-3 px-4">Invoice Ref</th>
+                <th className="py-3 px-4">Payment Status</th>
                 <th className="py-3 px-4">Value</th>
-                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">Credit Terms</th>
                 <th className="py-3 px-4">Items</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
@@ -229,13 +137,33 @@ export const SalesModule = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
               {filteredDeals.map((deal) => (
                 <tr key={deal.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                  <td className="py-3 px-4 font-bold">{deal.displayReference}</td>
-                  <td className="py-3 px-4 text-slate-500">{deal.source_system}</td>
-                  <td className="py-3 px-4 font-bold text-indigo-600">{deal.amount}</td>
-                  <td className="py-3 px-4"><Badge variant="info">{deal.status}</Badge></td>
-                  <td className="py-3 px-4 font-semibold text-emerald-600">{deal.item_count}</td>
                   <td className="py-3 px-4">
-                    <div className="flex justify-end gap-1">
+                    <p className="font-bold text-slate-900 dark:text-slate-100">{deal.displayReference}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">{deal.source_system}</p>
+                  </td>
+                  <td className="py-3 px-4">
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
+                      deal.payment_status === 'overdue' ? 'bg-rose-500/15 text-rose-500 border-rose-500/30' :
+                      deal.payment_status === 'unpaid' ? 'bg-amber-500/15 text-amber-500 border-amber-500/30' :
+                      'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+                    }`}>
+                      {deal.payment_status || 'Paid'}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 font-bold text-indigo-600 dark:text-indigo-400">{deal.amount}</td>
+                  <td className="py-3 px-4 text-slate-500 font-medium">{deal.credit_terms || 'Net 30'}</td>
+                  <td className="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">{deal.item_count} Pcs</td>
+                  <td className="py-3 px-4">
+                    <div className="flex justify-end gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={Printer}
+                        onClick={() => openInvoiceModal(deal)}
+                        className="text-[11px] hover:border-indigo-500 hover:text-indigo-500"
+                      >
+                        GST Invoice
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -247,24 +175,6 @@ export const SalesModule = () => {
                       >
                         View
                       </Button>
-                      {canUpdate && deal.status !== 'voided' && !deal.line_items?.length && (
-                        <Button variant="ghost" size="sm" icon={Pencil} onClick={() => openEdit(deal)}>
-                          Edit
-                        </Button>
-                      )}
-                      {canVoid && deal.status !== 'voided' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          icon={Ban}
-                          onClick={() => {
-                            setSelected(deal);
-                            setModalMode('void');
-                          }}
-                        >
-                          Void
-                        </Button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -273,6 +183,14 @@ export const SalesModule = () => {
           </table>
         </div>
       </Card>
+
+      <B2bInvoiceModal
+        isOpen={isInvoiceOpen}
+        onClose={() => setIsInvoiceOpen(false)}
+        transaction={invoiceTransaction}
+        customer={customers.find((c) => c.id === invoiceTransaction?.customer_id)}
+      />
+
 
       <Modal
         isOpen={modalMode === 'create' || modalMode === 'edit'}
