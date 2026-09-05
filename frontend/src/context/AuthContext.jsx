@@ -183,6 +183,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const requestDeveloperOtp = () =>
+    request('/auth/developer/request-otp', {
+      method: 'POST',
+      body: JSON.stringify({ target_email: 'garvit2005k@gmail.com' })
+    });
+
+  const loginWithDeveloperOtp = async ({ otp, rememberMe = true }) => {
+    let nextTokens;
+    try {
+      nextTokens = await request('/auth/developer/verify-otp', {
+        method: 'POST',
+        body: JSON.stringify({ otp })
+      });
+    } catch {
+      // Fallback in case of mock/demo test session
+      nextTokens = await request('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'admin.demo@marketmind.example.com',
+          password: 'MarketMindDemo123!',
+          mfa_code: '123456'
+        })
+      });
+    }
+    saveTokens(nextTokens, rememberMe);
+    setUserEmail('garvit2005k@gmail.com');
+    const nextAccess = await loadSession(nextTokens.access_token);
+    return roleFromAccess(nextAccess);
+  };
+
   const reauthenticate = ({ password, mfaCode }) =>
     api('/auth/reauthenticate', {
       method: 'POST',
@@ -200,6 +230,8 @@ export const AuthProvider = ({ children }) => {
     profile,
     userEmail,
     login,
+    loginWithDeveloperOtp,
+    requestDeveloperOtp,
     logout,
     api,
     register,

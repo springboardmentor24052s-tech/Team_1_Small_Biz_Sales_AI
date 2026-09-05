@@ -31,17 +31,23 @@ describe('Developer & Secret Admin Access Path', () => {
     expect(screen.queryByText('Administrator')).not.toBeInTheDocument();
   });
 
-  it('renders dedicated Developer Console when isDeveloperPortal is true', () => {
+  it('renders dedicated OTP-only Developer Console without email/password fields', () => {
     const handleBack = vi.fn();
     renderLogin({ isDeveloperPortal: true, initialMode: 'login', onBack: handleBack });
 
     expect(screen.getByText('Developer Console')).toBeInTheDocument();
-    expect(screen.getByText('RESTRICTED DEVELOPER GATEWAY')).toBeInTheDocument();
+    expect(screen.getByText('RESTRICTED DEVELOPER OTP GATEWAY')).toBeInTheDocument();
     expect(screen.getByText('SYS_ROOT')).toBeInTheDocument();
-    expect(screen.getByText('Unlock Developer Console')).toBeInTheDocument();
+    expect(screen.getAllByText('garvit2005k@gmail.com').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Send OTP')).toBeInTheDocument();
+    expect(screen.getByText('Verify OTP & Open Developer Console')).toBeInTheDocument();
     expect(screen.getByText('Return to Public Workspace')).toBeInTheDocument();
 
-    // Verify public demo role switcher is hidden
+    // Verify Email, Password, and Demo role selector are NOT rendered in developer portal
+    expect(screen.queryByText('Work Email Address')).not.toBeInTheDocument();
+    expect(screen.queryByText('Password')).not.toBeInTheDocument();
+    expect(screen.queryByText('Forgot password?')).not.toBeInTheDocument();
+    expect(screen.queryByText('Remember this browser')).not.toBeInTheDocument();
     expect(screen.queryByText('Demo Access Role:')).not.toBeInTheDocument();
   });
 });

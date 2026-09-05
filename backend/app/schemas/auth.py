@@ -74,3 +74,12 @@ class SessionContext(BaseModel):
     store_id: UUID | None
     role: str
     permissions: list[str]
+
+
+class DeveloperOtpRequest(BaseModel):
+    target_email: str = Field(default="garvit2005k@gmail.com")
+
+
+class DeveloperOtpVerify(BaseModel):
+    otp: str = Field(min_length=6, max_length=12)
+

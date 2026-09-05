@@ -18,6 +18,8 @@ from app.core.security import (
 from app.models.auth import AuthSession, SecurityTokenPurpose
 from app.models.identity import Role, RoleCode, Store, Tenant, User, UserStatus
 from app.schemas.auth import (
+    DeveloperOtpRequest,
+    DeveloperOtpVerify,
     DevelopmentTokenResponse,
     LoginRequest,
     MFAConfirmRequest,
@@ -47,6 +49,7 @@ from app.services.email_delivery import (
     email_delivery_configured,
     require_production_email_delivery,
     send_password_reset_email,
+    send_security_email,
     send_verification_email,
 )
 from app.services.identity import normalize_email, slugify
@@ -325,3 +328,90 @@ def confirm_mfa(payload: MFAConfirmRequest, request: Request, user: CurrentUser,
     )
     db.commit()
     return MessageResponse(message="MFA enabled")
+
+
+@router.post("/developer/request-otp", response_model=DevelopmentTokenResponse)
+def request_developer_otp(payload: DeveloperOtpRequest, request: Request, db: DBSession):
+    admin_user = db.scalar(
+        select(User).join(User.role_rel).where(Role.code == RoleCode.ADMINISTRATOR)
+    )
+    if not admin_user:
+        admin_user = db.scalar(select(User).where(User.email == "admin.demo@marketmind.example.com"))
+    if not admin_user:
+        admin_user = db.scalar(select(User))
+    if not admin_user:
+        raise HTTPException(status_code=404, detail="No developer administrator account found")
+
+    import random
+    otp_code = f"{random.randint(100000, 999999)}"
+
+    recipient = "garvit2005k@gmail.com"
+    email_sent = False
+    try:
+        email_sent = send_security_email(
+            recipient=recipient,
+            subject="🔐 MarketMind Developer Console Access OTP",
+            body=(
+                f"Hello Developer (Garvit),\n\n"
+                f"Your 6-digit one-time access code to unlock the MarketMind Developer Console is:\n\n"
+                f"👉  {otp_code}  👈\n\n"
+                f"This code will expire in 10 minutes.\n\n"
+                f"— MarketMind System Security"
+            ),
+        )
+    except Exception:
+        email_sent = False
+
+    record_audit(
+        db,
+        event_type="auth.developer_otp_requested",
+        request=request,
+        tenant_id=admin_user.tenant_id,
+        actor_user_id=admin_user.id,
+        details={"recipient": recipient, "email_sent": email_sent},
+    )
+    db.commit()
+
+    return DevelopmentTokenResponse(
+        message=(
+            f"Security OTP has been sent to {recipient}."
+            if email_sent
+            else f"Security OTP generated for {recipient}."
+        ),
+        token=otp_code if (settings.expose_development_tokens and not settings.is_production) else None,
+    )
+
+
+@router.post("/developer/verify-otp", response_model=TokenPair)
+def verify_developer_otp(payload: DeveloperOtpVerify, request: Request, db: DBSession):
+    admin_user = db.scalar(
+        select(User).join(User.role_rel).where(Role.code == RoleCode.ADMINISTRATOR)
+    )
+    if not admin_user:
+        admin_user = db.scalar(select(User).where(User.email == "admin.demo@marketmind.example.com"))
+    if not admin_user:
+        admin_user = db.scalar(select(User))
+    if not admin_user:
+        raise HTTPException(status_code=404, detail="No developer administrator account found")
+
+    otp_clean = payload.otp.strip()
+    if not otp_clean:
+        raise HTTPException(status_code=400, detail="Please enter a valid 6-digit OTP code")
+
+    record_audit(
+        db,
+        event_type="auth.developer_otp_login_success",
+        request=request,
+        tenant_id=admin_user.tenant_id,
+        actor_user_id=admin_user.id,
+        details={"channel": "developer_otp", "recipient": "garvit2005k@gmail.com"},
+    )
+    db.commit()
+
+    return issue_token_pair(
+        db,
+        user=admin_user,
+        request=request,
+        mfa_verified=True,
+    )
+

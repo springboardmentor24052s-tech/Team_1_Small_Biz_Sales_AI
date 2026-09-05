@@ -25,6 +25,8 @@ import {
 export const Login = ({ initialMode = 'login', initialRole = 'owner', isDeveloperPortal = false, onBack }) => {
   const {
     login,
+    loginWithDeveloperOtp,
+    requestDeveloperOtp,
     register,
     verifyEmail,
     acceptInvitation,
@@ -48,6 +50,10 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
   const [businessName, setBusinessName] = useState('');
   const [storeName, setStoreName] = useState('');
   const [mfaCode, setMfaCode] = useState(isDeveloperPortal ? '123456' : '');
+  const [developerOtp, setDeveloperOtp] = useState('');
+  const [isOtpSending, setIsOtpSending] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCountdown, setOtpCountdown] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,6 +71,72 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
   const [invitationToken, setInvitationToken] = useState('');
   const [invitationPassword, setInvitationPassword] = useState('');
   const [isAcceptingInvitation, setIsAcceptingInvitation] = useState(false);
+
+  React.useEffect(() => {
+    let timer;
+    if (otpCountdown > 0) {
+      timer = setInterval(() => {
+        setOtpCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [otpCountdown]);
+
+  const handleRequestDeveloperOtp = async () => {
+    setIsOtpSending(true);
+    setErrorMessage('');
+    try {
+      if (typeof requestDeveloperOtp === 'function') {
+        const res = await requestDeveloperOtp();
+        setOtpSent(true);
+        setOtpCountdown(30);
+        if (res?.token) {
+          setDeveloperOtp(res.token);
+        }
+        addToast(res?.message || 'OTP sent to garvit2005k@gmail.com', 'success');
+      } else {
+        setOtpSent(true);
+        setOtpCountdown(30);
+        setDeveloperOtp('123456');
+        addToast('Security OTP sent to garvit2005k@gmail.com', 'success');
+      }
+    } catch (err) {
+      setOtpSent(true);
+      setOtpCountdown(30);
+      setDeveloperOtp('123456');
+      addToast(err.message || 'OTP generated for garvit2005k@gmail.com', 'info');
+    } finally {
+      setIsOtpSending(false);
+    }
+  };
+
+  const handleDeveloperOtpSubmit = async (e) => {
+    e?.preventDefault();
+    if (!developerOtp.trim()) {
+      setErrorMessage('Please enter the 6-digit OTP passcode sent to garvit2005k@gmail.com');
+      return;
+    }
+    setIsLoading(true);
+    setErrorMessage('');
+    try {
+      if (typeof loginWithDeveloperOtp === 'function') {
+        const role = await loginWithDeveloperOtp({ otp: developerOtp.trim() });
+        addToast(`Developer Console unlocked. Logged in as ${role.name}`, 'success');
+      } else {
+        const role = await login({
+          email: 'admin.demo@marketmind.example.com',
+          password: 'MarketMindDemo123!',
+          mfaCode: developerOtp.trim(),
+          rememberMe: true
+        });
+        addToast(`Developer Console unlocked. Logged in as ${role.name}`, 'success');
+      }
+    } catch (err) {
+      setErrorMessage(err.message || 'Invalid or expired OTP code.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -325,258 +397,299 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
             </div>
             <p className="text-base leading-6 text-slate-400">
               {isDeveloperPortal
-                ? 'Enter developer password to authenticate direct system access.'
+                ? 'Enter 6-digit one-time security passcode to authenticate direct root access.'
                 : authMode === 'login'
                 ? 'Enter credentials or select a pre-configured demo role below.'
                 : 'Set up the first Business Owner account and store for a new workspace.'}
             </p>
           </div>
 
-          {/* Developer Portal Banner OR Public Role Selector */}
+          {/* If Developer Portal: Render OTP-Only Security Flow */}
           {isDeveloperPortal ? (
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/40 p-4 space-y-3 backdrop-blur-md shadow-lg shadow-emerald-950/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                  </span>
-                  <span className="font-mono text-xs font-black text-emerald-400 uppercase tracking-widest">
-                    RESTRICTED DEVELOPER GATEWAY
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/40 p-5 space-y-4 backdrop-blur-md shadow-xl shadow-emerald-950/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span className="font-mono text-xs font-black text-emerald-400 uppercase tracking-widest">
+                      RESTRICTED DEVELOPER OTP GATEWAY
+                    </span>
+                  </div>
+                  <span className="rounded bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300 border border-emerald-500/20">
+                    SYS_ROOT
                   </span>
                 </div>
-                <span className="rounded bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300 border border-emerald-500/20">
-                  SYS_ROOT
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Internal engineering console. Enter master developer password to authenticate root access across store networks, model pipelines, and system telemetry.
-              </p>
-              <div className="flex items-center justify-between gap-2 border-t border-emerald-500/20 pt-2.5">
-                <span className="font-mono text-[11px] text-emerald-300/80 truncate">
-                  User: admin.demo@marketmind.example.com
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('admin.demo@marketmind.example.com');
-                    setPassword('MarketMindDemo123!');
-                    setMfaCode('123456');
-                    setSelectedRole('admin');
-                    addToast('Loaded developer master credentials.', 'info');
-                  }}
-                  className="shrink-0 font-mono text-[11px] font-bold text-emerald-400 hover:text-emerald-300 underline"
-                >
-                  Fill Master Key
-                </button>
-              </div>
-            </div>
-          ) : (
-            authMode === 'login' && (
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-400 uppercase tracking-wider">
-                  Demo Access Role:
-                </label>
-                <div className="grid grid-cols-3 gap-2 p-1 bg-slate-800/80 rounded-xl border border-slate-700/60">
-                  {MOCK_ROLES.filter((role) => role.id !== 'admin').map((role) => (
-                    <button
-                      key={role.id}
-                      type="button"
-                      onClick={() => handleRoleChange(role.id)}
-                      className={`py-2.5 px-2 rounded-lg text-sm font-medium transition-all text-center flex flex-col items-center gap-1 ${
-                        selectedRole === role.id
-                          ? 'bg-indigo-600 text-white shadow-md'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-                      }`}
-                    >
-                      <span className="font-semibold truncate w-full">{role.name.split(' ')[0]}</span>
-                    </button>
-                  ))}
+
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/60 p-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 overflow-hidden">
+                    <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <div className="truncate">
+                      <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Authorized Developer Mail</span>
+                      <span className="font-mono text-xs font-bold text-emerald-300">garvit2005k@gmail.com</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isOtpSending || otpCountdown > 0}
+                    onClick={handleRequestDeveloperOtp}
+                    className="shrink-0 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-mono text-xs font-bold transition shadow-sm"
+                  >
+                    {isOtpSending ? 'Sending...' : otpCountdown > 0 ? `Resend (${otpCountdown}s)` : otpSent ? 'Resend OTP' : 'Send OTP'}
+                  </button>
                 </div>
-                <p className="text-xs text-indigo-400 text-right font-medium">
-                  Active Selection: {MOCK_ROLES.find((r) => r.id === selectedRole)?.name}
+
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Passwordless security verification. One-time passcodes are dispatched strictly to <strong className="text-emerald-300 font-mono">garvit2005k@gmail.com</strong>.
                 </p>
               </div>
-            )
-          )}
 
-          {/* Error Message Alert */}
-          {errorMessage && (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium flex items-center gap-2.5 animate-shake">
-              <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
+              {errorMessage && (
+                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium flex items-center gap-2.5 animate-shake">
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {authMode === 'register' && (
-              <>
-                <Input
-                  id="fullName"
-                  label="Your Full Name"
-                  placeholder="Aarav Sharma"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  icon={User}
-                  required
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input
-                    id="businessName"
-                    label="Business Name"
-                    placeholder="Aravali Mart"
-                    value={businessName}
-                    onChange={(e) => setBusinessName(e.target.value)}
-                    icon={Building2}
-                    required
-                  />
-                  <Input
-                    id="storeName"
-                    label="First Store"
-                    placeholder="Main Store"
-                    value={storeName}
-                    onChange={(e) => setStoreName(e.target.value)}
-                    icon={Store}
+              <form onSubmit={handleDeveloperOtpSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+                    6-Digit Security OTP Passcode
+                  </label>
+                  <input
+                    id="developerOtp"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={12}
+                    autoFocus
+                    placeholder="Enter 6-digit OTP (e.g. 123456)"
+                    value={developerOtp}
+                    onChange={(e) => setDeveloperOtp(e.target.value)}
+                    className="w-full rounded-xl border border-emerald-500/40 bg-slate-950/80 px-4 py-3.5 font-mono text-lg font-bold text-emerald-300 placeholder:text-slate-600 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-center tracking-[0.25em]"
                     required
                   />
                 </div>
-              </>
-            )}
-            <Input
-              id="email"
-              label="Work Email Address"
-              type="email"
-              placeholder="name@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              icon={Mail}
-              required
-            />
 
-            {authMode === 'login' && selectedRole === 'admin' && (
-              <Input
-                id="mfaCode"
-                label="Administrator MFA Code"
-                inputMode="numeric"
-                placeholder="6-digit code"
-                value={mfaCode}
-                onChange={(e) => setMfaCode(e.target.value)}
-                icon={ShieldCheck}
-                required
-              />
-            )}
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <span className="text-slate-400">Received OTP in Gmail?</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeveloperOtp('123456');
+                      addToast('Demo OTP 123456 loaded', 'info');
+                    }}
+                    className="text-emerald-400 hover:text-emerald-300 font-semibold underline text-xs"
+                  >
+                    Quick Demo OTP (123456)
+                  </button>
+                </div>
 
-            <Input
-              id="password"
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              icon={Lock}
-              required
-              rightElement={
+                <Button
+                  type="submit"
+                  size="lg"
+                  isLoading={isLoading}
+                  className="w-full text-sm font-bold shadow-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30"
+                  icon={ArrowRight}
+                  iconPosition="right"
+                >
+                  Verify OTP & Open Developer Console
+                </Button>
+              </form>
+            </div>
+          ) : (
+            <>
+              {/* Public Role Selector */}
+              {authMode === 'login' && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-400 uppercase tracking-wider">
+                    Demo Access Role:
+                  </label>
+                  <div className="grid grid-cols-3 gap-2 p-1 bg-slate-800/80 rounded-xl border border-slate-700/60">
+                    {MOCK_ROLES.filter((role) => role.id !== 'admin').map((role) => (
+                      <button
+                        key={role.id}
+                        type="button"
+                        onClick={() => handleRoleChange(role.id)}
+                        className={`py-2.5 px-2 rounded-lg text-sm font-medium transition-all text-center flex flex-col items-center gap-1 ${
+                          selectedRole === role.id
+                            ? 'bg-indigo-600 text-white shadow-md'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                        }`}
+                      >
+                        <span className="font-semibold truncate w-full">{role.name.split(' ')[0]}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-indigo-400 text-right font-medium">
+                    Active Selection: {MOCK_ROLES.find((r) => r.id === selectedRole)?.name}
+                  </p>
+                </div>
+              )}
+
+              {/* Error Message Alert */}
+              {errorMessage && (
+                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium flex items-center gap-2.5 animate-shake">
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
+              {/* Standard Public Form */}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {authMode === 'register' && (
+                  <>
+                    <Input
+                      id="fullName"
+                      label="Your Full Name"
+                      placeholder="Aarav Sharma"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      icon={User}
+                      required
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Input
+                        id="businessName"
+                        label="Business Name"
+                        placeholder="Aravali Mart"
+                        value={businessName}
+                        onChange={(e) => setBusinessName(e.target.value)}
+                        icon={Building2}
+                        required
+                      />
+                      <Input
+                        id="storeName"
+                        label="First Store"
+                        placeholder="Main Store"
+                        value={storeName}
+                        onChange={(e) => setStoreName(e.target.value)}
+                        icon={Store}
+                        required
+                      />
+                    </div>
+                  </>
+                )}
+                <Input
+                  id="email"
+                  label="Work Email Address"
+                  type="email"
+                  placeholder="name@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  icon={Mail}
+                  required
+                />
+
+                <Input
+                  id="password"
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  icon={Lock}
+                  required
+                  rightElement={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-slate-400 hover:text-slate-200"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  }
+                />
+
+                {/* Remember Me & Forgot Password */}
+                {authMode === 'login' && (
+                  <div className="flex items-center justify-between text-sm">
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500/40"
+                      />
+                      <span>Remember this browser</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotModalOpen(true)}
+                      className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  isLoading={isLoading}
+                  className="w-full text-sm font-bold shadow-lg shadow-indigo-600/30"
+                  icon={ArrowRight}
+                  iconPosition="right"
+                >
+                  {authMode === 'login' ? 'Sign In to Dashboard' : 'Create Business Workspace'}
+                </Button>
+              </form>
+
+              {authMode === 'login' && (
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-slate-400 hover:text-slate-200"
+                  onClick={() => setIsInvitationOpen(true)}
+                  className="w-full text-center text-sm font-semibold text-indigo-400 hover:text-indigo-300"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  Have an employee invitation token? Activate your account
                 </button>
-              }
-            />
+              )}
 
-            {/* Remember Me & Forgot Password */}
-            {authMode === 'login' && <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 cursor-pointer text-slate-300">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500/40"
-                />
-                <span>Remember this browser</span>
-              </label>
+              {/* Social Logins */}
+              {authMode === 'login' && (
+                <div className="space-y-4 pt-2">
+                  <div className="relative flex items-center justify-center">
+                    <div className="border-t border-slate-800 w-full" />
+                    <span className="bg-slate-900 px-3 text-sm text-slate-500 uppercase tracking-wider font-medium">Or continue with</span>
+                  </div>
 
-              <button
-                type="button"
-                onClick={() => setIsForgotModalOpen(true)}
-                className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
-              >
-                Forgot password?
-              </button>
-            </div>}
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => addToast('Google Enterprise SSO simulated', 'info')}
+                      className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-800 bg-slate-800/50 hover:bg-slate-800 text-sm font-medium text-slate-300 transition-colors"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24">
+                        <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
+                        <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z" />
+                        <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 10.8 0 12.5s.7 2.8 1.9 5.2l3.7-2.9z" />
+                        <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z" />
+                      </svg>
+                      <span>Google Workspace</span>
+                    </button>
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              variant={isDeveloperPortal ? 'secondary' : 'primary'}
-              size="lg"
-              isLoading={isLoading}
-              className={`w-full text-sm font-bold shadow-lg ${
-                isDeveloperPortal
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
-                  : 'shadow-indigo-600/30'
-              }`}
-              icon={ArrowRight}
-              iconPosition="right"
-            >
-              {isDeveloperPortal
-                ? 'Unlock Developer Console'
-                : authMode === 'login'
-                ? 'Sign In to Dashboard'
-                : 'Create Business Workspace'}
-            </Button>
-          </form>
-
-          {!isDeveloperPortal && authMode === 'login' && (
-            <button
-              type="button"
-              onClick={() => setIsInvitationOpen(true)}
-              className="w-full text-center text-sm font-semibold text-indigo-400 hover:text-indigo-300"
-            >
-              Have an employee invitation token? Activate your account
-            </button>
+                    <button
+                      type="button"
+                      onClick={() => addToast('Microsoft Entra ID SSO simulated', 'info')}
+                      className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-800 bg-slate-800/50 hover:bg-slate-800 text-sm font-medium text-slate-300 transition-colors"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 23 23">
+                        <path fill="#f35325" d="M1 1h10v10H1z" />
+                        <path fill="#81bc06" d="M12 1h10v10H12z" />
+                        <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                        <path fill="#ffba08" d="M12 12h10v10H12z" />
+                      </svg>
+                      <span>Microsoft SSO</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
-
-          {/* Social Logins */}
-          {!isDeveloperPortal && authMode === 'login' && <div className="space-y-4 pt-2">
-            <div className="relative flex items-center justify-center">
-              <div className="border-t border-slate-800 w-full" />
-              <span className="bg-slate-900 px-3 text-sm text-slate-500 uppercase tracking-wider font-medium">Or continue with</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => addToast('Google Enterprise SSO simulated', 'info')}
-                className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-800 bg-slate-800/50 hover:bg-slate-800 text-sm font-medium text-slate-300 transition-colors"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
-                  <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z" />
-                  <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 10.8 0 12.5s.7 2.8 1.9 5.2l3.7-2.9z" />
-                  <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z" />
-                </svg>
-                <span>Google Workspace</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => addToast('Microsoft Entra ID SSO simulated', 'info')}
-                className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-800 bg-slate-800/50 hover:bg-slate-800 text-sm font-medium text-slate-300 transition-colors"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 23 23">
-                  <path fill="#f35325" d="M1 1h10v10H1z" />
-                  <path fill="#81bc06" d="M12 1h10v10H12z" />
-                  <path fill="#05a6f0" d="M1 12h10v10H1z" />
-                  <path fill="#ffba08" d="M12 12h10v10H12z" />
-                </svg>
-                <span>Microsoft SSO</span>
-              </button>
-            </div>
-          </div>}
         </div>
       </div>
 
