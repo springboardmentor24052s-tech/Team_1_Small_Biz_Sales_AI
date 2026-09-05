@@ -1,4 +1,7 @@
+import json
 import smtplib
+import urllib.error
+import urllib.request
 from email.message import EmailMessage
 
 from app.core.config import settings
@@ -8,8 +11,16 @@ class EmailDeliveryError(RuntimeError):
     pass
 
 
-def email_delivery_configured() -> bool:
+def resend_configured() -> bool:
+    return bool(settings.resend_api_key and settings.resend_api_key.get_secret_value().strip())
+
+
+def smtp_configured() -> bool:
     return bool(settings.smtp_host and settings.smtp_from_email)
+
+
+def email_delivery_configured() -> bool:
+    return bool(resend_configured() or smtp_configured())
 
 
 def require_production_email_delivery() -> None:
@@ -17,9 +28,46 @@ def require_production_email_delivery() -> None:
         raise EmailDeliveryError("Email delivery is not configured")
 
 
+def send_via_resend(*, recipient: str, subject: str, body: str) -> bool:
+    api_key = settings.resend_api_key.get_secret_value().strip()
+    from_email = settings.resend_from_email or "MarketMind Security <onboarding@resend.dev>"
+
+    url = "https://api.resend.com/emails"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "User-Agent": "MarketMind/1.0",
+    }
+    payload = {
+        "from": from_email,
+        "to": [recipient],
+        "subject": subject,
+        "text": body,
+    }
+
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            return response.status in (200, 201)
+    except urllib.error.HTTPError as exc:
+        err_body = exc.read().decode("utf-8", errors="ignore")
+        raise EmailDeliveryError(f"Resend API delivery failed: {err_body}") from exc
+    except Exception as exc:
+        raise EmailDeliveryError(f"Resend API error: {exc}") from exc
+
+
 def send_security_email(*, recipient: str, subject: str, body: str) -> bool:
-    if not email_delivery_configured():
+    if resend_configured():
+        return send_via_resend(recipient=recipient, subject=subject, body=body)
+
+    if not smtp_configured():
         return False
+
     message = EmailMessage()
     message["Subject"] = subject
     message["From"] = settings.smtp_from_email
@@ -38,7 +86,7 @@ def send_security_email(*, recipient: str, subject: str, body: str) -> bool:
                 )
             smtp.send_message(message)
     except (OSError, smtplib.SMTPException) as exc:
-        raise EmailDeliveryError("Email delivery failed") from exc
+        raise EmailDeliveryError("SMTP email delivery failed") from exc
     return True
 
 

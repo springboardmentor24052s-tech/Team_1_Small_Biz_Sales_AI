@@ -333,7 +333,7 @@ def confirm_mfa(payload: MFAConfirmRequest, request: Request, user: CurrentUser,
 @router.post("/developer/request-otp", response_model=DevelopmentTokenResponse)
 def request_developer_otp(payload: DeveloperOtpRequest, request: Request, db: DBSession):
     admin_user = db.scalar(
-        select(User).join(User.role_rel).where(Role.code == RoleCode.ADMINISTRATOR)
+        select(User).join(Role, User.role_id == Role.id).where(Role.code == RoleCode.ADMINISTRATOR)
     )
     if not admin_user:
         admin_user = db.scalar(select(User).where(User.email == "admin.demo@marketmind.example.com"))
@@ -352,10 +352,10 @@ def request_developer_otp(payload: DeveloperOtpRequest, request: Request, db: DB
             recipient=recipient,
             subject="🔐 MarketMind Developer Console Access OTP",
             body=(
-                f"Hello Developer (Garvit),\n\n"
-                f"Your 6-digit one-time access code to unlock the MarketMind Developer Console is:\n\n"
+                f"Hey Admin,\n\n"
+                f"Your 6-digit one-time access code (OTP) to unlock the MarketMind Developer Console is:\n\n"
                 f"👉  {otp_code}  👈\n\n"
-                f"This code will expire in 10 minutes.\n\n"
+                f"This code will expire in 10 minutes. If you did not initiate this login, please review server security immediately.\n\n"
                 f"— MarketMind System Security"
             ),
         )
@@ -385,7 +385,7 @@ def request_developer_otp(payload: DeveloperOtpRequest, request: Request, db: DB
 @router.post("/developer/verify-otp", response_model=TokenPair)
 def verify_developer_otp(payload: DeveloperOtpVerify, request: Request, db: DBSession):
     admin_user = db.scalar(
-        select(User).join(User.role_rel).where(Role.code == RoleCode.ADMINISTRATOR)
+        select(User).join(Role, User.role_id == Role.id).where(Role.code == RoleCode.ADMINISTRATOR)
     )
     if not admin_user:
         admin_user = db.scalar(select(User).where(User.email == "admin.demo@marketmind.example.com"))

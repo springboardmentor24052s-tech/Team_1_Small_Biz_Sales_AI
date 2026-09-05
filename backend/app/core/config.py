@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     smtp_password: SecretStr | None = None
     smtp_from_email: str | None = None
     smtp_starttls: bool = True
+    resend_api_key: SecretStr | None = None
+    resend_from_email: str = "onboarding@resend.dev"
     initial_admin_email: str | None = None
     initial_admin_password: SecretStr | None = None
 
