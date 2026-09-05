@@ -163,6 +163,7 @@ const MainAppContent = () => {
       case 'businesses':
       case 'auth_logs':
       case 'ai_models':
+      case 'errors':
       case 'system':
         return currentRole.id === 'admin'
           ? <AdminDashboard activeTab={activeTab} onTabChange={setActiveTab} />

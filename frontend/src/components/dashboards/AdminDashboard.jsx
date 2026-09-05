@@ -2,9 +2,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   AlertCircle,
+  AlertOctagon,
   AlertTriangle,
   ArrowUpRight,
   Brain,
+  Bug,
   Building2,
   Calendar,
   Check,
@@ -17,12 +19,14 @@ import {
   Database,
   Download,
   Eye,
+  FileCode,
   Filter,
   Key,
   Layers,
   Lock,
   Mail,
   MapPin,
+  Phone,
   RefreshCw,
   Search,
   Server,
@@ -31,8 +35,10 @@ import {
   Sparkles,
   Store,
   Terminal,
+  Trash2,
   UserCheck,
   Users,
+  Wrench,
   Zap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -68,17 +74,24 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
   const [businessSearchQuery, setBusinessSearchQuery] = useState('');
   const [expandedBusinessId, setExpandedBusinessId] = useState('aravali');
   const [selectedEventModal, setSelectedEventModal] = useState(null);
+  const [selectedErrorModal, setSelectedErrorModal] = useState(null);
   const [copiedKey, setCopiedKey] = useState(null);
   const [retrainingModel, setRetrainingModel] = useState(null);
   const [rbacSearch, setRbacSearch] = useState('');
 
-  // Mock / Loaded Business Organizations with Employees
+  // Error Handling Tab State
+  const [errorSearchQuery, setErrorSearchQuery] = useState('');
+  const [selectedErrorSeverity, setSelectedErrorSeverity] = useState('all');
+  const [selectedErrorCategory, setSelectedErrorCategory] = useState('all');
+
+  // Comprehensive Multi-Tenant Business Directory with Phone Numbers, Emails, and Staff Details
   const [businesses, setBusinesses] = useState([
     {
       id: 'aravali',
       name: 'Aravali Retail Group',
       ownerName: 'Aarav Sharma',
       ownerEmail: 'owner.demo@marketmind.example.com',
+      ownerPhone: '+91 98201 45678',
       currency: 'INR (₹)',
       timezone: 'Asia/Kolkata',
       joinedDate: '2026-01-15',
@@ -89,6 +102,7 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
           id: 'emp-1',
           name: 'Vikram Mehta',
           email: 'manager.demo@marketmind.example.com',
+          phone: '+91 98111 22334',
           role: 'Store Manager',
           store: 'Main Store (Jaipur)',
           status: 'ACTIVE',
@@ -98,6 +112,7 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
           id: 'emp-2',
           name: 'Priya Verma',
           email: 'priya.sales@aravali.example.com',
+          phone: '+91 98777 66554',
           role: 'Sales Executive',
           store: 'Main Store (Jaipur)',
           status: 'ACTIVE',
@@ -107,6 +122,7 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
           id: 'emp-3',
           name: 'Rahul Sen',
           email: 'rahul.sales@aravali.example.com',
+          phone: '+91 98999 88776',
           role: 'Sales Executive',
           store: 'Udaipur Branch',
           status: 'PENDING_INVITE',
@@ -166,6 +182,7 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
       name: 'Northwind Enterprises',
       ownerName: 'Dev Patel',
       ownerEmail: 'owner@northwind.example.com',
+      ownerPhone: '+91 98450 12390',
       currency: 'INR (₹)',
       timezone: 'Asia/Kolkata',
       joinedDate: '2026-03-02',
@@ -176,6 +193,7 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
           id: 'emp-4',
           name: 'Amit Joshi',
           email: 'amit.manager@northwind.example.com',
+          phone: '+91 98333 44556',
           role: 'Store Manager',
           store: 'North Hub Store',
           status: 'ACTIVE',
@@ -185,6 +203,7 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
           id: 'emp-5',
           name: 'Sneha Roy',
           email: 'sneha.sales@northwind.example.com',
+          phone: '+91 98666 77889',
           role: 'Sales Executive',
           store: 'North Hub Store',
           status: 'ACTIVE',
@@ -238,6 +257,62 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
           horizon: '0.05 Contamination'
         }
       ]
+    }
+  ]);
+
+  // Comprehensive System Error Logs
+  const [systemErrors, setSystemErrors] = useState([
+    {
+      id: 'ERR-8902',
+      errorCode: 'RESEND_DISPATCH_TIMEOUT',
+      category: 'Email Gateway',
+      severity: 'WARNING',
+      timestamp: 'Today, 05:22:10 PM',
+      business: 'Aravali Retail Group',
+      endpoint: 'POST /api/v1/auth/developer/request-otp',
+      message: 'SMTP fallback skipped; Resend API connection latency spiked to 840ms before acknowledging receipt.',
+      stackTrace: 'Error: Resend API Gateway Timeout\n  at send_via_resend (email_delivery.py:59)\n  at send_security_email (email_delivery.py:66)\n  at request_developer_otp (auth.py:351)',
+      status: 'RESOLVED',
+      resolution: 'Connection re-established. Key validated and OTP received successfully.'
+    },
+    {
+      id: 'ERR-8744',
+      errorCode: 'ISOLATION_FOREST_MIN_SAMPLES_WARN',
+      category: 'AI Pipeline',
+      severity: 'INFO',
+      timestamp: 'Today, 03:15:00 PM',
+      business: 'Northwind Enterprises',
+      endpoint: 'GET /api/v1/anomalies',
+      message: 'Transaction history size (48 samples) is below recommended threshold of 100 for optimal contamination calibration.',
+      stackTrace: 'UserWarning: n_samples is smaller than optimal fit window\n  at detect_anomalies (anomaly_service.py:72)\n  at get_anomalies (anomalies.py:34)',
+      status: 'RESOLVED',
+      resolution: 'Synthetic warmup batch applied. Detection operating normally.'
+    },
+    {
+      id: 'ERR-8611',
+      errorCode: 'HTTP_422_UNPROCESSABLE_ENTITY',
+      category: 'API & Validation',
+      severity: 'WARNING',
+      timestamp: 'Yesterday, 08:44:12 PM',
+      business: 'Aravali Retail Group',
+      endpoint: 'POST /api/v1/auth/password-reset/confirm',
+      message: 'Password confirmation failed validation policy: token missing or expired before submission.',
+      stackTrace: 'HTTPException: status_code=422, detail="Password reset token expired or invalid"\n  at confirm_password_reset (auth.py:228)',
+      status: 'RESOLVED',
+      resolution: 'User requested fresh OTP token. Password successfully reset.'
+    },
+    {
+      id: 'ERR-8509',
+      errorCode: 'SQLITE_BUSY_WAL_CHECKPOINT',
+      category: 'Database Engine',
+      severity: 'INFO',
+      timestamp: 'Yesterday, 02:10:45 PM',
+      business: 'System Platform Root',
+      endpoint: 'WAL Checkpoint Background Task',
+      message: 'SQLite database journal executed passive WAL checkpointing; 0 readers delayed.',
+      stackTrace: 'sqlite3.OperationalError: wal checkpoint passive mode\n  at execute_checkpoint (db/session.py:88)',
+      status: 'RESOLVED',
+      resolution: 'WAL checkpoint completed cleanly. Zero read locks encountered.'
     }
   ]);
 
@@ -313,6 +388,36 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
     }
   };
 
+  const handleSimulateError = () => {
+    const newErr = {
+      id: `ERR-${Math.floor(1000 + Math.random() * 9000)}`,
+      errorCode: 'DEV_SIMULATED_TEST_EXCEPTION',
+      category: 'Diagnostic Simulator',
+      severity: 'WARNING',
+      timestamp: 'Just now (' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ')',
+      business: selectedBusinessFilter === 'all' ? 'Aravali Retail Group' : selectedBusinessFilter,
+      endpoint: 'POST /api/v1/system/diagnostics',
+      message: 'Simulated exception test to verify platform alerting, trace capturing, and admin recovery pipelines.',
+      stackTrace: 'DiagnosticError: Developer simulated test anomaly\n  at handleSimulateError (AdminDashboard.jsx:265)\n  at SyntheticEvent (react-dom.js)',
+      status: 'ACTIVE',
+      resolution: 'Manual test trigger. Ready to be marked as resolved by Administrator.'
+    };
+    setSystemErrors((prev) => [newErr, ...prev]);
+    addToast('Simulated test error generated in diagnostics stream.', 'info');
+  };
+
+  const handleResolveError = (errId) => {
+    setSystemErrors((prev) =>
+      prev.map((e) => (e.id === errId ? { ...e, status: 'RESOLVED', resolution: 'Marked resolved by Administrator' } : e))
+    );
+    addToast(`Error ${errId} marked as resolved.`, 'success');
+  };
+
+  const handleClearResolvedErrors = () => {
+    setSystemErrors((prev) => prev.filter((e) => e.status !== 'RESOLVED'));
+    addToast('Resolved error logs archived.', 'info');
+  };
+
   const handleCopyText = (text, key) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
@@ -328,6 +433,17 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
     downloadAnchor.click();
     downloadAnchor.remove();
     addToast('Audit log JSON exported successfully.', 'success');
+  };
+
+  const handleExportErrors = () => {
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(systemErrors, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `marketmind-system-errors-${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    addToast('Error diagnostics report exported.', 'success');
   };
 
   // Helper to map audit logs to emails and businesses
@@ -394,6 +510,24 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
     });
   }, [logs, logSearchQuery, logSeverityFilter, selectedBusinessFilter]);
 
+  // Filtered System Errors for Tab 4
+  const filteredErrors = useMemo(() => {
+    return systemErrors.filter((err) => {
+      const q = errorSearchQuery.toLowerCase();
+      const matchesSearch =
+        !q.trim() ||
+        err.id.toLowerCase().includes(q) ||
+        err.errorCode.toLowerCase().includes(q) ||
+        err.message.toLowerCase().includes(q) ||
+        err.business.toLowerCase().includes(q);
+
+      const matchesSeverity = selectedErrorSeverity === 'all' || err.severity === selectedErrorSeverity;
+      const matchesCategory = selectedErrorCategory === 'all' || err.category === selectedErrorCategory;
+
+      return matchesSearch && matchesSeverity && matchesCategory;
+    });
+  }, [systemErrors, errorSearchQuery, selectedErrorSeverity, selectedErrorCategory]);
+
   // Filtered Businesses for Tab 1
   const filteredBusinesses = useMemo(() => {
     if (!businessSearchQuery.trim()) return businesses;
@@ -402,7 +536,8 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
       (b) =>
         b.name.toLowerCase().includes(q) ||
         b.ownerName.toLowerCase().includes(q) ||
-        b.ownerEmail.toLowerCase().includes(q)
+        b.ownerEmail.toLowerCase().includes(q) ||
+        b.ownerPhone.toLowerCase().includes(q)
     );
   }, [businesses, businessSearchQuery]);
 
@@ -442,10 +577,10 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
               RESTRICTED SYSTEM ROOT • PLATFORM ADMIN CONSOLE
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-purple-200 bg-clip-text text-transparent">
-              Platform Governance & AI Operations
+              Platform Governance & Diagnostics
             </h1>
             <p className="text-xs md:text-sm text-slate-400 max-w-2xl leading-relaxed">
-              Manage multi-tenant business organizations, audit authentications and login timings by business, inspect AI model last-train dates, and monitor system infrastructure.
+              Multi-tenant Business Owners directory with contact records, authentication timing logs, AI retrain telemetry, and automated error diagnostics.
             </p>
           </div>
 
@@ -477,31 +612,31 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-slate-800 bg-slate-900/80 backdrop-blur">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Business Workspaces</span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Business Owners</span>
             <Building2 className="w-4 h-4 text-purple-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono text-white">{businesses.length}</span>
+            <span className="text-2xl font-bold font-mono text-white">{businesses.length} Owners</span>
             <span className="text-xs text-emerald-400 font-semibold font-mono">100% Active</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">{totalStoresAcrossPlatform} Total Stores Onboarded</p>
+          <p className="text-[11px] text-slate-500 mt-1">{totalStoresAcrossPlatform} Stores • {totalEmployeesAcrossPlatform} Employees</p>
         </Card>
 
         <Card className="border-slate-800 bg-slate-900/80 backdrop-blur">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Registered Staff</span>
-            <Users className="w-4 h-4 text-blue-400" />
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Auth & Login Stream</span>
+            <Clock className="w-4 h-4 text-blue-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono text-white">{totalEmployeesAcrossPlatform}</span>
-            <span className="text-xs text-slate-400 font-mono">Employees</span>
+            <span className="text-2xl font-bold font-mono text-white">{logs.length}</span>
+            <span className="text-xs text-slate-400 font-mono">Recorded</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Managers & Sales Executives</p>
+          <p className="text-[11px] text-slate-500 mt-1">Exact Timestamps & Email Tracking</p>
         </Card>
 
         <Card className="border-slate-800 bg-slate-900/80 backdrop-blur">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Pipelines</span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Retrain Schedules</span>
             <Brain className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
@@ -512,18 +647,20 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
 
         <Card className="border-slate-800 bg-slate-900/80 backdrop-blur">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Security & Auth Logs</span>
-            <ShieldAlert className="w-4 h-4 text-purple-400" />
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Error Diagnostics</span>
+            <AlertOctagon className="w-4 h-4 text-rose-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono text-purple-300">{logs.length}</span>
-            <span className="text-xs text-slate-400 font-mono">Recorded</span>
+            <span className="text-2xl font-bold font-mono text-rose-300">
+              {systemErrors.filter((e) => e.status !== 'RESOLVED').length} Active
+            </span>
+            <span className="text-xs text-slate-400 font-mono">({systemErrors.length} total)</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Real-time Timing & Email Tracking</p>
+          <p className="text-[11px] text-slate-500 mt-1">Exceptions & Stack Trace Monitor</p>
         </Card>
       </div>
 
-      {/* Navigation Tabs */}
+      {/* Horizontal Top Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-800 pb-2 overflow-x-auto">
         <button
           type="button"
@@ -568,6 +705,22 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
 
         <button
           type="button"
+          onClick={() => handleTabSelect('errors')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+            currentTab === 'errors'
+              ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+          }`}
+        >
+          <AlertTriangle className="w-4 h-4" />
+          Error Handling & Diagnostics
+          <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-rose-900/80 text-rose-200">
+            {systemErrors.filter((e) => e.status !== 'RESOLVED').length}
+          </span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => handleTabSelect('system')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
             currentTab === 'system'
@@ -587,17 +740,17 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-purple-400" />
-                Multi-Tenant Business Workspaces & Staff Directory
+                Multi-Tenant Business Owners & Complete Staff Directory
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Inspect registered Business Owners, active stores, and all affiliated employees.
+                Displays total Business Owners ({businesses.length}), direct contact records (email, phone, business name), and all registered employees.
               </p>
             </div>
             <div className="relative w-full sm:w-72">
               <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search business or owner..."
+                placeholder="Search by name, email, phone, business..."
                 value={businessSearchQuery}
                 onChange={(e) => setBusinessSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500"
@@ -615,32 +768,44 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
                     className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-slate-800/40 transition"
                   >
                     <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
+                      <div className="w-11 h-11 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
                         <Building2 className="w-5 h-5" />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-bold text-white text-base">{biz.name}</h4>
                           <Badge variant="success" className="text-[10px] px-1.5 py-0">{biz.status}</Badge>
+                          <span className="text-xs text-slate-500 font-mono">ID: {biz.id}</span>
                         </div>
-                        <p className="text-xs text-slate-400 font-mono mt-0.5">
-                          Owner: <strong className="text-slate-200">{biz.ownerName}</strong> ({biz.ownerEmail})
-                        </p>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300 font-mono">
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3 h-3 text-purple-400" />
+                            Owner: <strong className="text-white">{biz.ownerName}</strong>
+                          </span>
+                          <span className="flex items-center gap-1 text-purple-300">
+                            <Mail className="w-3 h-3 text-purple-400" />
+                            {biz.ownerEmail}
+                          </span>
+                          <span className="flex items-center gap-1 text-emerald-300 font-bold">
+                            <Phone className="w-3 h-3 text-emerald-400" />
+                            {biz.ownerPhone}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-slate-300">
+                    <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-slate-300">
                       <div className="px-3 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800">
-                        <span className="text-slate-500 block text-[10px] uppercase">Stores</span>
-                        <span className="font-bold text-white">{biz.storesCount} Active</span>
+                        <span className="text-slate-500 block text-[10px] uppercase">Active Stores</span>
+                        <span className="font-bold text-white">{biz.storesCount} Stores</span>
                       </div>
                       <div className="px-3 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800">
-                        <span className="text-slate-500 block text-[10px] uppercase">Employees</span>
-                        <span className="font-bold text-purple-300">{biz.employees.length} Staff</span>
+                        <span className="text-slate-500 block text-[10px] uppercase">Registered Staff</span>
+                        <span className="font-bold text-purple-300">{biz.employees.length} Employees</span>
                       </div>
                       <div className="px-3 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800">
-                        <span className="text-slate-500 block text-[10px] uppercase">Timezone / Cur</span>
-                        <span className="text-slate-300">{biz.currency}</span>
+                        <span className="text-slate-500 block text-[10px] uppercase">Joined Date</span>
+                        <span className="text-slate-300">{biz.joinedDate}</span>
                       </div>
                       <div className="p-1 rounded-lg bg-slate-800 text-slate-400">
                         {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -654,10 +819,10 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
                       <div className="flex items-center justify-between pb-2 border-b border-slate-800/60">
                         <h5 className="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
                           <Users className="w-3.5 h-3.5" />
-                          Affiliated Employees & Store Assignments ({biz.employees.length})
+                          Affiliated Employees under {biz.name} ({biz.employees.length} Staff)
                         </h5>
                         <span className="text-[11px] text-slate-500 font-mono">
-                          Managed by Business Owner ({biz.ownerName})
+                          Owner Contact: {biz.ownerPhone} • {biz.ownerEmail}
                         </span>
                       </div>
 
@@ -667,6 +832,7 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
                             <tr>
                               <th className="py-2.5 px-3">Employee Name</th>
                               <th className="py-2.5 px-3">Email Address</th>
+                              <th className="py-2.5 px-3">Phone Number</th>
                               <th className="py-2.5 px-3">Role</th>
                               <th className="py-2.5 px-3">Assigned Store</th>
                               <th className="py-2.5 px-3">Status</th>
@@ -677,12 +843,13 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
                             {biz.employees.map((emp) => (
                               <tr key={emp.id} className="hover:bg-slate-800/20 transition">
                                 <td className="py-3 px-3 font-semibold text-white flex items-center gap-2">
-                                  <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] text-slate-300">
+                                  <div className="w-6 h-6 rounded-full bg-purple-950 border border-purple-500/30 flex items-center justify-center text-[10px] text-purple-300 font-bold">
                                     {emp.name.slice(0, 2).toUpperCase()}
                                   </div>
                                   {emp.name}
                                 </td>
-                                <td className="py-3 px-3 text-slate-300">{emp.email}</td>
+                                <td className="py-3 px-3 text-purple-300">{emp.email}</td>
+                                <td className="py-3 px-3 text-emerald-300 font-semibold">{emp.phone}</td>
                                 <td className="py-3 px-3">
                                   <Badge
                                     variant={emp.role === 'Store Manager' ? 'info' : 'success'}
@@ -901,7 +1068,7 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
                           <Badge variant="info" className="text-[10px]">5 AI Engines Configured</Badge>
                         </div>
                         <CardDescription className="text-xs mt-1">
-                          Tenant Workspace ID: {biz.id} • Owner: {biz.ownerName} ({biz.ownerEmail})
+                          Tenant ID: {biz.id} • Owner: {biz.ownerName} ({biz.ownerPhone} • {biz.ownerEmail})
                         </CardDescription>
                       </div>
 
@@ -985,7 +1152,192 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
         </div>
       )}
 
-      {/* TAB 4: System Health & RBAC Policy */}
+      {/* TAB 4: Dedicated Error Handling & Diagnostics */}
+      {currentTab === 'errors' && (
+        <div className="space-y-4">
+          <Card className="border-slate-800 bg-slate-900/80">
+            <CardHeader className="border-b border-slate-800 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-400" />
+                    <CardTitle className="text-base font-bold text-white">System Error & Exception Diagnostic Center</CardTitle>
+                    <Badge variant="danger" className="text-[10px]">
+                      {systemErrors.filter((e) => e.status !== 'RESOLVED').length} Active Issues
+                    </Badge>
+                  </div>
+                  <CardDescription className="text-xs mt-1">
+                    Live capture of unhandled API exceptions, database locks, ML inference warnings, and email delivery timeouts.
+                  </CardDescription>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSimulateError}
+                    icon={Bug}
+                    className="border-rose-500/40 bg-rose-950/40 hover:bg-rose-900/60 text-rose-200 text-xs font-semibold"
+                  >
+                    Simulate Test Error
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearResolvedErrors}
+                    icon={Trash2}
+                    className="border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"
+                  >
+                    Clear Resolved
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportErrors}
+                    icon={Download}
+                    className="border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"
+                  >
+                    Export Report
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+
+            {/* Error Filters & Search Bar */}
+            <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search error code, message, endpoint, or business..."
+                  value={errorSearchQuery}
+                  onChange={(e) => setErrorSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={selectedErrorSeverity}
+                  onChange={(e) => setSelectedErrorSeverity(e.target.value)}
+                  className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-purple-500"
+                >
+                  <option value="all">All Severities</option>
+                  <option value="CRITICAL">Critical Only</option>
+                  <option value="ERROR">Error Only</option>
+                  <option value="WARNING">Warning Only</option>
+                  <option value="INFO">Info Only</option>
+                </select>
+
+                <select
+                  value={selectedErrorCategory}
+                  onChange={(e) => setSelectedErrorCategory(e.target.value)}
+                  className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-purple-500"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="Email Gateway">Email Gateway</option>
+                  <option value="AI Pipeline">AI Pipeline</option>
+                  <option value="Database Engine">Database Engine</option>
+                  <option value="API & Validation">API & Validation</option>
+                  <option value="Diagnostic Simulator">Diagnostic Simulator</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Error Records Stream */}
+            <div className="p-4 space-y-3">
+              {filteredErrors.length === 0 ? (
+                <div className="text-center py-12 text-slate-500 text-xs">
+                  No system error logs match your search filters.
+                </div>
+              ) : (
+                filteredErrors.map((err) => {
+                  const isResolved = err.status === 'RESOLVED';
+                  return (
+                    <div
+                      key={err.id}
+                      className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 transition space-y-2.5 font-mono text-xs"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <Badge
+                            variant={
+                              err.severity === 'CRITICAL' ? 'danger' :
+                              err.severity === 'WARNING' ? 'warning' : 'info'
+                            }
+                            className="text-[10px] px-1.5 py-0"
+                          >
+                            {err.severity}
+                          </Badge>
+                          <span className="font-bold text-white text-xs">{err.errorCode}</span>
+                          <span className="text-[11px] text-purple-400">[{err.category}]</span>
+                          <span className="text-[11px] text-slate-400">ID: {err.id}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 text-[11px]">{err.timestamp}</span>
+                          {isResolved ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">
+                              RESOLVED
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 animate-pulse">
+                              ACTIVE
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-slate-300">
+                        <div>
+                          <span className="text-slate-500 text-[11px]">Affected Business: </span>
+                          <span className="text-white font-semibold">{err.business}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 text-[11px]">Endpoint / Context: </span>
+                          <span className="text-purple-300">{err.endpoint}</span>
+                        </div>
+                      </div>
+
+                      <p className="text-slate-300 text-xs font-sans leading-relaxed bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/60">
+                        {err.message}
+                      </p>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <div className="text-[11px] text-emerald-400/90 truncate max-w-lg">
+                          <strong>Resolution:</strong> {err.resolution}
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {!isResolved && (
+                            <button
+                              type="button"
+                              onClick={() => handleResolveError(err.id)}
+                              className="px-2.5 py-1 rounded bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 text-[11px] font-semibold transition"
+                            >
+                              Mark Resolved
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedErrorModal(err)}
+                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                            title="View Stack Trace"
+                          >
+                            <FileCode className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* TAB 5: System Health & RBAC Policy */}
       {currentTab === 'system' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -1129,7 +1481,7 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
         </div>
       )}
 
-      {/* JSON Payload Modal Drawer */}
+      {/* Auth Event Payload Modal */}
       {selectedEventModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
           <div className="w-full max-w-xl rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
@@ -1173,6 +1525,80 @@ export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) =>
               >
                 Close
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Trace Diagnostic Modal */}
+      {selectedErrorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={selectedErrorModal.severity === 'CRITICAL' ? 'danger' : 'warning'} className="text-[10px]">
+                    {selectedErrorModal.severity}
+                  </Badge>
+                  <h3 className="font-mono font-bold text-white text-sm">
+                    {selectedErrorModal.errorCode}
+                  </h3>
+                </div>
+                <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                  ID: {selectedErrorModal.id} • Context: {selectedErrorModal.endpoint}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedErrorModal(null)}
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 flex-1 overflow-y-auto">
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="text-[11px] font-mono text-slate-500 uppercase font-bold">Error Message</span>
+                <p className="text-xs text-slate-200">{selectedErrorModal.message}</p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="text-[11px] font-mono text-slate-500 uppercase font-bold">Stack Trace & Execution Path</span>
+                <pre className="text-xs font-mono text-rose-300 whitespace-pre-wrap overflow-x-auto bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
+                  {selectedErrorModal.stackTrace}
+                </pre>
+              </div>
+
+              <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 space-y-1">
+                <span className="text-[11px] font-mono text-emerald-400 uppercase font-bold">Automated Remediation</span>
+                <p className="text-xs text-emerald-200">{selectedErrorModal.resolution}</p>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+              <span className="text-[11px] font-mono text-slate-500">
+                Timestamp: {selectedErrorModal.timestamp}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCopyText(selectedErrorModal.stackTrace, 'err_trace')}
+                  icon={copiedKey === 'err_trace' ? Check : Copy}
+                  className="text-xs"
+                >
+                  {copiedKey === 'err_trace' ? 'Copied' : 'Copy Trace'}
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setSelectedErrorModal(null)}
+                  className="text-xs bg-purple-600 hover:bg-purple-500"
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           </div>
         </div>

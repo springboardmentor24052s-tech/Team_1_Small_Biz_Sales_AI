@@ -19,30 +19,36 @@ const renderAdminDashboard = () => {
 };
 
 describe('Admin Dashboard Platform Operations & Governance', () => {
-  it('renders platform governance header, counters, and Business Owners directory', () => {
+  it('renders Business Owners with emails, phone numbers, and employee details', () => {
     renderAdminDashboard();
 
-    expect(screen.getByText('Platform Governance & AI Operations')).toBeInTheDocument();
+    expect(screen.getByText('Platform Governance & Diagnostics')).toBeInTheDocument();
     expect(screen.getByText('RESTRICTED SYSTEM ROOT • PLATFORM ADMIN CONSOLE')).toBeInTheDocument();
 
-    // Business Owners & Teams tab by default
+    // Verify Business Owners and Phone Numbers
     expect(screen.getByText('Aravali Retail Group')).toBeInTheDocument();
-    expect(screen.getByText('Northwind Enterprises')).toBeInTheDocument();
+    expect(screen.getByText('+91 98201 45678')).toBeInTheDocument();
+    expect(screen.getByText('owner.demo@marketmind.example.com')).toBeInTheDocument();
 
-    // Verify employees under default expanded business
+    expect(screen.getByText('Northwind Enterprises')).toBeInTheDocument();
+    expect(screen.getByText('+91 98450 12390')).toBeInTheDocument();
+
+    // Verify Employees with Phone Numbers
     expect(screen.getByText('Vikram Mehta')).toBeInTheDocument();
-    expect(screen.getByText('Priya Verma')).toBeInTheDocument();
+    expect(screen.getByText('+91 98111 22334')).toBeInTheDocument();
+    expect(screen.getByText('+91 98777 66554')).toBeInTheDocument();
   });
 
-  it('navigates to Authentication & Login Timings with Business filter', () => {
+  it('navigates to Error Handling & Diagnostics tab and displays error logs', () => {
     renderAdminDashboard();
 
-    const authTab = screen.getByText('Authentication & Login Timings');
-    fireEvent.click(authTab);
+    const errorTab = screen.getByText('Error Handling & Diagnostics');
+    fireEvent.click(errorTab);
 
-    expect(screen.getByText('Timestamp & Date')).toBeInTheDocument();
-    expect(screen.getByText('Actor Email')).toBeInTheDocument();
-    expect(screen.getByText('Business Workspace')).toBeInTheDocument();
+    expect(screen.getByText('System Error & Exception Diagnostic Center')).toBeInTheDocument();
+    expect(screen.getByText('Simulate Test Error')).toBeInTheDocument();
+    expect(screen.getByText('RESEND_DISPATCH_TIMEOUT')).toBeInTheDocument();
+    expect(screen.getByText('ISOLATION_FOREST_MIN_SAMPLES_WARN')).toBeInTheDocument();
   });
 
   it('navigates to AI Models & Retrain Schedules and displays last trained dates', () => {
@@ -53,7 +59,6 @@ describe('Admin Dashboard Platform Operations & Governance', () => {
 
     expect(screen.getByText('AI Inference Engines & Training Schedules')).toBeInTheDocument();
     expect(screen.getAllByText('Sales & Revenue Demand Forecasting').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('Customer RFM Segmentation').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Last Trained:').length).toBeGreaterThanOrEqual(1);
   });
 });

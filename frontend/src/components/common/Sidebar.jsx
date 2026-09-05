@@ -32,6 +32,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed, 
         { id: 'businesses', label: 'Businesses & Teams', icon: Building2, badge: 'Owners', badgeColor: 'bg-purple-500/20 text-purple-300' },
         { id: 'auth_logs', label: 'Auth & Login Logs', icon: Clock, badge: 'Timing', badgeColor: 'bg-blue-500/20 text-blue-300' },
         { id: 'ai_models', label: 'AI Models & Retrain', icon: Cpu, badge: 'Last Train', badgeColor: 'bg-emerald-500/20 text-emerald-300' },
+        { id: 'errors', label: 'Error Handling & Logs', icon: Activity, badge: 'Diagnostics', badgeColor: 'bg-rose-500/20 text-rose-300' },
         { id: 'system', label: 'System Health & RBAC', icon: Database, badge: 'Infra', badgeColor: 'bg-slate-700 text-slate-300' },
         { id: 'settings', label: t('Settings'), icon: Settings, badge: null }
       ]
