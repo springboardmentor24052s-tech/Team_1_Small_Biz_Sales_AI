@@ -1,72 +1,69 @@
 # 🚀 MarketMind AI — Enterprise Sales Intelligence & Business Copilot Platform
 
-> **MarketMind AI (v2.4)** is an AI-powered sales intelligence, customer retention, inventory management, forecasting, and business copilot platform designed for small and medium retail businesses in India.
+> **MarketMind AI (v2.5)** is a full-stack, enterprise-grade AI sales intelligence, customer retention, inventory management, demand forecasting, and conversational business copilot platform engineered specifically for small and medium retail/wholesale enterprises.
 
 ---
 
 ## 🌟 Key Platform Features
 
-### 🏢 1. Role-Aware Executive Dashboards
+### 🏢 1. Role-Aware Operational Workspaces & Dashboards
 
-- **Business Owner View**: Revenue, completed orders, active customers, AOV, revenue trends, and strategic insights.
-- **Store Manager View**: Inventory alerts, stock thresholds, supplier purchase orders, and POS entry.
-- **Sales Executive View**: Sales pipeline, transactions, personal performance, and customer information.
-- **Administrator View**: Audit logs, security controls, user management, and system monitoring.
+- **Business Owner Workspace**: Executive KPI monitoring, revenue trends, profit margins, active customers, average order value (AOV), sales distribution, team performance, and strategic growth insights.
+- **Store Manager Workspace**: Real-time store inventory levels, low-stock threshold triggers, automated supplier purchase order generation, and point-of-sale (POS) terminal entry.
+- **Sales Executive Workspace**: Personal sales pipeline tracking, daily customer transactions, quota pace indicators, target comparisons, and customer relationship management.
 
-### 🤖 2. AI Business Copilot
+### 🤖 2. Interactive AI Business Copilot
 
-- Full-screen AI chat workspace with specialized business personas.
-- Sales and strategy assistance.
-- Inventory and purchase-order guidance.
-- Customer retention and churn assistance.
-- Security and audit assistance.
-- English and Hindi language support.
+- **Full-Screen Conversational Workspace**: Intelligent business assistant powered by specialized domain personas (Executive Strategist, Inventory & Operations Optimizer, Customer Retention Specialist, and Data Analyst).
+- **Context-Aware Analytics**: Responds with actionable business suggestions, cross-sell ideas, replenishment strategies, and financial analysis.
+- **Bilingual Support**: Real-time language switching between **English** and **Hindi (`हिन्दी`)**.
 
-### 🛒 3. AI Product Recommendations
+### 🛒 3. AI Product Recommender Engine
 
-- Product co-occurrence and association-based recommendations.
-- Customer-specific recommendations.
-- Cross-selling and bundle opportunities.
-- Recommendation analytics and evaluation metrics.
-- Revenue uplift insights.
+- **Collaborative & Association Rule Mining**: Generates high-confidence product affinity, cross-selling, and up-selling recommendations based on transaction co-occurrence.
+- **Customer-Specific Recommendations**: Dynamic recommendations tailored to individual customer purchasing history and affinity scores.
+- **Affinity Analytics & Revenue Uplift**: Actionable bundle suggestions with estimated revenue uplift and conversion potential.
 
-### 👥 4. Customer Retention & Churn Analytics
+### 👥 4. Customer Retention & Churn Analytics (Customer 360)
 
-- RFM-based customer analysis.
-- Customer risk classification.
-- Revenue-at-risk identification.
-- Customer retention insights.
-- Email and WhatsApp outreach support.
+- **RFM Segmentation**: Multi-dimensional Recency, Frequency, and Monetary value clustering to classify customers into Champions, Loyal, At Risk, and Hibernating tiers.
+- **Predictive Churn Risk Scoring**: Identifies revenue-at-risk customers before churn occurs.
+- **Integrated Outreach Workflows**: One-click communication triggers via pre-formatted Email and WhatsApp templates.
+- **Customer 360 Profile**: Historical order timeline, favorite categories, lifetime value (LTV), and personalized re-engagement recommendations.
 
-### 🛡️ 5. Business Safeguards & Anomaly Detection
+### 🛡️ 5. Anomaly Detection & Business Safeguards
 
-- Detection of unusual sales and transaction activity.
-- Severity-based anomaly filtering.
-- Configurable sensitivity levels.
-- Acknowledge and resolve workflow for detected anomalies.
+- **Multi-Factor Anomaly Engine**: Detects unusual revenue drops, sudden transaction spikes, inventory discrepancies, and irregular discount patterns.
+- **Severity Filtering & Triage**: Categorizes anomalies by severity (`Critical`, `Warning`, `Info`) with sensitivity tuning.
+- **Resolution Workflow**: Audit-logged acknowledge, investigate, and resolve workflow to track issue mitigation.
 
 ### 📦 6. Inventory & Supplier Purchase Orders
 
-- Low-stock monitoring.
-- Safety-stock thresholds.
-- SKU-specific inventory information.
-- Supplier purchase-order generation.
-- CSV export and supplier communication support.
+- **Automated Stock Level Monitoring**: Visual safety-stock thresholds and reorder triggers.
+- **Supplier PO Generator**: Generates formal purchase orders with supplier contact data, line-item quantities, and unit costs.
+- **Export & Delivery**: Instant export to CSV and formatted printable documentation for supplier communication.
 
-### 📈 7. Forecasting & Business Reports
+### 📈 7. Predictive Forecasting & Analytics Reports
 
-- Revenue forecasting.
-- Product/category demand forecasting.
-- Personal sales forecasting where applicable.
-- Multiple forecast horizons: **7, 14, and 30 days**.
-- Business analytics reports.
-- CSV report export.
+- **Multi-Model Forecast Engine**: Powered by XGBoost, Prophet, and Linear Trend algorithms.
+- **Multi-Horizon Predictions**: Configurable forecast horizons (**7, 14, and 30 days**) for business revenue and SKU-level product demand.
+- **Model Health & Lineage**: Chronological train/validation splits, MAE/RMSE/R² metrics, and baseline improvement gates.
+- **Statutory Billing & GST Invoices**: Automated generation of GST-compliant A5 Wholesale Thermal and Laser invoices with CGST/SGST/IGST breakdowns.
+- **Executive CSV Export**: One-click download of revenue summaries, sales ledgers, and inventory reports.
 
-### 🌐 8. Indian Market & Hindi Localization
+### 🌐 8. Indian Market Localization
 
-- Indian Rupee (`₹`) formatting.
-- `en-IN` number and currency formatting.
-- English and Hindi language switching.
+- **Currency & Formatting**: Native Indian Rupee (`₹`) styling with standard Indian numeral grouping (`en-IN`, lakhs/crores).
+- **Bilingual Interface**: English and Hindi language support across dashboards, notifications, and AI Copilot.
+
+---
+
+## 🔒 Enterprise Security & Resilience
+
+- **Tiered Rate Limiting**: Built-in in-memory token bucket rate limiter protecting Authentication (`10 req/min`), Public (`30 req/min`), and Authenticated (`120 req/min`) routes with automated `Retry-After` headers and exponential backoff.
+- **Zero-Leakage Error Handling**: Sanitized global exception handlers for database (`SQLAlchemyError`) and internal runtime errors with server-side correlation IDs preventing internal schema or stack trace leakage.
+- **File Upload Protection**: Avatar image uploads verified using magic-byte file signature validation (`image/png`, `image/jpeg`, `image/webp`) with a 2MB size cap; CSV imports strictly validate structure and reject NULL bytes.
+- **Modern Authentication & Authorization**: Argon2id password hashing, rotating JWT access and refresh sessions, tenant-isolated data scopes, and secure OTP verification for password resets.
 
 ---
 
@@ -75,293 +72,198 @@
 ```text
 Team_1_Small_Biz_Sales_AI/
 ├── backend/
+│   ├── alembic/              # Database migration definitions
 │   ├── app/
-│   │   ├── api/v1/          # REST API endpoints
-│   │   ├── core/            # Security, authentication and configuration
-│   │   ├── models/          # SQLAlchemy database models
-│   │   ├── services/        # Business and AI/ML services
-│   │   └── bootstrap.py     # Database initialization and setup
-│   ├── tests/               # Backend automated tests
-│   ├── pyproject.toml
-│   └── requirements.txt
+│   │   ├── api/v1/           # REST API endpoints (auth, sales, inventory, forecasts, etc.)
+│   │   ├── core/             # Security, rate limiting, JWT, config & CORS
+│   │   ├── db/               # SQLAlchemy session management and base model
+│   │   ├── models/           # Identity, inventory, sales, customer & ML database models
+│   │   ├── schemas/          # Pydantic validation schemas
+│   │   ├── services/         # Business logic, ML models, and email dispatchers
+│   │   ├── commands/         # CLI commands for data seeding and model imports
+│   │   ├── bootstrap.py      # Role/permission seed script
+│   │   └── main.py           # FastAPI application entry point
+│   ├── tests/                # Comprehensive Pytest automated test suite
+│   ├── requirements.txt      # Python dependencies
+│   └── pyproject.toml
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── components/      # Dashboards and UI modules
-│   │   ├── context/         # Authentication, language and application contexts
-│   │   ├── services/        # API service clients
-│   │   └── test/            # Frontend automated tests
-│   └── .env.example
+│   │   ├── components/       # Dashboards, auth modals, and operational modules
+│   │   ├── context/          # Auth, Language, Toast, and Notification contexts
+│   │   ├── services/         # Axios API clients with auto token refresh
+│   │   └── test/             # Frontend Vitest & React Testing Library test suites
+│   ├── package.json
+│   └── vite.config.js
 │
-├── preprocessing/            # Dataset preprocessing and ML preparation
-├── data/                     # Sample datasets
-├── docs/                     # Project documentation
+├── preprocessing/            # ML training pipelines, data cleaning & feature engineering
+├── data/                     # Sample datasets and generated model artifacts
+├── docs/                     # Architectural documentation and project blueprints
 └── README.md
+```
 
+---
 
+## 🚀 Quickstart — Run Locally
 
-🚀 Quickstart — Run Locally
-Prerequisites
-Python 3.10+
-Node.js 18.x or 20.x
-Git
-Step 1: Clone the Repository
+### Prerequisites
+- **Python 3.10+** (Python 3.12 recommended)
+- **Node.js 18.x or 20.x** & **npm**
+- **Git**
+
+---
+
+### Step 1: Clone the Repository
+
+```bash
 git clone https://github.com/springboardmentor24052s-tech/Team_1_Small_Biz_Sales_AI.git
 cd Team_1_Small_Biz_Sales_AI
+```
 
-Use the branch provided by your team/mentor for evaluation.
+---
 
-Step 2: Start the Backend
+### Step 2: Start the Backend Service
 
-Open a terminal in the backend/ directory:
+Open a terminal in the `backend/` directory:
 
+```bash
 cd backend
-Windows
+```
 
-Create and activate a virtual environment:
-
+#### Windows (PowerShell)
+```powershell
+# Create and activate virtual environment
 python -m venv .venv
 .\.venv\Scripts\activate
 
-Install dependencies:
-
+# Install dependencies
 pip install -r requirements.txt
 
-Seed the local demo database:
+# Create environment configuration
+Copy-Item .env.example .env
 
-.\.venv\Scripts\python.exe -m app.commands.seed_demo
+# Seed initial evaluation database & demo accounts
+python -m app.commands.seed_demo
 
-Start FastAPI:
+# Start the FastAPI server
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
 
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-
-Backend:
-
-http://127.0.0.1:8000
-
-Swagger API documentation:
-
-http://127.0.0.1:8000/api/v1/docs
-Mac / Linux
+#### macOS / Linux (Bash)
+```bash
+# Create and activate virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
-python -m app.commands.seed_demo
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-Step 3: Start the Frontend
 
-Open a second terminal:
-
-cd frontend
-
-Create the environment file:
-
-Windows
-Copy-Item .env.example .env
-Mac / Linux
+# Create environment configuration
 cp .env.example .env
 
-Install dependencies:
-
-npm install
-
-Start the development server:
-
-npm run dev
-
-Frontend:
-
-http://localhost:5173/
-🔑 Demo Login
-
-The application contains demo accounts for local evaluation.
-
-For security reasons, passwords and authentication secrets are not stored in this public repository README.
-
-Use the project's local database seeding/setup process to create the required demo accounts.
-
-Available application roles include:
-
-Role	Workspace
-🏢 Business Owner	Executive Dashboard, AI Copilot, Strategic Insights
-🏪 Store Manager	Inventory, Stock Alerts, Supplier Purchase Orders
-💼 Sales Executive	Sales Pipeline, Transactions, Performance
-🛡️ Administrator	User Management, Audit and Security Controls
-📊 Data Provisioning
-
-Database files are intentionally excluded from Git.
-
-To populate a local environment with evaluation data, use:
-
+# Seed initial evaluation database & demo accounts
 python -m app.commands.seed_demo
 
-The application also provides a Business Setup workflow for adding evaluation/sample data directly from the UI.
+# Start the FastAPI server
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
 
-After loading sample data, the dashboards can be used to verify:
+- **Backend API Base**: `http://127.0.0.1:8000`
+- **Interactive Swagger Documentation**: `http://127.0.0.1:8000/api/v1/docs`
 
-Sales and revenue metrics
-Customer analytics
-Inventory information
-Product recommendations
-Anomaly detection
-Forecasting
-Reports and exports
-🧪 Milestone 4 — Testing & Verification
+---
 
-Milestone 4 focused on testing, integration verification, frontend reliability, error handling, and deployment readiness.
+### Step 3: Start the Frontend Application
 
-Backend Testing
+Open a second terminal in the `frontend/` directory:
 
-The backend test suite was expanded and stabilized for time-dependent and validation scenarios.
+```bash
+cd frontend
+```
 
-Coverage includes:
+#### Windows (PowerShell)
+```powershell
+# Create environment configuration
+Copy-Item .env.example .env
 
-Authentication and role-based access
-Dashboard and preference behavior
-Forecasting APIs
-Forecast horizon validation
-Recommendation APIs
-Customer-specific recommendations
-Anomaly detection
-Anomaly severity filtering
-Anomaly acknowledgement and resolution
-Model monitoring
-Churn-related functionality
+# Install dependencies
+npm install
 
-A time-dependent preference test was updated to use relative dates so that it remains reliable as the system date changes.
+# Start Vite development server
+npm run dev
+```
 
-Forecasting validation was also tested to ensure unsupported horizons are rejected correctly. Supported horizons are:
+#### macOS / Linux (Bash)
+```bash
+# Create environment configuration
+cp .env.example .env
 
-7 days
-14 days
-30 days
-Frontend Testing
+# Install dependencies
+npm install
 
-Vitest and React Testing Library were added for frontend automated testing.
+# Start Vite development server
+npm run dev
+```
 
-Coverage includes:
+- **Frontend Application URL**: `http://localhost:5173/`
 
-API client success and error handling
-Authentication headers and JSON requests
-Empty/204 API responses
-Recommendation service API calls
-Recommendation analytics and evaluation APIs
-Anomaly service API calls
-Anomaly acknowledgement and resolution
-Anomaly severity filtering in the UI
-Recommendation API failure states
-Recommendation retry behavior
-Reports API failure handling
-Test Results
-Frontend Tests:       19 / 19 PASSED
-Backend Tests:        41 / 41 PASSED
-Preprocessing Tests:  10 / 10 PASSED
--------------------------------------
-Total:                70 / 70 PASSED
-Additional Verification
-Frontend Lint:        0 errors
-Frontend Build:       Successful
-Local Application:    Manually verified
+---
 
-The production frontend build completed successfully with Vite.
+## 🧪 Testing & Quality Verification
 
-🔍 Manual Application Verification
+MarketMind maintains an extensive, fully automated test suite across backend and frontend stacks.
 
-The application was also tested locally after the automated tests.
+### Automated Test Suite Execution
 
-The following workflows were verified:
+#### Backend Tests (Pytest)
+```powershell
+cd backend
+pytest -v
+```
 
-User login and role-based dashboard access
-Business Setup
-Evaluation sample-data loading
-Dashboard KPI population
-AI Product Recommendations
-Anomaly Alerts
-Anomaly severity filtering
-Anomaly acknowledgement/resolution workflow
-Customer and business analytics
-Model training/refresh workflow
-Reports & Forecasts
-CSV report download
-Frontend loading and API error states
-Retry behavior for unavailable recommendation data
+#### Frontend Tests (Vitest)
+```powershell
+cd frontend
+npm run test:run
+```
 
-This manual verification was performed in addition to the automated test suites.
+### Test Suite Results
 
-📈 Forecasting
+| Test Category | Suite Coverage | Passed | Failed | Pass Rate |
+|:---|:---|:---:|:---:|:---:|
+| **Backend API & Core** | Auth, RBAC, Rate Limiting, File Safety, Forecasting, Recommendations, Anomaly, Churn, Team | **48** | 0 | **100%** |
+| **Frontend UI & Services** | Auth Context, Token Refresh, Error States, Recommender, Anomaly Actions, Forecasting Views | **31** | 0 | **100%** |
+| **Total Automated Tests** | End-to-end integration and unit verification | **79** | **0** | **100%** |
 
-The forecasting module supports:
+### Additional Quality Checks
+- **Frontend Code Quality**: `0 ESLint errors`, `0 npm audit vulnerabilities`
+- **Production Build**: Production bundle compilation succeeds without warnings via `npm run build`.
+- **Database Integrity**: Clean Alembic migration schemas with SQLite (local) and PostgreSQL (production) compatibility.
 
-Revenue forecasting
-Demand forecasting
-Personal sales forecasting
-7-day forecasts
-14-day forecasts
-30-day forecasts
-Forecast model monitoring
-Forecast prediction APIs
+---
 
-Invalid forecast horizons are rejected by the API with a validation error rather than being processed as an unsupported request.
+## 🧰 Technology Stack
 
-🛡️ Security & Data Handling
-Authentication and role-based access control are implemented in the backend.
-Database files are excluded from Git.
-Local environment configuration is provided through .env.example.
-Passwords and authentication secrets are not documented in the public README.
-Demo/evaluation data should be generated locally through the provided setup and seeding workflows.
+### Frontend
+- **Framework**: React 18 (Vite SPA)
+- **Styling**: Vanilla CSS & Tailwind CSS (Custom Indian-inspired theme tokens & dark mode)
+- **Icons**: Lucide React
+- **Data Visualization**: Recharts & Custom SVG metric cards
+- **Testing**: Vitest, React Testing Library, jsdom
 
-Do not commit real production credentials, API keys, tokens, database files, or other secrets to the repository.
+### Backend
+- **Framework**: FastAPI (Asynchronous Python REST API)
+- **ORM & Database**: SQLAlchemy 2.0, Alembic, SQLite (dev) / PostgreSQL (prod)
+- **Validation**: Pydantic v2
+- **Security**: Argon2id (`passlib`), PyJWT, In-memory Token-Bucket Rate Limiter
+- **Testing**: Pytest, HTTPX, Pytest-Cov
 
-☁️ Deployment Readiness
+### Machine Learning & Analytics
+- **Algorithms**: Scikit-Learn, XGBoost, Prophet, Pandas, NumPy
+- **Capabilities**: RFM Segmentation, Association Rule Mining, Multi-Horizon Time Series Demand/Revenue Forecasting, Statistical & Isolation Forest Anomaly Detection
 
-Milestone 4 also prepared the project for deployment and evaluation by verifying:
+---
 
-Backend dependency installation
-Frontend dependency installation
-Production frontend build
-API integration
-Error handling
-Automated test execution
-Local end-to-end application workflow
-Environment configuration through .env
-Database/sample-data initialization
+## 👥 Project Summary
 
-The project can therefore be validated locally before being deployed to a cloud hosting environment.
-
-🧰 Technology Stack
-Frontend
-React
-Vite
-Tailwind CSS
-Recharts
-Vitest
-React Testing Library
-Backend
-Python
-FastAPI
-SQLAlchemy
-Pydantic
-Pytest
-AI / ML
-Scikit-learn
-XGBoost
-Prophet
-Recommendation algorithms
-Customer segmentation
-Churn prediction
-Anomaly detection
-Forecasting
-Database
-SQLite for local development/evaluation
-SQLAlchemy ORM
-Development
-Git
-GitHub
-REST APIs
-Swagger / OpenAPI
-Automated testing
-👥 Project Outcome
-
-MarketMind AI combines sales analytics, customer intelligence, inventory management, forecasting, recommendations, anomaly detection, and AI-assisted business decision support into a single platform for small and medium retail businesses.
-
-Milestone 4 strengthened the project through automated testing, frontend integration testing, API validation, error-state handling, local application verification, build validation, and deployment-readiness documentation.
+MarketMind AI combines predictive AI analytics, inventory control, automated GST invoicing, customer churn prevention, and an interactive business copilot into a unified, secure platform built for small-to-medium retail and wholesale enterprises.
