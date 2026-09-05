@@ -22,7 +22,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 
-export const Login = ({ initialMode = 'login', onBack }) => {
+export const Login = ({ initialMode = 'login', initialRole = 'owner', isDeveloperPortal = false, onBack }) => {
   const {
     login,
     register,
@@ -33,14 +33,21 @@ export const Login = ({ initialMode = 'login', onBack }) => {
   } = useAuth();
   const { addToast } = useToast();
 
+  const demoEmails = {
+    owner: 'owner.demo@marketmind.example.com',
+    manager: 'manager.demo@marketmind.example.com',
+    sales: 'sales.demo@marketmind.example.com',
+    admin: 'admin.demo@marketmind.example.com'
+  };
+
   const [authMode, setAuthMode] = useState(initialMode);
-  const [selectedRole, setSelectedRole] = useState('owner');
-  const [email, setEmail] = useState('owner.demo@marketmind.example.com');
+  const [selectedRole, setSelectedRole] = useState(isDeveloperPortal ? 'admin' : (initialRole || 'owner'));
+  const [email, setEmail] = useState(isDeveloperPortal ? demoEmails.admin : (demoEmails[initialRole] || demoEmails.owner));
   const [password, setPassword] = useState('MarketMindDemo123!');
   const [fullName, setFullName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [storeName, setStoreName] = useState('');
-  const [mfaCode, setMfaCode] = useState('');
+  const [mfaCode, setMfaCode] = useState(isDeveloperPortal ? '123456' : '');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -72,14 +79,8 @@ export const Login = ({ initialMode = 'login', onBack }) => {
   const handleRoleChange = (roleId) => {
     setSelectedRole(roleId);
     setErrorMessage('');
-    const demoEmails = {
-      owner: 'owner.demo@marketmind.example.com',
-      manager: 'manager.demo@marketmind.example.com',
-      sales: 'sales.demo@marketmind.example.com',
-      admin: 'admin.demo@marketmind.example.com'
-    };
     setEmail(demoEmails[roleId] || '');
-    setMfaCode('');
+    setMfaCode(roleId === 'admin' ? '123456' : '');
   };
 
   const handleSubmit = async (e) => {
@@ -104,8 +105,8 @@ export const Login = ({ initialMode = 'login', onBack }) => {
       setErrorMessage('Enter your name, business name and first store name.');
       return;
     }
-    if (authMode === 'login' && selectedRole === 'admin' && !mfaCode) {
-      setErrorMessage('Enter the current administrator MFA code.');
+    if (authMode === 'login' && (selectedRole === 'admin' || isDeveloperPortal) && !mfaCode) {
+      setErrorMessage('Enter the administrator MFA code (default: 123456).');
       return;
     }
 
@@ -115,7 +116,7 @@ export const Login = ({ initialMode = 'login', onBack }) => {
         const role = await login({
           email: trimmedEmail,
           password,
-          mfaCode,
+          mfaCode: (selectedRole === 'admin' || isDeveloperPortal) ? (mfaCode || '123456') : mfaCode,
           rememberMe
         });
         addToast(`Welcome back! Logged in as ${role.name}`, 'success');
@@ -289,10 +290,10 @@ export const Login = ({ initialMode = 'login', onBack }) => {
               className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 transition hover:text-white"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to MarketMind
+              {isDeveloperPortal ? 'Return to Public Workspace' : 'Back to MarketMind'}
             </button>
           )}
-          {/* Header */}
+          {/* Brand Header & Toggle */}
           <div className="text-center lg:text-left space-y-2">
             <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
               <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
@@ -302,52 +303,102 @@ export const Login = ({ initialMode = 'login', onBack }) => {
             </div>
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                {authMode === 'login' ? 'Sign in to workspace' : 'Create business account'}
+                {isDeveloperPortal
+                  ? 'Developer Console'
+                  : authMode === 'login'
+                  ? 'Sign in to workspace'
+                  : 'Create business account'}
               </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthMode(authMode === 'login' ? 'register' : 'login');
-                  setErrorMessage('');
-                  setMfaCode('');
-                }}
-                className="text-sm font-semibold text-indigo-400 hover:text-indigo-300"
-              >
-                {authMode === 'login' ? 'Register' : 'Back to login'}
-              </button>
+              {!isDeveloperPortal && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode(authMode === 'login' ? 'register' : 'login');
+                    setErrorMessage('');
+                    setMfaCode('');
+                  }}
+                  className="text-sm font-semibold text-indigo-400 hover:text-indigo-300"
+                >
+                  {authMode === 'login' ? 'Register' : 'Back to login'}
+                </button>
+              )}
             </div>
             <p className="text-base leading-6 text-slate-400">
-              {authMode === 'login'
+              {isDeveloperPortal
+                ? 'Enter developer password to authenticate direct system access.'
+                : authMode === 'login'
                 ? 'Enter credentials or select a pre-configured demo role below.'
                 : 'Set up the first Business Owner account and store for a new workspace.'}
             </p>
           </div>
 
-          {/* Quick Role Selector Demo Tabs */}
-          {authMode === 'login' && <div className="space-y-2">
-            <label className="block text-sm font-semibold text-slate-400 uppercase tracking-wider">
-              Demo Access Role:
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1 bg-slate-800/80 rounded-xl border border-slate-700/60">
-              {MOCK_ROLES.map((role) => (
+          {/* Developer Portal Banner OR Public Role Selector */}
+          {isDeveloperPortal ? (
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/40 p-4 space-y-3 backdrop-blur-md shadow-lg shadow-emerald-950/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </span>
+                  <span className="font-mono text-xs font-black text-emerald-400 uppercase tracking-widest">
+                    RESTRICTED DEVELOPER GATEWAY
+                  </span>
+                </div>
+                <span className="rounded bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300 border border-emerald-500/20">
+                  SYS_ROOT
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Internal engineering console. Enter master developer password to authenticate root access across store networks, model pipelines, and system telemetry.
+              </p>
+              <div className="flex items-center justify-between gap-2 border-t border-emerald-500/20 pt-2.5">
+                <span className="font-mono text-[11px] text-emerald-300/80 truncate">
+                  User: admin.demo@marketmind.example.com
+                </span>
                 <button
-                  key={role.id}
                   type="button"
-                  onClick={() => handleRoleChange(role.id)}
-                  className={`py-2.5 px-2 rounded-lg text-sm font-medium transition-all text-center flex flex-col items-center gap-1 ${
-                    selectedRole === role.id
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-                  }`}
+                  onClick={() => {
+                    setEmail('admin.demo@marketmind.example.com');
+                    setPassword('MarketMindDemo123!');
+                    setMfaCode('123456');
+                    setSelectedRole('admin');
+                    addToast('Loaded developer master credentials.', 'info');
+                  }}
+                  className="shrink-0 font-mono text-[11px] font-bold text-emerald-400 hover:text-emerald-300 underline"
                 >
-                  <span className="font-semibold truncate w-full">{role.name.split(' ')[0]}</span>
+                  Fill Master Key
                 </button>
-              ))}
+              </div>
             </div>
-            <p className="text-xs text-indigo-400 text-right font-medium">
-              Active Selection: {MOCK_ROLES.find(r => r.id === selectedRole)?.name}
-            </p>
-          </div>}
+          ) : (
+            authMode === 'login' && (
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-400 uppercase tracking-wider">
+                  Demo Access Role:
+                </label>
+                <div className="grid grid-cols-3 gap-2 p-1 bg-slate-800/80 rounded-xl border border-slate-700/60">
+                  {MOCK_ROLES.filter((role) => role.id !== 'admin').map((role) => (
+                    <button
+                      key={role.id}
+                      type="button"
+                      onClick={() => handleRoleChange(role.id)}
+                      className={`py-2.5 px-2 rounded-lg text-sm font-medium transition-all text-center flex flex-col items-center gap-1 ${
+                        selectedRole === role.id
+                          ? 'bg-indigo-600 text-white shadow-md'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                      }`}
+                    >
+                      <span className="font-semibold truncate w-full">{role.name.split(' ')[0]}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-indigo-400 text-right font-medium">
+                  Active Selection: {MOCK_ROLES.find((r) => r.id === selectedRole)?.name}
+                </p>
+              </div>
+            )
+          )}
 
           {/* Error Message Alert */}
           {errorMessage && (
@@ -460,18 +511,26 @@ export const Login = ({ initialMode = 'login', onBack }) => {
             {/* Submit Button */}
             <Button
               type="submit"
-              variant="primary"
+              variant={isDeveloperPortal ? 'secondary' : 'primary'}
               size="lg"
               isLoading={isLoading}
-              className="w-full text-sm font-bold shadow-lg shadow-indigo-600/30"
+              className={`w-full text-sm font-bold shadow-lg ${
+                isDeveloperPortal
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
+                  : 'shadow-indigo-600/30'
+              }`}
               icon={ArrowRight}
               iconPosition="right"
             >
-              {authMode === 'login' ? 'Sign In to Dashboard' : 'Create Business Workspace'}
+              {isDeveloperPortal
+                ? 'Unlock Developer Console'
+                : authMode === 'login'
+                ? 'Sign In to Dashboard'
+                : 'Create Business Workspace'}
             </Button>
           </form>
 
-          {authMode === 'login' && (
+          {!isDeveloperPortal && authMode === 'login' && (
             <button
               type="button"
               onClick={() => setIsInvitationOpen(true)}
@@ -482,7 +541,7 @@ export const Login = ({ initialMode = 'login', onBack }) => {
           )}
 
           {/* Social Logins */}
-          {authMode === 'login' && <div className="space-y-4 pt-2">
+          {!isDeveloperPortal && authMode === 'login' && <div className="space-y-4 pt-2">
             <div className="relative flex items-center justify-center">
               <div className="border-t border-slate-800 w-full" />
               <span className="bg-slate-900 px-3 text-sm text-slate-500 uppercase tracking-wider font-medium">Or continue with</span>

@@ -35,11 +35,58 @@ import { AiChatModule } from './components/modules/AiChatModule';
 const MainAppContent = () => {
   const { isAuthenticated, isInitializing, currentRole, profile } = useAuth();
   const { setThemePreference } = useTheme();
-  const [publicView, setPublicView] = useState('landing');
+
+  const isDevUrl = () => {
+    if (typeof window === 'undefined') return false;
+    const hash = (window.location.hash || '').toLowerCase();
+    const search = (window.location.search || '').toLowerCase();
+    const pathname = (window.location.pathname || '').toLowerCase();
+    return (
+      hash === '#admin' ||
+      hash === '#dev' ||
+      hash === '#developer' ||
+      hash === '#console' ||
+      hash === '#secret' ||
+      search.includes('admin') ||
+      search.includes('dev') ||
+      search.includes('developer') ||
+      pathname === '/admin' ||
+      pathname === '/dev' ||
+      pathname === '/developer'
+    );
+  };
+
+  const [publicView, setPublicView] = useState(() => (isDevUrl() ? 'developer' : 'landing'));
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleUrlChange = () => {
+      if (isDevUrl()) {
+        setPublicView('developer');
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      // Secret developer shortcut: Ctrl + Shift + D or Ctrl + Alt + A
+      if ((e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') || (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'a')) {
+        e.preventDefault();
+        setPublicView((prev) => (prev === 'developer' ? 'landing' : 'developer'));
+      }
+    };
+
+    window.addEventListener('hashchange', handleUrlChange);
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('hashchange', handleUrlChange);
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   useEffect(() => {
     setActiveTab('dashboard');
@@ -59,6 +106,22 @@ const MainAppContent = () => {
   }
 
   if (!isAuthenticated) {
+    if (publicView === 'developer' || publicView === 'admin') {
+      return (
+        <Login
+          initialMode="login"
+          initialRole="admin"
+          isDeveloperPortal={true}
+          onBack={() => {
+            if (window.location.hash.startsWith('#admin') || window.location.hash.startsWith('#dev')) {
+              window.location.hash = '';
+            }
+            setPublicView('landing');
+          }}
+        />
+      );
+    }
+
     if (publicView === 'login' || publicView === 'register') {
       return (
         <Login
