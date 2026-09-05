@@ -240,14 +240,22 @@ async def preview_import(
 ):
     require_owner(actor)
     if not upload.filename or not upload.filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=422, detail="Upload a CSV file")
+        raise HTTPException(status_code=422, detail="Upload a CSV file with .csv extension")
+    allowed_mimes = {
+        "text/csv", "text/plain", "application/vnd.ms-excel",
+        "application/csv", "text/x-csv", "application/octet-stream"
+    }
+    if upload.content_type and upload.content_type.lower() not in allowed_mimes:
+        raise HTTPException(status_code=422, detail="Invalid file MIME type for CSV upload")
     content = await upload.read(MAX_CSV_BYTES + 1)
     if not content or len(content) > MAX_CSV_BYTES:
         raise HTTPException(status_code=413, detail="CSV must be between 1 byte and 2 MB")
+    if b"\x00" in content:
+        raise HTTPException(status_code=422, detail="Binary or executable content is not permitted in CSV uploads")
     try:
         raw_csv = content.decode("utf-8-sig")
     except UnicodeDecodeError as exc:
-        raise HTTPException(status_code=422, detail="CSV must use UTF-8 encoding") from exc
+        raise HTTPException(status_code=422, detail="CSV must use valid UTF-8 text encoding") from exc
     if kind in {"inventory", "sales"} and not scoped_store(db, actor.tenant_id, store_id):
         raise HTTPException(status_code=422, detail="Select a store in this business")
     seller = scoped_seller(db, actor, seller_id) if kind in {"sales", "customers"} else None

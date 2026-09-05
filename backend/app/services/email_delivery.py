@@ -96,14 +96,14 @@ def send_security_email(*, recipient: str, subject: str, body: str) -> bool:
 def send_invitation_email(*, recipient: str, full_name: str, token: str) -> bool:
     return send_security_email(
         recipient=recipient,
-        subject="Activate your MarketMind employee account",
+        subject="🔐 MarketMind Employee Account Activation",
         body=(
             f"Hello {full_name},\n\n"
-            "Your Business Owner invited you to MarketMind. Open the MarketMind sign-in page, "
-            "choose 'Activate your account', and use this one-time invitation token:\n\n"
-            f"{token}\n\n"
-            "Create your password to confirm ownership of this email address. If you were not "
-            "expecting this invitation, you can ignore this email."
+            "Your Business Owner has invited you to join the MarketMind Sales & Intelligence workspace.\n\n"
+            "Please open the MarketMind sign-in page, select 'Activate Account', and enter your one-time activation token:\n\n"
+            f"👉  {token}  👈\n\n"
+            "Set your password to confirm ownership of this account. This token will expire shortly for security.\n\n"
+            "— MarketMind System Security"
         ),
     )
 
@@ -111,13 +111,14 @@ def send_invitation_email(*, recipient: str, full_name: str, token: str) -> bool
 def send_password_reset_email(*, recipient: str, full_name: str, token: str) -> bool:
     return send_security_email(
         recipient=recipient,
-        subject="Reset your MarketMind password",
+        subject="🔐 MarketMind Password Reset Token",
         body=(
             f"Hello {full_name},\n\n"
-            "Use this one-time token in the Forgot Password window on MarketMind:\n\n"
-            f"{token}\n\n"
-            "If you did not request a password reset, ignore this email. Existing sessions are "
-            "revoked after the password is changed."
+            "We received a request to reset your password for your MarketMind account.\n\n"
+            "Use this one-time security token in the Forgot Password window to set a new password:\n\n"
+            f"👉  {token}  👈\n\n"
+            "This token will expire in 30 minutes. If you did not initiate this password reset, you can safely ignore this email.\n\n"
+            "— MarketMind System Security"
         ),
     )
 
@@ -125,11 +126,13 @@ def send_password_reset_email(*, recipient: str, full_name: str, token: str) -> 
 def send_verification_email(*, recipient: str, full_name: str, token: str) -> bool:
     return send_security_email(
         recipient=recipient,
-        subject="Verify your MarketMind business account",
+        subject="🔐 MarketMind Business Account Email Verification",
         body=(
             f"Hello {full_name},\n\n"
-            "Use this one-time token in MarketMind to verify your email address:\n\n"
-            f"{token}\n\n"
-            "Your workspace remains inactive until this verification is completed."
+            "Thank you for registering with MarketMind!\n\n"
+            "To verify your email address and activate your store workspace, please enter this one-time verification token:\n\n"
+            f"👉  {token}  👈\n\n"
+            "This token will expire in 30 minutes. Your workspace will remain active once verified.\n\n"
+            "— MarketMind System Security"
         ),
     )
