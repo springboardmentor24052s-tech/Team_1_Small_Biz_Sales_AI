@@ -374,11 +374,11 @@ def request_developer_otp(payload: DeveloperOtpRequest, request: Request, db: DB
 
     return DevelopmentTokenResponse(
         message=(
-            f"Security OTP has been sent to {recipient}."
+            "Security OTP has been sent to the Developer / Admin email."
             if email_sent
-            else f"Security OTP generated for {recipient}."
+            else "Security OTP generated for the Developer / Admin email."
         ),
-        token=otp_code if (settings.expose_development_tokens and not settings.is_production) else None,
+        token=None,
     )
 
 

@@ -38,7 +38,9 @@ describe('Developer & Secret Admin Access Path', () => {
     expect(screen.getByText('Developer Console')).toBeInTheDocument();
     expect(screen.getByText('RESTRICTED DEVELOPER OTP GATEWAY')).toBeInTheDocument();
     expect(screen.getByText('SYS_ROOT')).toBeInTheDocument();
-    expect(screen.getAllByText('garvit2005k@gmail.com').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Developer / Admin Email')).toBeInTheDocument();
+    expect(screen.queryByText('garvit2005k@gmail.com')).not.toBeInTheDocument();
+    expect(screen.queryByText('Quick Demo OTP (123456)')).not.toBeInTheDocument();
     expect(screen.getByText('Send OTP')).toBeInTheDocument();
     expect(screen.getByText('Verify OTP & Open Developer Console')).toBeInTheDocument();
     expect(screen.getByText('Return to Public Workspace')).toBeInTheDocument();

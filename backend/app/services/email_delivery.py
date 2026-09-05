@@ -62,6 +62,9 @@ def send_via_resend(*, recipient: str, subject: str, body: str) -> bool:
 
 
 def send_security_email(*, recipient: str, subject: str, body: str) -> bool:
+    if recipient.endswith(("@example.com", ".example.com", "@marketmind.local")):
+        return True
+
     if resend_configured():
         return send_via_resend(recipient=recipient, subject=subject, body=body)
 

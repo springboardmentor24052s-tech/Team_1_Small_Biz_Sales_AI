@@ -90,21 +90,16 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
         const res = await requestDeveloperOtp();
         setOtpSent(true);
         setOtpCountdown(30);
-        if (res?.token) {
-          setDeveloperOtp(res.token);
-        }
-        addToast(res?.message || 'OTP sent to garvit2005k@gmail.com', 'success');
+        addToast(res?.message || 'Security OTP has been sent to the Developer / Admin email.', 'success');
       } else {
         setOtpSent(true);
         setOtpCountdown(30);
-        setDeveloperOtp('123456');
-        addToast('Security OTP sent to garvit2005k@gmail.com', 'success');
+        addToast('Security OTP has been sent to the Developer / Admin email.', 'success');
       }
     } catch (err) {
       setOtpSent(true);
       setOtpCountdown(30);
-      setDeveloperOtp('123456');
-      addToast(err.message || 'OTP generated for garvit2005k@gmail.com', 'info');
+      addToast(err.message || 'Security OTP generated for the Developer / Admin email.', 'info');
     } finally {
       setIsOtpSending(false);
     }
@@ -113,7 +108,7 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
   const handleDeveloperOtpSubmit = async (e) => {
     e?.preventDefault();
     if (!developerOtp.trim()) {
-      setErrorMessage('Please enter the 6-digit OTP passcode sent to garvit2005k@gmail.com');
+      setErrorMessage('Please enter the 6-digit OTP passcode sent to the Developer / Admin email.');
       return;
     }
     setIsLoading(true);
@@ -427,8 +422,8 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
                   <div className="flex items-center gap-2.5 overflow-hidden">
                     <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
                     <div className="truncate">
-                      <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Authorized Developer Mail</span>
-                      <span className="font-mono text-xs font-bold text-emerald-300">garvit2005k@gmail.com</span>
+                      <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Authorized Delivery Channel</span>
+                      <span className="font-mono text-xs font-bold text-emerald-300">Developer / Admin Email</span>
                     </div>
                   </div>
                   <button
@@ -442,7 +437,7 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
                 </div>
 
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Passwordless security verification. One-time passcodes are dispatched strictly to <strong className="text-emerald-300 font-mono">garvit2005k@gmail.com</strong>.
+                  Passwordless security verification. One-time passcodes are dispatched strictly to the registered Developer / Admin email.
                 </p>
               </div>
 
@@ -464,26 +459,12 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
                     inputMode="numeric"
                     maxLength={12}
                     autoFocus
-                    placeholder="Enter 6-digit OTP (e.g. 123456)"
+                    placeholder="Enter 6-digit OTP"
                     value={developerOtp}
                     onChange={(e) => setDeveloperOtp(e.target.value)}
                     className="w-full rounded-xl border border-emerald-500/40 bg-slate-950/80 px-4 py-3.5 font-mono text-lg font-bold text-emerald-300 placeholder:text-slate-600 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-center tracking-[0.25em]"
                     required
                   />
-                </div>
-
-                <div className="flex items-center justify-between text-xs pt-1">
-                  <span className="text-slate-400">Received OTP in Gmail?</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeveloperOtp('123456');
-                      addToast('Demo OTP 123456 loaded', 'info');
-                    }}
-                    className="text-emerald-400 hover:text-emerald-300 font-semibold underline text-xs"
-                  >
-                    Quick Demo OTP (123456)
-                  </button>
                 </div>
 
                 <Button
