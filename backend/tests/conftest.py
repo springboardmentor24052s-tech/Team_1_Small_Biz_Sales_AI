@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.api.dependencies import get_db
+from app.core.config import settings
+from app.core.rate_limiter import rate_limiter
 from app.core.security import hash_password
 from app.db.base import Base
 from app.main import app
@@ -15,6 +17,19 @@ from app.models.identity import Role, Store, Tenant, User, UserStatus
 from app.services.identity import get_role, seed_authorization
 
 TEST_PASSWORD = "StrongTestPass123!"
+
+
+@pytest.fixture(autouse=True)
+def isolate_test_environment():
+    orig_env = settings.environment
+    orig_enabled = settings.rate_limit_enabled
+    settings.environment = "testing"
+    settings.rate_limit_enabled = False
+    rate_limiter.reset()
+    yield
+    settings.environment = orig_env
+    settings.rate_limit_enabled = orig_enabled
+    rate_limiter.reset()
 
 
 @pytest.fixture()

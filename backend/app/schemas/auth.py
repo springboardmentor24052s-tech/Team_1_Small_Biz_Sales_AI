@@ -8,19 +8,19 @@ class RegisterRequest(BaseModel):
     store_name: str = Field(min_length=2, max_length=160)
     full_name: str = Field(min_length=2, max_length=160)
     email: EmailStr
-    password: str
-    currency: str = Field(default="INR", min_length=3, max_length=3)
-    timezone: str = Field(default="Asia/Kolkata", max_length=64)
+    password: str = Field(min_length=12, max_length=128)
+    currency: str = Field(default="INR", min_length=3, max_length=3, pattern=r"^[A-Z]{3}$")
+    timezone: str = Field(default="Asia/Kolkata", min_length=2, max_length=64)
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
-    mfa_code: str | None = Field(default=None, min_length=6, max_length=8)
+    password: str = Field(min_length=1, max_length=128)
+    mfa_code: str | None = Field(default=None, min_length=6, max_length=8, pattern=r"^\d{6,8}$")
 
 
 class RefreshRequest(BaseModel):
-    refresh_token: str
+    refresh_token: str = Field(min_length=16, max_length=256)
 
 
 class TokenPair(BaseModel):
@@ -37,7 +37,7 @@ class DevelopmentTokenResponse(BaseModel):
 
 
 class TokenRequest(BaseModel):
-    token: str
+    token: str = Field(min_length=8, max_length=256)
 
 
 class PasswordResetRequest(BaseModel):
@@ -45,13 +45,13 @@ class PasswordResetRequest(BaseModel):
 
 
 class PasswordResetConfirm(BaseModel):
-    token: str
-    new_password: str
+    token: str = Field(min_length=8, max_length=256)
+    new_password: str = Field(min_length=12, max_length=128)
 
 
 class ReauthenticateRequest(BaseModel):
-    password: str
-    mfa_code: str | None = None
+    password: str = Field(min_length=1, max_length=128)
+    mfa_code: str | None = Field(default=None, min_length=6, max_length=8, pattern=r"^\d{6,8}$")
 
 
 class ReauthenticateResponse(BaseModel):
@@ -65,7 +65,7 @@ class MFASetupResponse(BaseModel):
 
 
 class MFAConfirmRequest(BaseModel):
-    code: str = Field(min_length=6, max_length=8)
+    code: str = Field(min_length=6, max_length=8, pattern=r"^\d{6,8}$")
 
 
 class SessionContext(BaseModel):
@@ -81,5 +81,5 @@ class DeveloperOtpRequest(BaseModel):
 
 
 class DeveloperOtpVerify(BaseModel):
-    otp: str = Field(min_length=6, max_length=12)
+    otp: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
 

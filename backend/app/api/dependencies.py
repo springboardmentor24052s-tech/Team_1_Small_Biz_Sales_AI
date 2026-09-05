@@ -3,11 +3,12 @@ from datetime import timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.rate_limiter import rate_limit_auth, rate_limit_authenticated, rate_limit_public, rate_limiter
 from app.core.security import as_utc, decode_jwt, utcnow
 from app.db.session import get_db
 from app.models.auth import AuthSession
@@ -34,9 +35,11 @@ def get_bearer_token(
 
 
 def get_current_user(
+    request: Request,
     db: DBSession,
     token: Annotated[str, Depends(get_bearer_token)],
 ) -> User:
+    rate_limiter.check_rate_limit(request, tier="authenticated")
     payload = decode_jwt(token, "access")
     try:
         user_id = UUID(payload["sub"])

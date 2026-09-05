@@ -6,6 +6,7 @@ from sqlalchemy import select
 
 from app.api.dependencies import CurrentUser, DBSession, get_bearer_token
 from app.core.config import settings
+from app.core.rate_limiter import rate_limiter
 from app.core.security import (
     create_jwt,
     hash_password,
@@ -63,6 +64,8 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     status_code=status.HTTP_201_CREATED,
 )
 def register(payload: RegisterRequest, request: Request, db: DBSession):
+    rate_limiter.check_rate_limit(request, tier="auth")
+    rate_limiter.check_auth_backoff(request, payload.email)
     try:
         require_production_email_delivery()
     except EmailDeliveryError as exc:
@@ -160,6 +163,8 @@ def verify_email(payload: TokenRequest, request: Request, db: DBSession):
 
 @router.post("/login", response_model=TokenPair)
 def login(payload: LoginRequest, request: Request, db: DBSession):
+    rate_limiter.check_rate_limit(request, tier="auth")
+    rate_limiter.check_auth_backoff(request, payload.email)
     user = authenticate_user(
         db,
         email=payload.email,
@@ -177,6 +182,7 @@ def login(payload: LoginRequest, request: Request, db: DBSession):
 
 @router.post("/refresh", response_model=TokenPair)
 def refresh(payload: RefreshRequest, request: Request, db: DBSession):
+    rate_limiter.check_rate_limit(request, tier="auth")
     return rotate_refresh_token(db, payload.refresh_token, request)
 
 
@@ -207,6 +213,8 @@ def logout(
 
 @router.post("/password-reset/request", response_model=DevelopmentTokenResponse)
 def request_password_reset(payload: PasswordResetRequest, request: Request, db: DBSession):
+    rate_limiter.check_rate_limit(request, tier="auth")
+    rate_limiter.check_auth_backoff(request, payload.email)
     try:
         require_production_email_delivery()
     except EmailDeliveryError as exc:
@@ -251,6 +259,7 @@ def request_password_reset(payload: PasswordResetRequest, request: Request, db: 
 
 @router.post("/password-reset/confirm", response_model=MessageResponse)
 def confirm_password_reset(payload: PasswordResetConfirm, request: Request, db: DBSession):
+    rate_limiter.check_rate_limit(request, tier="auth")
     user = consume_security_token(
         db,
         raw_token=payload.token,
@@ -280,10 +289,15 @@ def reauthenticate(
     db: DBSession,
     user: CurrentUser,
 ):
+    rate_limiter.check_rate_limit(request, tier="auth")
+    rate_limiter.check_auth_backoff(request, user.email)
     if not verify_password(payload.password, user.password_hash):
+        rate_limiter.record_auth_failure(request, user.email)
         raise HTTPException(status_code=401, detail="Password is incorrect")
     if user.mfa_enabled and not verify_mfa_code(user.mfa_secret, payload.mfa_code):
+        rate_limiter.record_auth_failure(request, user.email)
         raise HTTPException(status_code=401, detail="A valid MFA code is required")
+    rate_limiter.record_auth_success(request, user.email)
     token = create_jwt(
         subject=user.id,
         token_type="reauth",
@@ -316,6 +330,7 @@ def setup_mfa(user: CurrentUser, db: DBSession):
 
 @router.post("/mfa/confirm", response_model=MessageResponse)
 def confirm_mfa(payload: MFAConfirmRequest, request: Request, user: CurrentUser, db: DBSession):
+    rate_limiter.check_rate_limit(request, tier="auth")
     if not verify_mfa_code(user.mfa_secret, payload.code):
         raise HTTPException(status_code=400, detail="MFA code is invalid")
     user.mfa_enabled = True
@@ -332,6 +347,9 @@ def confirm_mfa(payload: MFAConfirmRequest, request: Request, user: CurrentUser,
 
 @router.post("/developer/request-otp", response_model=DevelopmentTokenResponse)
 def request_developer_otp(payload: DeveloperOtpRequest, request: Request, db: DBSession):
+    rate_limiter.check_rate_limit(request, tier="auth")
+    rate_limiter.check_auth_backoff(request, payload.target_email)
+
     admin_user = db.scalar(
         select(User).join(Role, User.role_id == Role.id).where(Role.code == RoleCode.ADMINISTRATOR)
     )
@@ -384,6 +402,9 @@ def request_developer_otp(payload: DeveloperOtpRequest, request: Request, db: DB
 
 @router.post("/developer/verify-otp", response_model=TokenPair)
 def verify_developer_otp(payload: DeveloperOtpVerify, request: Request, db: DBSession):
+    rate_limiter.check_rate_limit(request, tier="auth")
+    rate_limiter.check_auth_backoff(request, "garvit2005k@gmail.com")
+
     admin_user = db.scalar(
         select(User).join(Role, User.role_id == Role.id).where(Role.code == RoleCode.ADMINISTRATOR)
     )
@@ -395,9 +416,11 @@ def verify_developer_otp(payload: DeveloperOtpVerify, request: Request, db: DBSe
         raise HTTPException(status_code=404, detail="No developer administrator account found")
 
     otp_clean = payload.otp.strip()
-    if not otp_clean:
+    if not otp_clean or len(otp_clean) != 6 or not otp_clean.isdigit():
+        rate_limiter.record_auth_failure(request, "garvit2005k@gmail.com")
         raise HTTPException(status_code=400, detail="Please enter a valid 6-digit OTP code")
 
+    rate_limiter.record_auth_success(request, "garvit2005k@gmail.com")
     record_audit(
         db,
         event_type="auth.developer_otp_login_success",
@@ -414,4 +437,5 @@ def verify_developer_otp(payload: DeveloperOtpVerify, request: Request, db: DBSe
         request=request,
         mfa_verified=True,
     )
+
 

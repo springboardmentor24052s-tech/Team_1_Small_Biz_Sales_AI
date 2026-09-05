@@ -1,9 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 
-from app.api.dependencies import DBSession
+from app.api.dependencies import DBSession, rate_limit_public
 
-router = APIRouter(prefix="/health", tags=["Health"])
+router = APIRouter(prefix="/health", tags=["Health"], dependencies=[Depends(rate_limit_public)])
 
 
 @router.get("/live")

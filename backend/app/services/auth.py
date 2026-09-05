@@ -114,11 +114,15 @@ def authenticate_user(
     mfa_code: str | None,
     request: Request,
 ) -> User:
+    from app.core.rate_limiter import rate_limiter
+
+    rate_limiter.check_auth_backoff(request, email)
     user = find_user_by_email(db, email)
     now = utcnow()
     generic_error = HTTPException(status_code=401, detail="Incorrect email or password")
 
     if not user:
+        rate_limiter.record_auth_failure(request, email)
         record_audit(
             db,
             event_type="auth.login_failed",
@@ -135,6 +139,7 @@ def authenticate_user(
         raise HTTPException(status_code=403, detail="Email address is not verified")
 
     if not verify_password(password, user.password_hash):
+        rate_limiter.record_auth_failure(request, email)
         user.failed_login_count += 1
         if user.failed_login_count >= settings.max_login_failures:
             user.status = UserStatus.LOCKED
@@ -159,6 +164,7 @@ def authenticate_user(
         raise generic_error
 
     if user.mfa_enabled and not verify_mfa_code(user.mfa_secret, mfa_code):
+        rate_limiter.record_auth_failure(request, email)
         record_audit(
             db,
             event_type="auth.mfa_failed",
@@ -169,6 +175,7 @@ def authenticate_user(
         db.commit()
         raise HTTPException(status_code=401, detail="A valid MFA code is required")
 
+    rate_limiter.record_auth_success(request, email)
     user.failed_login_count = 0
     user.locked_until = None
     user.status = UserStatus.ACTIVE

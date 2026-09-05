@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     password_min_length: int = 12
     max_login_failures: int = 5
     account_lock_minutes: int = 15
+    rate_limit_enabled: bool = True
+    rate_limit_auth_per_minute: int = 15
+    rate_limit_auth_ip_per_minute: int = 30
+    rate_limit_public_per_minute: int = 60
+    rate_limit_authenticated_per_minute: int = 300
+    auth_backoff_base_seconds: int = 2
+    auth_backoff_max_seconds: int = 300
     cors_origins: list[str] = Field(
         default_factory=lambda: [
             "http://localhost:5173",
