@@ -54,7 +54,7 @@ def read_recommendations(
         logger.error(f"Error generating product recommendations: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate product recommendations: {str(e)}"
+            detail="Failed to generate product recommendations. Please try again later."
         )
 
 @router.get("/analytics", response_model=RecommendationAnalytics, summary="Get Recommendation Analytics & Model Signals")
@@ -70,7 +70,7 @@ def read_recommendation_analytics(db: Session = Depends(get_db)):
         logger.error(f"Error fetching recommendation analytics: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch recommendation analytics: {str(e)}"
+            detail="Failed to fetch recommendation analytics. Please try again later."
         )
 
 @router.get("/evaluation", response_model=EvaluationMetrics, summary="Get Recommendation Model Precision@K and Recall@K Evaluation")
@@ -88,7 +88,7 @@ def read_recommendation_evaluation(
         logger.error(f"Error calculating recommendation evaluation metrics: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to calculate recommendation evaluation metrics: {str(e)}"
+            detail="Failed to calculate recommendation evaluation metrics. Please try again later."
         )
 
 @router.get("/insights", response_model=RecommendationInsights, summary="Get Recommendation Insights")
@@ -104,5 +104,5 @@ def read_recommendation_insights(db: Session = Depends(get_db)):
         logger.error(f"Error generating recommendation insights: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate recommendation insights: {str(e)}"
+            detail="Failed to generate recommendation insights. Please try again later."
         )

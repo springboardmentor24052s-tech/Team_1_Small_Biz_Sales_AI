@@ -23,9 +23,11 @@ def read_churn_summary(
         summary = get_churn_summary(db=db, tenant_id=tenant_id, store_id=store_id)
         return summary
     except Exception as e:
+        import logging
+        logging.getLogger("marketmind.api.churn").error("Churn summary generation failed: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate churn summary: {str(e)}"
+            detail="Failed to generate churn summary. Please try again later."
         )
 
 
@@ -50,7 +52,9 @@ def read_churn_customers(
         )
         return result
     except Exception as e:
+        import logging
+        logging.getLogger("marketmind.api.churn").error("Churn customer records query failed: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch churn customer records: {str(e)}"
+            detail="Failed to fetch churn customer records. Please try again later."
         )

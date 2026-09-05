@@ -29,9 +29,11 @@ def read_anomalies(
         )
         return summary
     except Exception as e:
+        import logging
+        logging.getLogger("marketmind.api.anomalies").error("Anomaly detection failed: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to execute anomaly detection: {str(e)}"
+            detail="Failed to execute anomaly detection. Please try again later."
         )
 
 

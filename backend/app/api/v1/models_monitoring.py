@@ -23,7 +23,9 @@ def read_models_monitoring(
         telemetry = get_system_monitoring_status(db=db, tenant_id=tenant_id)
         return telemetry
     except Exception as e:
+        import logging
+        logging.getLogger("marketmind.api.models_monitoring").error("Model monitoring telemetry fetch failed: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch model monitoring telemetry: {str(e)}"
+            detail="Failed to fetch model monitoring telemetry. Please try again later."
         )

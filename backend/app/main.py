@@ -56,15 +56,41 @@ async def request_context(request: Request, call_next):
     return response
 
 
+import logging
+from sqlalchemy.exc import SQLAlchemyError
+
+logger = logging.getLogger("marketmind.error")
+
+
+def _sanitize_message(status_code: int, detail: str) -> str:
+    """Ensure internal paths, stack traces, or raw exception strings are never leaked to client."""
+    if status_code < 500:
+        return detail
+    lowered = detail.casefold()
+    if any(marker in lowered for marker in ["traceback", "file \"", "line ", "sqlite3", "psycopg", "syntax error", "\\app\\", "/app/"]):
+        return "An internal server error occurred. Please try again later."
+    return detail
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
+    correlation_id = getattr(request.state, "correlation_id", str(uuid4()))
+    if exc.status_code >= 500:
+        logger.error(
+            "HTTPException %d on %s %s [Correlation: %s]: %s",
+            exc.status_code,
+            request.method,
+            request.url.path,
+            correlation_id,
+            exc.detail,
+        )
     return JSONResponse(
         status_code=exc.status_code,
         headers=exc.headers,
         content={
             "code": f"http_{exc.status_code}",
-            "message": str(exc.detail),
-            "correlation_id": request.state.correlation_id,
+            "message": _sanitize_message(exc.status_code, str(exc.detail)),
+            "correlation_id": correlation_id,
             "field_details": [],
             "retryable": exc.status_code >= 500,
         },
@@ -73,14 +99,61 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    correlation_id = getattr(request.state, "correlation_id", str(uuid4()))
     return JSONResponse(
         status_code=422,
         content={
             "code": "validation_error",
             "message": "Request validation failed",
-            "correlation_id": request.state.correlation_id,
+            "correlation_id": correlation_id,
             "field_details": jsonable_encoder(exc.errors()),
             "retryable": False,
+        },
+    )
+
+
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+    correlation_id = getattr(request.state, "correlation_id", str(uuid4()))
+    logger.error(
+        "Database error on %s %s [Correlation: %s]: %s",
+        request.method,
+        request.url.path,
+        correlation_id,
+        exc,
+        exc_info=True,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "code": "database_error",
+            "message": "A database error occurred while processing your request. Please try again later.",
+            "correlation_id": correlation_id,
+            "field_details": [],
+            "retryable": True,
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    correlation_id = getattr(request.state, "correlation_id", str(uuid4()))
+    logger.error(
+        "Unhandled exception on %s %s [Correlation: %s]: %s",
+        request.method,
+        request.url.path,
+        correlation_id,
+        exc,
+        exc_info=True,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "code": "internal_server_error",
+            "message": "An unexpected error occurred. Please contact support with your correlation ID.",
+            "correlation_id": correlation_id,
+            "field_details": [],
+            "retryable": True,
         },
     )
 
