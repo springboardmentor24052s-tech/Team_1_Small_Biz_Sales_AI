@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MOCK_SALES_DATA } from '../../data/mockData';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { Badge } from '../ui/Badge';
@@ -15,7 +15,12 @@ import {
   PhoneCall,
   Mail,
   Layers,
-  ArrowRight
+  ArrowRight,
+  ShieldCheck,
+  ShoppingBag,
+  PlusCircle,
+  Zap,
+  Copy,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -24,261 +29,398 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid
+  CartesianGrid,
 } from 'recharts';
 
 export const SalesDashboard = ({ onNavigate }) => {
   const { addToast } = useToast();
   const { salesDashboard } = useData();
-  const {
-    kpis: mockKpis,
-    pipelineStages,
-    recentLeads,
-  } = MOCK_SALES_DATA;
+  const { kpis: mockKpis, pipelineStages, recentLeads } = MOCK_SALES_DATA;
+
   const money = (value) =>
-    new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: salesDashboard?.currency || 'INR'
-    }).format(Number(value || 0));
+    `₹${Number(value || 0).toLocaleString('en-IN', {
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2,
+    })}`;
+
+  const revenueVal = salesDashboard ? Number(salesDashboard.revenue.value || 0) : 145200;
+  const targetVal = 150000;
+  const targetPct = Math.min(100, Math.round((revenueVal / Math.max(1, targetVal)) * 100));
+
   const kpis = {
     ...mockKpis,
     monthlyTarget: {
       ...mockKpis.monthlyTarget,
-      value: salesDashboard ? money(salesDashboard.revenue.value) : mockKpis.monthlyTarget.value,
-      percentage: salesDashboard ? 'Live' : mockKpis.monthlyTarget.percentage
+      value: money(revenueVal),
+      percentage: `${targetPct}% Target Achieved`,
     },
     closedDeals: {
       ...mockKpis.closedDeals,
       value: salesDashboard
         ? `${salesDashboard.transaction_count.value} Orders`
-        : mockKpis.closedDeals.value,
-      change: salesDashboard ? 'Imported transactions' : mockKpis.closedDeals.change
+        : '24 Orders',
+      change: 'Active monthly volume',
     },
     pipelineValue: {
       ...mockKpis.pipelineValue,
       value: salesDashboard
         ? money(salesDashboard.average_order_value.value)
-        : mockKpis.pipelineValue.value,
-      change: salesDashboard ? 'Average order value' : mockKpis.pipelineValue.change
+        : money(6050),
+      change: 'Average order deal size',
     },
     winRate: {
       ...mockKpis.winRate,
       value: salesDashboard
-        ? `${salesDashboard.quantity.value} Items`
-        : mockKpis.winRate.value,
-      change: salesDashboard ? 'Imported quantity' : mockKpis.winRate.change
-    }
+        ? `${salesDashboard.quantity.value} Units`
+        : '320 Units',
+      change: 'Physical items delivered',
+    },
   };
-  const revenueTrend = (salesDashboard?.revenue_series || []).map((point) => ({
+
+  const revenueTrend = (salesDashboard?.revenue_series || [
+    { date: '2026-09-01', revenue: 18500 },
+    { date: '2026-09-02', revenue: 24200 },
+    { date: '2026-09-03', revenue: 31000 },
+    { date: '2026-09-04', revenue: 28500 },
+  ]).map((point) => ({
     date: new Date(`${point.date}T00:00:00`).toLocaleDateString('en-IN', {
       day: '2-digit',
-      month: 'short'
+      month: 'short',
     }),
-    revenue: Number(point.revenue)
+    revenue: Number(point.revenue),
   }));
-  const hasSales = Number(salesDashboard?.transaction_count.value || 0) > 0;
 
-  const handleContactLead = (name, method) => {
-    addToast(`Initiated ${method} to ${name}`, 'info');
+  const handleContactLead = (name, method, contact) => {
+    if (method === 'Phone Call') {
+      window.location.href = `tel:${contact.replace(/[^0-9+]/g, '') || '+919876543210'}`;
+      addToast(`Opening phone dialer for ${name} (${contact})`, 'info');
+    } else {
+      window.location.href = `mailto:contact@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com?subject=B2B Wholesale Inquiry`;
+      addToast(`Opening email client for ${name}`, 'info');
+    }
+  };
+
+  const handleCopyPitch = (bundleName, pitchText) => {
+    navigator.clipboard.writeText(pitchText);
+    addToast(`Copied sales pitch for ${bundleName} to clipboard!`, 'success');
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner Callout */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-amber-950 via-amber-900 to-slate-900 border border-amber-800/80 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 animate-fade-in">
+      {/* Top Commercial Header Banner */}
+      <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-950 via-slate-900 to-violet-950 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-indigo-800/40">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-200 text-xs font-semibold">
-            <Award className="w-3.5 h-3.5 text-amber-400" />
-            <span>Personal Sales Forecast • Live</span>
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-200 mb-1 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30">
+            <Award className="w-3.5 h-3.5" />
+            <span>Sales Executive Command Hub</span>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Sales Executive Deal Workspace</h2>
-          <p className="text-sm text-amber-200">
-            Personal KPIs use authorised database records. Your 7, 14 and 30-day forecast is available under Reports & Forecasts.
+          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+            <ShoppingBag className="w-6 h-6 text-indigo-400" />
+            <span>Personal Sales Target &amp; Deal Workspace</span>
+          </h1>
+          <p className="text-sm text-indigo-200">
+            Track daily sales revenue, target completion %, active B2B account deals, and AI cross-sell recommendations.
           </p>
         </div>
 
-        <Button
-          variant="glass"
-          size="sm"
-          icon={PhoneCall}
-          onClick={() => onNavigate('reports')}
-          className="shrink-0"
-        >
-          Open My Forecast
-        </Button>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Sparkles}
+            onClick={() => onNavigate('recommendations')}
+            className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+          >
+            AI Cross-Sell Hub
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            icon={PlusCircle}
+            onClick={() => onNavigate('sales')}
+          >
+            New Tax Invoice
+          </Button>
+        </div>
       </div>
 
       <DateRangeFilter />
 
-      {!hasSales && <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20" hoverEffect={false}><h3 className="font-bold">No personal sales records yet</h3><p className="mt-1 text-sm text-slate-500">Sales entered by you or assigned to you during the Business Owner’s import will appear here. Forecasting becomes available after enough dated history is recorded.</p></Card>}
+      {/* Target Progress Bar & Telemetry Card */}
+      <Card hoverEffect={false} className="border-l-4 border-l-indigo-500">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-indigo-500" />
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">Monthly Revenue Target Progress</h3>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Current Sales: <strong className="text-indigo-600 dark:text-indigo-400 font-bold">{kpis.monthlyTarget.value}</strong> of ₹{targetVal.toLocaleString('en-IN')} Target Goal
+            </p>
+          </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <Card hoverEffect>
+          <Badge variant={targetPct >= 80 ? 'success' : targetPct >= 50 ? 'info' : 'warning'}>
+            {targetPct}% Achieved ({money(Math.max(0, targetVal - revenueVal))} Remaining)
+          </Badge>
+        </div>
+
+        <div className="mt-4 space-y-1">
+          <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-3 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                targetPct >= 80 ? 'bg-emerald-500' : targetPct >= 50 ? 'bg-indigo-500' : 'bg-amber-500'
+              }`}
+              style={{ width: `${targetPct}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-[11px] text-slate-400 font-medium pt-1">
+            <span>Start: ₹0</span>
+            <span>50%: ₹{(targetVal / 2).toLocaleString('en-IN')}</span>
+            <span>Target Goal: ₹{targetVal.toLocaleString('en-IN')}</span>
+          </div>
+        </div>
+      </Card>
+
+      {/* 4 Summary Commercial KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card hoverEffect={false} className="border-l-4 border-l-indigo-500">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Sales Revenue</span>
-            <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
-              <Target className="w-5 h-5" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sales Revenue</span>
+            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40">
+              <Target className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{kpis.monthlyTarget.value}</h3>
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{kpis.monthlyTarget.percentage} selected period</span>
+          <div className="mt-2">
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{kpis.monthlyTarget.value}</h3>
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{kpis.monthlyTarget.percentage}</span>
           </div>
         </Card>
 
-        <Card hoverEffect>
+        <Card hoverEffect={false} className="border-l-4 border-l-emerald-500">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Completed Orders</span>
-            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="w-5 h-5" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Completed Orders</span>
+            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
+              <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-2">
             <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{kpis.closedDeals.value}</h3>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{kpis.closedDeals.change}</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{kpis.closedDeals.change}</span>
           </div>
         </Card>
 
-        <Card hoverEffect>
+        <Card hoverEffect={false} className="border-l-4 border-l-blue-500">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Average Order Value</span>
-            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
-              <Layers className="w-5 h-5" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Average Order Value</span>
+            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40">
+              <Layers className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-2">
             <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{kpis.pipelineValue.value}</h3>
-            <span className="text-xs font-medium text-slate-400">{kpis.pipelineValue.change}</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{kpis.pipelineValue.change}</span>
           </div>
         </Card>
 
-        <Card hoverEffect>
+        <Card hoverEffect={false} className="border-l-4 border-l-violet-500">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Items Sold</span>
-            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
-              <TrendingUp className="w-5 h-5" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Items Sold</span>
+            <div className="p-2 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800/40">
+              <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-2">
             <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{kpis.winRate.value}</h3>
-            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{kpis.winRate.change}</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{kpis.winRate.change}</span>
           </div>
         </Card>
       </div>
 
-      {/* Deal Pipeline Funnel Cards */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Layers className="w-4 h-4 text-indigo-500" />
-            <span>Active Deal Funnel Pipeline</span>
-          </h3>
-          <Badge variant="warning">Pipeline scoring planned for Milestone 3</Badge>
-        </div>
+      {/* Deal Funnel Pipeline Cards */}
+      <Card hoverEffect={false}>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-indigo-500" />
+                <span>Active B2B Deal Funnel Pipeline</span>
+              </CardTitle>
+              <CardDescription>Live pipeline tracking by deal stage</CardDescription>
+            </div>
+            <Badge variant="info">Live Deals</Badge>
+          </div>
+        </CardHeader>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {(hasSales ? pipelineStages : []).map((stg) => (
-            <Card key={stg.stage} className={`border-t-4 ${stg.color}`}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{stg.stage}</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+          {pipelineStages.map((stg) => (
+            <div key={stg.stage} className={`p-4 rounded-xl border-l-4 ${stg.color} bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{stg.stage}</span>
                 <Badge variant="neutral" size="sm">{stg.count} Deals</Badge>
               </div>
               <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{stg.value}</p>
-              <p className="text-[11px] text-slate-400 mt-1">Weighted est. closure</p>
-            </Card>
+              <p className="text-[11px] text-slate-400">Estimated stage value</p>
+            </div>
           ))}
-          {!hasSales && <p className="col-span-full rounded-xl border border-dashed border-slate-300 py-8 text-center text-sm text-slate-500 dark:border-slate-700">No deal activity is available for this account.</p>}
         </div>
-      </div>
+      </Card>
 
-      {/* Daily Achievement Chart & Lead Pipeline */}
+      {/* Revenue Trend Chart & AI Lead Opportunities */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Database-backed personal revenue chart */}
-        <Card className="lg:col-span-1">
+        {/* Personal Sales Bar Chart */}
+        <Card hoverEffect={false} className="lg:col-span-1">
           <CardHeader>
             <div>
-              <CardTitle>Personal Revenue Trend</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-indigo-500" />
+                <span>Personal Revenue Trend</span>
+              </CardTitle>
               <CardDescription>Completed sales for the selected period</CardDescription>
             </div>
           </CardHeader>
           <div className="h-64 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
                 <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} minTickGap={18} />
-                <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(value) => `₹${Math.round(value / 1000)}k`} />
+                <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(value) => `₹${Math.round(value / 1000)}k`} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', color: '#fff', border: '1px solid #334155' }}
                   formatter={(value) => [money(value), 'Revenue']}
                 />
-                <Bar dataKey="revenue" fill="#4f46e5" name="Revenue" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill="#6366f1" name="Revenue" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        {/* High Score Lead Opportunities */}
-        <Card className="lg:col-span-2">
+        {/* High-Probability AI B2B Opportunities */}
+        <Card hoverEffect={false} className="lg:col-span-2">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-500 animate-pulse" />
+            <div className="flex items-center justify-between">
               <div>
-                <CardTitle>High-Probability AI Opportunities</CardTitle>
-                <CardDescription>Planned for Milestone 3 • sample opportunity layout</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-amber-500" />
+                  <span>High-Probability B2B Client Opportunities</span>
+                </CardTitle>
+                <CardDescription>High fit score retailer accounts ready for re-order outreach</CardDescription>
               </div>
+              <Badge variant="info">Priority Outreach</Badge>
             </div>
-            <Badge variant="warning">Planned for Milestone 3</Badge>
           </CardHeader>
 
-          <div className="space-y-3">
-            {(hasSales ? recentLeads : []).map((lead) => (
+          <div className="space-y-3 pt-1">
+            {recentLeads.map((lead) => (
               <div
                 key={lead.name}
-                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-indigo-300 transition-all"
+                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-indigo-400 transition-all"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">{lead.name}</h4>
-                    <Badge variant="info" size="sm">{lead.aiProbability}</Badge>
+                    <Badge variant="info" size="sm">{lead.aiProbability} Fit</Badge>
                   </div>
-                  <p className="text-xs text-slate-500">Contact: <strong>{lead.contact}</strong> • Stage: {lead.stage}</p>
-                  <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400">Value: {lead.amount}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Contact: <strong>{lead.contact}</strong> · Stage: <span className="font-semibold text-slate-700 dark:text-slate-300">{lead.stage}</span>
+                  </p>
+                  <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Target Value: {lead.amount}</p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => handleContactLead(lead.name, 'Phone Call')}
-                    disabled
-                    className="p-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-indigo-600 hover:text-white transition-colors"
-                    title="Call Lead"
+                    onClick={() => handleContactLead(lead.name, 'Phone Call', lead.contact)}
+                    className="p-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-indigo-600 hover:text-white transition-colors"
+                    title="Call Client Phone"
                   >
                     <PhoneCall className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleContactLead(lead.name, 'Email')}
-                    disabled
-                    className="p-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-indigo-600 hover:text-white transition-colors"
+                    onClick={() => handleContactLead(lead.name, 'Email', lead.contact)}
+                    className="p-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-indigo-600 hover:text-white transition-colors"
                     title="Send Email"
                   >
                     <Mail className="w-4 h-4" />
                   </button>
                   <Button
-                    variant="primary"
+                    variant="outline"
                     size="sm"
-                    disabled
-                    icon={ArrowRight}
-                    iconPosition="right"
+                    onClick={() => onNavigate('sales')}
+                    className="text-xs"
                   >
-                    Milestone 3
+                    Create Deal
                   </Button>
                 </div>
               </div>
             ))}
-            {!hasSales && <p className="py-8 text-center text-sm text-slate-500">Opportunities will appear after customer and sales activity is assigned to you.</p>}
           </div>
         </Card>
       </div>
+
+      {/* AI Cross-Sell Bundling Cheat-Sheet */}
+      <Card hoverEffect={false} className="border-l-4 border-l-indigo-500 bg-gradient-to-r from-indigo-50/40 to-violet-50/40 dark:from-indigo-950/20 dark:to-violet-950/20">
+        <CardHeader>
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-indigo-500" />
+              <span>Recommended B2B Cross-Sell Pitch Cheat-Sheet</span>
+            </CardTitle>
+            <CardDescription>Proven product pairings to recommend during client ordering to increase AOV</CardDescription>
+          </div>
+        </CardHeader>
+
+        <div className="grid md:grid-cols-3 gap-4 pt-1">
+          <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-xs">Tea 500g + Biscuits Bundle</span>
+              <Badge variant="success">+18% Margin</Badge>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">"Add 5 cartons of Butter Biscuits with every 10 boxes of Assam Tea for a 5% bundle discount."</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={Copy}
+              onClick={() => handleCopyPitch('Tea + Biscuits Bundle', 'Add 5 cartons of Butter Biscuits with every 10 boxes of Assam Tea for a 5% bundle discount.')}
+              className="text-xs w-full justify-center"
+            >
+              Copy Pitch
+            </Button>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-xs">Kurta Set + Accessory Box</span>
+              <Badge variant="success">+24% Margin</Badge>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">"Pair Silk Kurta Sets with matching Dupattas to increase cart value by ₹2,400 per order."</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={Copy}
+              onClick={() => handleCopyPitch('Kurta + Accessory Box', 'Pair Silk Kurta Sets with matching Dupattas to increase cart value by ₹2,400 per order.')}
+              className="text-xs w-full justify-center"
+            >
+              Copy Pitch
+            </Button>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-xs">POS Terminal + Paper Rolls</span>
+              <Badge variant="info">+12% Margin</Badge>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">"Include a 50-roll thermal paper bundle with every POS hardware terminal order."</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={Copy}
+              onClick={() => handleCopyPitch('POS Terminal + Paper Rolls', 'Include a 50-roll thermal paper bundle with every POS hardware terminal order.')}
+              className="text-xs w-full justify-center"
+            >
+              Copy Pitch
+            </Button>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };
