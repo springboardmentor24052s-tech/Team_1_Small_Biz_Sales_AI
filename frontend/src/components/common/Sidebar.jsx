@@ -13,7 +13,11 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  Building2,
+  Clock,
+  Cpu,
+  Database
 } from 'lucide-react';
 
 import { useLanguage } from '../../context/LanguageContext';
@@ -25,7 +29,10 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed, 
   const allowedModules = new Set((access?.modules || []).map((module) => module.code));
   const navItems = currentRole.id === 'admin'
     ? [
-        { id: 'dashboard', label: 'Platform Console', icon: LayoutDashboard, badge: 'Root', badgeColor: 'bg-purple-500/20 text-purple-300' },
+        { id: 'businesses', label: 'Businesses & Teams', icon: Building2, badge: 'Owners', badgeColor: 'bg-purple-500/20 text-purple-300' },
+        { id: 'auth_logs', label: 'Auth & Login Logs', icon: Clock, badge: 'Timing', badgeColor: 'bg-blue-500/20 text-blue-300' },
+        { id: 'ai_models', label: 'AI Models & Retrain', icon: Cpu, badge: 'Last Train', badgeColor: 'bg-emerald-500/20 text-emerald-300' },
+        { id: 'system', label: 'System Health & RBAC', icon: Database, badge: 'Infra', badgeColor: 'bg-slate-700 text-slate-300' },
         { id: 'settings', label: t('Settings'), icon: Settings, badge: null }
       ]
     : [

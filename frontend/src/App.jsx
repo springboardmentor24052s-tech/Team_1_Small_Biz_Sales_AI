@@ -149,7 +149,7 @@ const MainAppContent = () => {
       case 'sales':
         return <SalesDashboard onNavigate={setActiveTab} />;
       case 'admin':
-        return <AdminDashboard />;
+        return <AdminDashboard activeTab={activeTab === 'dashboard' ? 'businesses' : activeTab} onTabChange={setActiveTab} />;
       default:
         return <OwnerDashboard onNavigate={setActiveTab} />;
     }
@@ -160,6 +160,13 @@ const MainAppContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return renderDashboardView();
+      case 'businesses':
+      case 'auth_logs':
+      case 'ai_models':
+      case 'system':
+        return currentRole.id === 'admin'
+          ? <AdminDashboard activeTab={activeTab} onTabChange={setActiveTab} />
+          : renderDashboardView();
       case 'sales':
         return <SalesModule />;
       case 'inventory':

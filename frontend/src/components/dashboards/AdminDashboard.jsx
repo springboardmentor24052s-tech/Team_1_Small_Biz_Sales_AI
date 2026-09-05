@@ -41,11 +41,20 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Card, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 
-export const AdminDashboard = () => {
+export const AdminDashboard = ({ activeTab: externalActiveTab, onTabChange }) => {
   const { api, profile } = useAuth();
   const { addToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('businesses'); // 'businesses', 'auth_logs', 'ai_models', 'system'
+  const [internalTab, setInternalTab] = useState('businesses');
+  const currentTab = externalActiveTab || internalTab;
+
+  const handleTabSelect = (tabId) => {
+    setInternalTab(tabId);
+    if (typeof onTabChange === 'function') {
+      onTabChange(tabId);
+    }
+  };
+
   const [roles, setRoles] = useState([]);
   const [logs, setLogs] = useState([]);
   const [monitoringData, setMonitoringData] = useState(null);
@@ -518,9 +527,9 @@ export const AdminDashboard = () => {
       <div className="flex items-center gap-2 border-b border-slate-800 pb-2 overflow-x-auto">
         <button
           type="button"
-          onClick={() => setActiveTab('businesses')}
+          onClick={() => handleTabSelect('businesses')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-            activeTab === 'businesses'
+            currentTab === 'businesses'
               ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
           }`}
@@ -532,9 +541,9 @@ export const AdminDashboard = () => {
 
         <button
           type="button"
-          onClick={() => setActiveTab('auth_logs')}
+          onClick={() => handleTabSelect('auth_logs')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-            activeTab === 'auth_logs'
+            currentTab === 'auth_logs'
               ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
           }`}
@@ -546,9 +555,9 @@ export const AdminDashboard = () => {
 
         <button
           type="button"
-          onClick={() => setActiveTab('ai_models')}
+          onClick={() => handleTabSelect('ai_models')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-            activeTab === 'ai_models'
+            currentTab === 'ai_models'
               ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
           }`}
@@ -559,9 +568,9 @@ export const AdminDashboard = () => {
 
         <button
           type="button"
-          onClick={() => setActiveTab('system')}
+          onClick={() => handleTabSelect('system')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-            activeTab === 'system'
+            currentTab === 'system'
               ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
           }`}
@@ -572,7 +581,7 @@ export const AdminDashboard = () => {
       </div>
 
       {/* TAB 1: Business Owners & Their Employees Directory */}
-      {activeTab === 'businesses' && (
+      {currentTab === 'businesses' && (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4">
             <div>
@@ -713,7 +722,7 @@ export const AdminDashboard = () => {
       )}
 
       {/* TAB 2: Authentication & Login Logs (with Business Filter) */}
-      {activeTab === 'auth_logs' && (
+      {currentTab === 'auth_logs' && (
         <div className="space-y-4">
           <Card className="border-slate-800 bg-slate-900/80">
             <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -852,7 +861,7 @@ export const AdminDashboard = () => {
       )}
 
       {/* TAB 3: AI Models & Last Train Dates (Per Business) */}
-      {activeTab === 'ai_models' && (
+      {currentTab === 'ai_models' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4">
             <div>
@@ -977,7 +986,7 @@ export const AdminDashboard = () => {
       )}
 
       {/* TAB 4: System Health & RBAC Policy */}
-      {activeTab === 'system' && (
+      {currentTab === 'system' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <Card className="border-slate-800 bg-slate-900/90">
