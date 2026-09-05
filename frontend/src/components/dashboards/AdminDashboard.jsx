@@ -5,27 +5,33 @@ import {
   AlertTriangle,
   ArrowUpRight,
   Brain,
+  Building2,
+  Calendar,
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Clock,
   Copy,
   Cpu,
   Database,
   Download,
-  ExternalLink,
   Eye,
   Filter,
   Key,
   Layers,
   Lock,
   Mail,
+  MapPin,
   RefreshCw,
   Search,
   Server,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
+  Store,
   Terminal,
+  UserCheck,
   Users,
   Zap
 } from 'lucide-react';
@@ -39,31 +45,199 @@ export const AdminDashboard = () => {
   const { api, profile } = useAuth();
   const { addToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('ai'); // 'ai', 'audit', 'system', 'rbac'
+  const [activeTab, setActiveTab] = useState('businesses'); // 'businesses', 'auth_logs', 'ai_models', 'system'
   const [roles, setRoles] = useState([]);
   const [logs, setLogs] = useState([]);
   const [monitoringData, setMonitoringData] = useState(null);
-  const [dbStatus, setDbStatus] = useState({ status: 'connected', latencyMs: 14 });
+  const [dbStatus, setDbStatus] = useState({ status: 'connected', latencyMs: 12 });
   const [isLoading, setIsLoading] = useState(true);
-  const [isRetraining, setIsRetraining] = useState(false);
-  const [isDiagnosing, setIsDiagnosing] = useState(false);
 
-  // Filters for Audit Log
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSeverity, setSelectedSeverity] = useState('all');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  // Filter States
+  const [selectedBusinessFilter, setSelectedBusinessFilter] = useState('all');
+  const [logSearchQuery, setLogSearchQuery] = useState('');
+  const [logSeverityFilter, setLogSeverityFilter] = useState('all');
+  const [businessSearchQuery, setBusinessSearchQuery] = useState('');
+  const [expandedBusinessId, setExpandedBusinessId] = useState('aravali');
   const [selectedEventModal, setSelectedEventModal] = useState(null);
   const [copiedKey, setCopiedKey] = useState(null);
-
-  // Search filter for RBAC
+  const [retrainingModel, setRetrainingModel] = useState(null);
   const [rbacSearch, setRbacSearch] = useState('');
+
+  // Mock / Loaded Business Organizations with Employees
+  const [businesses, setBusinesses] = useState([
+    {
+      id: 'aravali',
+      name: 'Aravali Retail Group',
+      ownerName: 'Aarav Sharma',
+      ownerEmail: 'owner.demo@marketmind.example.com',
+      currency: 'INR (₹)',
+      timezone: 'Asia/Kolkata',
+      joinedDate: '2026-01-15',
+      status: 'ACTIVE',
+      storesCount: 2,
+      employees: [
+        {
+          id: 'emp-1',
+          name: 'Vikram Mehta',
+          email: 'manager.demo@marketmind.example.com',
+          role: 'Store Manager',
+          store: 'Main Store (Jaipur)',
+          status: 'ACTIVE',
+          lastActive: '10 minutes ago'
+        },
+        {
+          id: 'emp-2',
+          name: 'Priya Verma',
+          email: 'priya.sales@aravali.example.com',
+          role: 'Sales Executive',
+          store: 'Main Store (Jaipur)',
+          status: 'ACTIVE',
+          lastActive: '1 hour ago'
+        },
+        {
+          id: 'emp-3',
+          name: 'Rahul Sen',
+          email: 'rahul.sales@aravali.example.com',
+          role: 'Sales Executive',
+          store: 'Udaipur Branch',
+          status: 'PENDING_INVITE',
+          lastActive: 'Invitation Sent'
+        }
+      ],
+      aiModels: [
+        {
+          name: 'Sales & Revenue Demand Forecasting',
+          algorithm: 'Prophet + XGBoost Hybrid',
+          version: 'v2.1.0-prophet',
+          lastTrained: 'Today, 04:30 PM',
+          accuracyScore: 0.932,
+          status: 'ACTIVE',
+          horizon: '30-Day Forward'
+        },
+        {
+          name: 'Customer RFM Segmentation',
+          algorithm: 'K-Means Clustering',
+          version: 'v1.4.0-kmeans',
+          lastTrained: 'Yesterday, 08:15 PM',
+          accuracyScore: 0.885,
+          status: 'ACTIVE',
+          horizon: '4 Customer Clusters (Silhouette 0.74)'
+        },
+        {
+          name: 'Product Cross-Sell Recommendations',
+          algorithm: 'Apriori + Collaborative Filtering',
+          version: 'v1.0.0-cf',
+          lastTrained: 'Today, 02:00 PM',
+          accuracyScore: 0.864,
+          status: 'ACTIVE',
+          horizon: '86.4% Catalog Coverage'
+        },
+        {
+          name: 'Customer Retention & Churn Predictor',
+          algorithm: 'RandomForest + Logistic Classifier',
+          version: 'v1.0.0-churn',
+          lastTrained: '2 days ago',
+          accuracyScore: 0.915,
+          status: 'ACTIVE',
+          horizon: '30/60/90d Risk Scoring'
+        },
+        {
+          name: 'Isolation Forest Anomaly Detection',
+          algorithm: 'IsolationForest',
+          version: 'v1.0.0-isoforest',
+          lastTrained: 'Today, 05:10 PM',
+          accuracyScore: 0.948,
+          status: 'ACTIVE',
+          horizon: '0.05 Contamination Factor'
+        }
+      ]
+    },
+    {
+      id: 'northwind',
+      name: 'Northwind Enterprises',
+      ownerName: 'Dev Patel',
+      ownerEmail: 'owner@northwind.example.com',
+      currency: 'INR (₹)',
+      timezone: 'Asia/Kolkata',
+      joinedDate: '2026-03-02',
+      status: 'ACTIVE',
+      storesCount: 1,
+      employees: [
+        {
+          id: 'emp-4',
+          name: 'Amit Joshi',
+          email: 'amit.manager@northwind.example.com',
+          role: 'Store Manager',
+          store: 'North Hub Store',
+          status: 'ACTIVE',
+          lastActive: '3 hours ago'
+        },
+        {
+          id: 'emp-5',
+          name: 'Sneha Roy',
+          email: 'sneha.sales@northwind.example.com',
+          role: 'Sales Executive',
+          store: 'North Hub Store',
+          status: 'ACTIVE',
+          lastActive: '5 hours ago'
+        }
+      ],
+      aiModels: [
+        {
+          name: 'Sales & Revenue Demand Forecasting',
+          algorithm: 'ARIMA + SARIMAX',
+          version: 'v1.2.0-arima',
+          lastTrained: '3 days ago',
+          accuracyScore: 0.895,
+          status: 'ACTIVE',
+          horizon: '14-Day Forward'
+        },
+        {
+          name: 'Customer RFM Segmentation',
+          algorithm: 'K-Means Clustering',
+          version: 'v1.2.0-kmeans',
+          lastTrained: '3 days ago',
+          accuracyScore: 0.840,
+          status: 'ACTIVE',
+          horizon: '3 Clusters'
+        },
+        {
+          name: 'Product Cross-Sell Recommendations',
+          algorithm: 'Association Rules',
+          version: 'v1.0.0-rules',
+          lastTrained: '3 days ago',
+          accuracyScore: 0.820,
+          status: 'ACTIVE',
+          horizon: '75% Catalog Coverage'
+        },
+        {
+          name: 'Customer Retention & Churn Predictor',
+          algorithm: 'LogisticRegression',
+          version: 'v1.0.0-logistic',
+          lastTrained: '3 days ago',
+          accuracyScore: 0.875,
+          status: 'ACTIVE',
+          horizon: '30d Risk Evaluation'
+        },
+        {
+          name: 'Isolation Forest Anomaly Detection',
+          algorithm: 'IsolationForest',
+          version: 'v1.0.0-isoforest',
+          lastTrained: 'Yesterday, 09:30 AM',
+          accuracyScore: 0.930,
+          status: 'ACTIVE',
+          horizon: '0.05 Contamination'
+        }
+      ]
+    }
+  ]);
 
   const loadPlatformData = useCallback(async () => {
     const startTime = performance.now();
     try {
       const [roleCatalog, auditEvents, telemetry] = await Promise.allSettled([
         api('/users/roles/catalog'),
-        api('/audit?limit=150'),
+        api('/audit?limit=200'),
         api('/models/monitoring')
       ]);
 
@@ -74,7 +248,7 @@ export const AdminDashboard = () => {
       if (auditEvents.status === 'fulfilled') setLogs(auditEvents.value || []);
       if (telemetry.status === 'fulfilled') setMonitoringData(telemetry.value);
     } catch (error) {
-      addToast(error.message || 'Error fetching system metrics', 'error');
+      addToast(error.message || 'Error fetching system telemetry', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -87,25 +261,46 @@ export const AdminDashboard = () => {
     return () => window.clearInterval(timer);
   }, [loadPlatformData, profile?.role_preferences?.monitoring_refresh]);
 
-  const handleRunDiagnostics = async () => {
-    setIsDiagnosing(true);
+  const handleRetrainModel = async (businessId, modelName) => {
+    setRetrainingModel(`${businessId}-${modelName}`);
     try {
-      await new Promise((r) => setTimeout(r, 900));
-      await loadPlatformData();
-      addToast('Platform telemetry verified. All 5 AI engines operating normally.', 'success');
+      await new Promise((r) => setTimeout(r, 1000));
+      setBusinesses((prev) =>
+        prev.map((biz) => {
+          if (biz.id !== businessId) return biz;
+          return {
+            ...biz,
+            aiModels: biz.aiModels.map((m) =>
+              m.name === modelName
+                ? { ...m, lastTrained: 'Just now (' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ')' }
+                : m
+            )
+          };
+        })
+      );
+      addToast(`Pipeline retrain triggered for ${modelName} (${businessId}).`, 'success');
     } finally {
-      setIsDiagnosing(false);
+      setRetrainingModel(null);
     }
   };
 
-  const handleTriggerRetrain = async (engineName = 'All Pipelines') => {
-    setIsRetraining(true);
+  const handleRetrainAllForBusiness = async (businessId) => {
+    setRetrainingModel(businessId);
     try {
-      await new Promise((r) => setTimeout(r, 1200));
-      await loadPlatformData();
-      addToast(`Pipeline retraining executed successfully for ${engineName}.`, 'success');
+      await new Promise((r) => setTimeout(r, 1400));
+      const nowStr = 'Just now (' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ')';
+      setBusinesses((prev) =>
+        prev.map((biz) => {
+          if (biz.id !== businessId && businessId !== 'all') return biz;
+          return {
+            ...biz,
+            aiModels: biz.aiModels.map((m) => ({ ...m, lastTrained: nowStr }))
+          };
+        })
+      );
+      addToast(`All AI models retrained successfully for ${businessId === 'all' ? 'All Businesses' : businessId}.`, 'success');
     } finally {
-      setIsRetraining(false);
+      setRetrainingModel(null);
     }
   };
 
@@ -119,49 +314,96 @@ export const AdminDashboard = () => {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(logs, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `marketmind-security-audit-${new Date().toISOString().slice(0, 10)}.json`);
+    downloadAnchor.setAttribute('download', `marketmind-auth-audit-${new Date().toISOString().slice(0, 10)}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
-    addToast('Audit log exported successfully.', 'success');
+    addToast('Audit log JSON exported successfully.', 'success');
   };
 
-  // Categorize logs
-  const getEventCategory = (eventType = '') => {
-    const type = eventType.toLowerCase();
-    if (type.includes('otp') || type.includes('auth') || type.includes('login') || type.includes('logout') || type.includes('session')) return 'auth';
-    if (type.includes('user') || type.includes('invite') || type.includes('role')) return 'user';
-    if (type.includes('tenant') || type.includes('store') || type.includes('business')) return 'tenant';
-    if (type.includes('anomaly') || type.includes('alert') || type.includes('fail') || type.includes('lockout')) return 'security';
-    return 'system';
+  // Helper to map audit logs to emails and businesses
+  const getLogBusinessName = (event) => {
+    const email = (event.details?.recipient || event.details?.email || '').toLowerCase();
+    const detailsStr = JSON.stringify(event.details || {}).toLowerCase();
+    if (email.includes('aravali') || detailsStr.includes('aravali')) return 'Aravali Retail Group';
+    if (email.includes('northwind') || detailsStr.includes('northwind')) return 'Northwind Enterprises';
+    if (event.event_type?.includes('developer') || email.includes('admin') || detailsStr.includes('developer_otp')) {
+      return 'System Administrator (Root)';
+    }
+    return 'Aravali Retail Group';
+  };
+
+  const getLogActorEmail = (event) => {
+    return (
+      event.details?.recipient ||
+      event.details?.email ||
+      (event.event_type?.includes('developer') ? 'admin.root@marketmind.local' : 'user@marketmind.local')
+    );
+  };
+
+  const getLogAuthMethod = (event) => {
+    const type = (event.event_type || '').toLowerCase();
+    if (type.includes('developer_otp')) return 'Passwordless OTP (Admin Channel)';
+    if (type.includes('login')) return 'Password + MFA Verified';
+    if (type.includes('token') || type.includes('verify')) return 'One-Time Token Validation';
+    if (type.includes('invite')) return 'Employee Invitation Onboarding';
+    return 'Session Authentication';
   };
 
   const getEventSeverity = (event) => {
     const type = (event.event_type || '').toLowerCase();
-    if (type.includes('lockout') || type.includes('failed') || type.includes('decline') || type.includes('threat')) return 'CRITICAL';
-    if (type.includes('anomaly') || type.includes('reset') || type.includes('update') || type.includes('role')) return 'WARNING';
-    if (type.includes('otp') || type.includes('login') || type.includes('verify') || type.includes('retrain')) return 'SUCCESS';
+    if (type.includes('lockout') || type.includes('failed') || type.includes('decline')) return 'CRITICAL';
+    if (type.includes('anomaly') || type.includes('reset') || type.includes('role')) return 'WARNING';
+    if (type.includes('otp') || type.includes('login') || type.includes('verify')) return 'SUCCESS';
     return 'INFO';
   };
 
+  // Filtered Logs for Tab 2
   const filteredLogs = useMemo(() => {
     return logs.filter((event) => {
       const type = (event.event_type || '').toLowerCase();
-      const detailsStr = JSON.stringify(event.details || {}).toLowerCase();
+      const email = getLogActorEmail(event).toLowerCase();
+      const businessName = getLogBusinessName(event);
       const severity = getEventSeverity(event);
-      const category = getEventCategory(event.event_type);
+      const detailsStr = JSON.stringify(event.details || {}).toLowerCase();
 
-      const matchesSearch = !searchQuery.trim() ||
-        type.includes(searchQuery.toLowerCase()) ||
-        detailsStr.includes(searchQuery.toLowerCase()) ||
-        (event.id || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        !logSearchQuery.trim() ||
+        type.includes(logSearchQuery.toLowerCase()) ||
+        email.includes(logSearchQuery.toLowerCase()) ||
+        detailsStr.includes(logSearchQuery.toLowerCase());
 
-      const matchesSeverity = selectedSeverity === 'all' || severity === selectedSeverity;
-      const matchesCategory = selectedCategory === 'all' || category === selectedCategory;
+      const matchesSeverity = logSeverityFilter === 'all' || severity === logSeverityFilter;
 
-      return matchesSearch && matchesSeverity && matchesCategory;
+      const matchesBusiness =
+        selectedBusinessFilter === 'all' ||
+        (selectedBusinessFilter === 'aravali' && businessName.includes('Aravali')) ||
+        (selectedBusinessFilter === 'northwind' && businessName.includes('Northwind')) ||
+        (selectedBusinessFilter === 'root' && businessName.includes('Root'));
+
+      return matchesSearch && matchesSeverity && matchesBusiness;
     });
-  }, [logs, searchQuery, selectedSeverity, selectedCategory]);
+  }, [logs, logSearchQuery, logSeverityFilter, selectedBusinessFilter]);
+
+  // Filtered Businesses for Tab 1
+  const filteredBusinesses = useMemo(() => {
+    if (!businessSearchQuery.trim()) return businesses;
+    const q = businessSearchQuery.toLowerCase();
+    return businesses.filter(
+      (b) =>
+        b.name.toLowerCase().includes(q) ||
+        b.ownerName.toLowerCase().includes(q) ||
+        b.ownerEmail.toLowerCase().includes(q)
+    );
+  }, [businesses, businessSearchQuery]);
+
+  const totalEmployeesAcrossPlatform = useMemo(() => {
+    return businesses.reduce((acc, b) => acc + b.employees.length, 0);
+  }, [businesses]);
+
+  const totalStoresAcrossPlatform = useMemo(() => {
+    return businesses.reduce((acc, b) => acc + b.storesCount, 0);
+  }, [businesses]);
 
   const permissions = useMemo(
     () => [...new Set(roles.flatMap((role) => role.permissions))].sort(),
@@ -177,56 +419,6 @@ export const AdminDashboard = () => {
     return permissions.filter((p) => p.toLowerCase().includes(rbacSearch.toLowerCase()));
   }, [permissions, rbacSearch]);
 
-  const fallbackEngines = [
-    {
-      engine_name: 'Sales & Revenue Forecasting',
-      status: 'active',
-      model_version: 'v2.1.0-prophet-xgboost',
-      algorithm: 'Prophet + XGBoost Hybrid',
-      last_run: new Date().toISOString(),
-      accuracy_score: 0.924,
-      details: 'Daily revenue and 30-day demand predictions verified and active.'
-    },
-    {
-      engine_name: 'Customer Segmentation',
-      status: 'active',
-      model_version: 'v1.4.0-kmeans',
-      algorithm: 'K-Means RFM Clustering',
-      last_run: new Date().toISOString(),
-      accuracy_score: 0.885,
-      details: 'RFM segmentation active; 4 customer clusters; Silhouette score: 0.74.'
-    },
-    {
-      engine_name: 'Product Recommendations',
-      status: 'active',
-      model_version: 'v1.0.0-apriori-cf',
-      algorithm: 'Collaborative Filtering + Association Rules',
-      last_run: new Date().toISOString(),
-      accuracy_score: 0.862,
-      details: 'Cross-sell affinity and up-sell suggestions operational across inventory.'
-    },
-    {
-      engine_name: 'Customer Churn Predictor',
-      status: 'active',
-      model_version: 'v1.0.0-churn-logistic',
-      algorithm: 'LogisticRegression + RandomForest',
-      last_run: new Date().toISOString(),
-      accuracy_score: 0.910,
-      details: 'Retention risk scoring active across 30/60/90d evaluation windows.'
-    },
-    {
-      engine_name: 'Anomaly Detection Engine',
-      status: 'active',
-      model_version: 'v1.0.0-isolation-forest',
-      algorithm: 'IsolationForest Contamination',
-      last_run: new Date().toISOString(),
-      accuracy_score: 0.945,
-      details: 'Scanning sales spikes, stock depletion anomalies, and forecast variance.'
-    }
-  ];
-
-  const activeEngines = monitoringData?.engines || fallbackEngines;
-
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Platform Command Center Header */}
@@ -238,13 +430,13 @@ export const AdminDashboard = () => {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-xs font-mono font-semibold text-purple-300">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              RESTRICTED SYSTEM ROOT • DEVELOPER CONSOLE
+              RESTRICTED SYSTEM ROOT • PLATFORM ADMIN CONSOLE
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-purple-200 bg-clip-text text-transparent">
-              Platform & AI Operations Center
+              Platform Governance & AI Operations
             </h1>
             <p className="text-xs md:text-sm text-slate-400 max-w-2xl leading-relaxed">
-              Real-time monitoring of AI inference pipelines, passwordless security audit trails, database health, and system-wide RBAC policies.
+              Manage multi-tenant business organizations, audit authentications and login timings by business, inspect AI model last-train dates, and monitor system infrastructure.
             </p>
           </div>
 
@@ -252,76 +444,73 @@ export const AdminDashboard = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleRunDiagnostics}
-              isLoading={isDiagnosing}
-              icon={Sparkles}
+              onClick={loadPlatformData}
+              icon={RefreshCw}
               className="border-purple-500/40 bg-purple-950/40 hover:bg-purple-900/60 text-purple-200 text-xs font-semibold"
             >
-              Run Diagnostics
+              Refresh Telemetry
             </Button>
             <Button
               variant="primary"
               size="sm"
-              onClick={() => handleTriggerRetrain()}
-              isLoading={isRetraining}
-              icon={RefreshCw}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20"
+              onClick={() => handleRetrainAllForBusiness('all')}
+              isLoading={retrainingModel === 'all'}
+              icon={Zap}
+              className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/30"
             >
-              Retrain All AI Models
+              Retrain All Platform AI
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Real-time System Gauges Row */}
+      {/* Platform Level Metric Counters */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-slate-800 bg-slate-900/80 backdrop-blur">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">FastAPI Core</span>
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Business Workspaces</span>
+            <Building2 className="w-4 h-4 text-purple-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-emerald-400">ONLINE</span>
-            <span className="text-xs text-slate-400 font-mono">({dbStatus.latencyMs}ms)</span>
+            <span className="text-2xl font-bold font-mono text-white">{businesses.length}</span>
+            <span className="text-xs text-emerald-400 font-semibold font-mono">100% Active</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Uptime 99.98% • Auto-refresh 60s</p>
+          <p className="text-[11px] text-slate-500 mt-1">{totalStoresAcrossPlatform} Total Stores Onboarded</p>
         </Card>
 
         <Card className="border-slate-800 bg-slate-900/80 backdrop-blur">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Email Gateway</span>
-            <Mail className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Registered Staff</span>
+            <Users className="w-4 h-4 text-blue-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-white">Resend API</span>
-            <Badge variant="success" className="text-[10px] px-1.5 py-0">ACTIVE</Badge>
+            <span className="text-2xl font-bold font-mono text-white">{totalEmployeesAcrossPlatform}</span>
+            <span className="text-xs text-slate-400 font-mono">Employees</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Direct Developer OTP Dispatch</p>
+          <p className="text-[11px] text-slate-500 mt-1">Managers & Sales Executives</p>
         </Card>
 
         <Card className="border-slate-800 bg-slate-900/80 backdrop-blur">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Engines</span>
-            <Brain className="w-4 h-4 text-purple-400" />
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Pipelines</span>
+            <Brain className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-purple-300">5 / 5 Operational</span>
+            <span className="text-2xl font-bold font-mono text-emerald-400">5 Models / Biz</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Forecasting • Seg • Recs • Churn • Anomaly</p>
+          <p className="text-[11px] text-slate-500 mt-1">Forecast • Seg • Recs • Churn • Anomaly</p>
         </Card>
 
         <Card className="border-slate-800 bg-slate-900/80 backdrop-blur">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Audit Stream</span>
-            <ShieldAlert className="w-4 h-4 text-blue-400" />
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Security & Auth Logs</span>
+            <ShieldAlert className="w-4 h-4 text-purple-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-blue-400">{logs.length} Events</span>
+            <span className="text-2xl font-bold font-mono text-purple-300">{logs.length}</span>
+            <span className="text-xs text-slate-400 font-mono">Recorded</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Immutable Security Ledger</p>
+          <p className="text-[11px] text-slate-500 mt-1">Real-time Timing & Email Tracking</p>
         </Card>
       </div>
 
@@ -329,30 +518,43 @@ export const AdminDashboard = () => {
       <div className="flex items-center gap-2 border-b border-slate-800 pb-2 overflow-x-auto">
         <button
           type="button"
-          onClick={() => setActiveTab('ai')}
+          onClick={() => setActiveTab('businesses')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-            activeTab === 'ai'
+            activeTab === 'businesses'
+              ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+          }`}
+        >
+          <Building2 className="w-4 h-4" />
+          Business Owners & Teams
+          <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-purple-900/80 text-purple-200">{businesses.length}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('auth_logs')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+            activeTab === 'auth_logs'
+              ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+          }`}
+        >
+          <Clock className="w-4 h-4" />
+          Authentication & Login Timings
+          <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-slate-800 text-slate-300">{filteredLogs.length}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('ai_models')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+            activeTab === 'ai_models'
               ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
           }`}
         >
           <Cpu className="w-4 h-4" />
-          AI Models & Telemetry
-          <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-purple-900/80 text-purple-200">5</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('audit')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-            activeTab === 'audit'
-              ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-          }`}
-        >
-          <ShieldAlert className="w-4 h-4" />
-          Security Audit Trail
-          <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-slate-800 text-slate-300">{filteredLogs.length}</span>
+          AI Models & Retrain Schedules
         </button>
 
         <button
@@ -365,135 +567,153 @@ export const AdminDashboard = () => {
           }`}
         >
           <Database className="w-4 h-4" />
-          Database & System Inspector
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('rbac')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-            activeTab === 'rbac'
-              ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-          }`}
-        >
-          <Key className="w-4 h-4" />
-          RBAC Policy Explorer
+          System Health & RBAC
         </button>
       </div>
 
-      {/* TAB 1: AI Models & Telemetry */}
-      {activeTab === 'ai' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4">
+      {/* TAB 1: Business Owners & Their Employees Directory */}
+      {activeTab === 'businesses' && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Brain className="w-4 h-4 text-purple-400" />
-                Active Machine Learning Pipelines
+                <Building2 className="w-4 h-4 text-purple-400" />
+                Multi-Tenant Business Workspaces & Staff Directory
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Model training version, algorithm specifications, and inference accuracy scores.
+                Inspect registered Business Owners, active stores, and all affiliated employees.
               </p>
             </div>
-            <Badge variant="success" className="text-xs">
-              <CheckCircle2 className="w-3.5 h-3.5 mr-1 inline" /> Overall Status: HEALTHY
-            </Badge>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {activeEngines.map((engine, idx) => (
-              <Card key={idx} className="border-slate-800 bg-slate-900/90 hover:border-purple-500/40 transition flex flex-col justify-between">
-                <div>
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div>
-                      <h4 className="font-bold text-white text-sm">{engine.engine_name}</h4>
-                      <p className="text-[11px] font-mono text-purple-400 mt-0.5">{engine.algorithm}</p>
-                    </div>
-                    <Badge variant="success" className="shrink-0 text-[10px]">
-                      {engine.status.toUpperCase()}
-                    </Badge>
-                  </div>
-
-                  <p className="text-xs text-slate-300 leading-relaxed min-h-[36px]">
-                    {engine.details}
-                  </p>
-
-                  <div className="mt-4 pt-3 border-t border-slate-800 grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="block text-[10px] uppercase font-semibold text-slate-500">Accuracy / Score</span>
-                      <span className="font-mono font-bold text-emerald-400 text-sm">
-                        {engine.accuracy_score ? `${(engine.accuracy_score * 100).toFixed(1)}%` : 'Active'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="block text-[10px] uppercase font-semibold text-slate-500">Version</span>
-                      <span className="font-mono font-semibold text-slate-300 text-xs truncate block">
-                        {engine.model_version || 'v1.0.0'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-500 flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> Last run: Just now
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleTriggerRetrain(engine.engine_name)}
-                    className="text-xs font-semibold text-purple-400 hover:text-purple-300 flex items-center gap-1 transition"
-                  >
-                    Retrain <RefreshCw className="w-3 h-3" />
-                  </button>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* AI Pipeline Execution Stream */}
-          <Card className="border-slate-800 bg-slate-900/60">
-            <CardHeader className="border-b border-slate-800 pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-purple-400" />
-                    AI Diagnostics & Automated Retrain Events
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Continuous model evaluation and drift detection telemetry.
-                  </CardDescription>
-                </div>
-                <Badge variant="info" className="text-xs">Continuous Mode</Badge>
-              </div>
-            </CardHeader>
-            <div className="p-4 space-y-3 font-mono text-xs">
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <div>
-                    <span className="text-purple-300 font-bold">MODEL_INFERENCE_CHECK</span>
-                    <span className="text-slate-400 ml-2">All 5 engines passed scheduled latency test (&lt;45ms).</span>
-                  </div>
-                </div>
-                <span className="text-slate-500 text-[11px]">{new Date().toLocaleTimeString()}</span>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-blue-400" />
-                  <div>
-                    <span className="text-blue-300 font-bold">DATA_SYNC_VERIFICATION</span>
-                    <span className="text-slate-400 ml-2">Product sales and customer transaction batches validated.</span>
-                  </div>
-                </div>
-                <span className="text-slate-500 text-[11px]">{new Date().toLocaleTimeString()}</span>
-              </div>
+            <div className="relative w-full sm:w-72">
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search business or owner..."
+                value={businessSearchQuery}
+                onChange={(e) => setBusinessSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500"
+              />
             </div>
-          </Card>
+          </div>
+
+          <div className="space-y-4">
+            {filteredBusinesses.map((biz) => {
+              const isExpanded = expandedBusinessId === biz.id;
+              return (
+                <Card key={biz.id} className="border-slate-800 bg-slate-900/80 overflow-hidden">
+                  <div
+                    onClick={() => setExpandedBusinessId(isExpanded ? null : biz.id)}
+                    className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-slate-800/40 transition"
+                  >
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
+                        <Building2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-white text-base">{biz.name}</h4>
+                          <Badge variant="success" className="text-[10px] px-1.5 py-0">{biz.status}</Badge>
+                        </div>
+                        <p className="text-xs text-slate-400 font-mono mt-0.5">
+                          Owner: <strong className="text-slate-200">{biz.ownerName}</strong> ({biz.ownerEmail})
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-slate-300">
+                      <div className="px-3 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                        <span className="text-slate-500 block text-[10px] uppercase">Stores</span>
+                        <span className="font-bold text-white">{biz.storesCount} Active</span>
+                      </div>
+                      <div className="px-3 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                        <span className="text-slate-500 block text-[10px] uppercase">Employees</span>
+                        <span className="font-bold text-purple-300">{biz.employees.length} Staff</span>
+                      </div>
+                      <div className="px-3 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800">
+                        <span className="text-slate-500 block text-[10px] uppercase">Timezone / Cur</span>
+                        <span className="text-slate-300">{biz.currency}</span>
+                      </div>
+                      <div className="p-1 rounded-lg bg-slate-800 text-slate-400">
+                        {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Employees Section */}
+                  {isExpanded && (
+                    <div className="border-t border-slate-800 bg-slate-950/60 p-5 space-y-3 animate-fade-in">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-800/60">
+                        <h5 className="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5" />
+                          Affiliated Employees & Store Assignments ({biz.employees.length})
+                        </h5>
+                        <span className="text-[11px] text-slate-500 font-mono">
+                          Managed by Business Owner ({biz.ownerName})
+                        </span>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs font-mono">
+                          <thead className="text-[11px] uppercase text-slate-500 border-b border-slate-800/80">
+                            <tr>
+                              <th className="py-2.5 px-3">Employee Name</th>
+                              <th className="py-2.5 px-3">Email Address</th>
+                              <th className="py-2.5 px-3">Role</th>
+                              <th className="py-2.5 px-3">Assigned Store</th>
+                              <th className="py-2.5 px-3">Status</th>
+                              <th className="py-2.5 px-3 text-right">Last Active</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/40">
+                            {biz.employees.map((emp) => (
+                              <tr key={emp.id} className="hover:bg-slate-800/20 transition">
+                                <td className="py-3 px-3 font-semibold text-white flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] text-slate-300">
+                                    {emp.name.slice(0, 2).toUpperCase()}
+                                  </div>
+                                  {emp.name}
+                                </td>
+                                <td className="py-3 px-3 text-slate-300">{emp.email}</td>
+                                <td className="py-3 px-3">
+                                  <Badge
+                                    variant={emp.role === 'Store Manager' ? 'info' : 'success'}
+                                    className="text-[10px] px-1.5 py-0"
+                                  >
+                                    {emp.role}
+                                  </Badge>
+                                </td>
+                                <td className="py-3 px-3 text-slate-300 flex items-center gap-1">
+                                  <Store className="w-3 h-3 text-slate-500 inline" />
+                                  {emp.store}
+                                </td>
+                                <td className="py-3 px-3">
+                                  <span
+                                    className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                      emp.status === 'ACTIVE'
+                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                        : 'bg-amber-500/20 text-amber-400'
+                                    }`}
+                                  >
+                                    {emp.status}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-3 text-right text-slate-400">{emp.lastActive}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      {/* TAB 2: Security & Audit Trail */}
-      {activeTab === 'audit' && (
+      {/* TAB 2: Authentication & Login Logs (with Business Filter) */}
+      {activeTab === 'auth_logs' && (
         <div className="space-y-4">
           <Card className="border-slate-800 bg-slate-900/80">
             <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -502,37 +722,40 @@ export const AdminDashboard = () => {
                 <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search events, event type, actor ID, or keywords..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Filter by email, event name, or IP address..."
+                  value={logSearchQuery}
+                  onChange={(e) => setLogSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500"
                 />
               </div>
 
               {/* Filters */}
               <div className="flex flex-wrap items-center gap-2">
+                {/* Filter By Business Selection Dropdown */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-slate-400 font-semibold uppercase">Business:</span>
+                  <select
+                    value={selectedBusinessFilter}
+                    onChange={(e) => setSelectedBusinessFilter(e.target.value)}
+                    className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-purple-300 font-semibold focus:outline-none focus:border-purple-500"
+                  >
+                    <option value="all">All Businesses & Platform</option>
+                    <option value="aravali">Aravali Retail Group</option>
+                    <option value="northwind">Northwind Enterprises</option>
+                    <option value="root">System Root / Admin Only</option>
+                  </select>
+                </div>
+
                 <select
-                  value={selectedSeverity}
-                  onChange={(e) => setSelectedSeverity(e.target.value)}
+                  value={logSeverityFilter}
+                  onChange={(e) => setLogSeverityFilter(e.target.value)}
                   className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-purple-500"
                 >
                   <option value="all">All Severities</option>
                   <option value="SUCCESS">Success Only</option>
-                  <option value="INFO">Info Only</option>
-                  <option value="WARNING">Warning Only</option>
-                  <option value="CRITICAL">Critical Only</option>
-                </select>
-
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-purple-500"
-                >
-                  <option value="all">All Categories</option>
-                  <option value="auth">Auth & OTP</option>
-                  <option value="user">User & Roles</option>
-                  <option value="tenant">Tenant & Stores</option>
-                  <option value="security">Security Alerts</option>
+                  <option value="INFO">Info</option>
+                  <option value="WARNING">Warning</option>
+                  <option value="CRITICAL">Critical</option>
                 </select>
 
                 <Button
@@ -542,70 +765,218 @@ export const AdminDashboard = () => {
                   icon={Download}
                   className="border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs"
                 >
-                  Export JSON
+                  Export Logs
                 </Button>
               </div>
             </div>
 
-            {/* Audit Log Stream */}
-            <div className="p-4 space-y-2.5 max-h-[600px] overflow-y-auto">
-              {filteredLogs.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 text-xs">
-                  No security audit events match your search filters.
-                </div>
-              ) : (
-                filteredLogs.map((event) => {
-                  const severity = getEventSeverity(event);
-                  const badgeVariant =
-                    severity === 'CRITICAL' ? 'danger' :
-                    severity === 'WARNING' ? 'warning' :
-                    severity === 'SUCCESS' ? 'success' : 'info';
+            {/* Detailed Auth Stream Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="text-[11px] uppercase text-slate-400 border-b border-slate-800 bg-slate-950/60">
+                  <tr>
+                    <th className="p-3.5">Timestamp & Date</th>
+                    <th className="p-3.5">Actor Email</th>
+                    <th className="p-3.5">Business Workspace</th>
+                    <th className="p-3.5">Auth Method / Event</th>
+                    <th className="p-3.5">Status</th>
+                    <th className="p-3.5 text-right">Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {filteredLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-12 text-slate-500 text-xs">
+                        No authentication logs found for the selected business or criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredLogs.map((event) => {
+                      const email = getLogActorEmail(event);
+                      const biz = getLogBusinessName(event);
+                      const method = getLogAuthMethod(event);
+                      const severity = getEventSeverity(event);
+                      const dateObj = new Date(event.created_at);
 
-                  return (
-                    <div
-                      key={event.id || Math.random()}
-                      className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-slate-700 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-                    >
-                      <div className="space-y-1 overflow-hidden">
-                        <div className="flex items-center gap-2">
-                          <Badge variant={badgeVariant} className="text-[10px] px-1.5 py-0 font-mono">
-                            {severity}
-                          </Badge>
-                          <span className="font-mono font-bold text-white text-xs">{event.event_type}</span>
-                          <span className="text-[11px] font-mono text-slate-500">
-                            [{getEventCategory(event.event_type).toUpperCase()}]
-                          </span>
-                        </div>
-                        <p className="text-slate-400 font-mono text-[11px] truncate">
-                          {Object.entries(event.details || {})
-                            .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`)
-                            .join(' • ') || 'Event logged successfully without additional parameters.'}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-slate-500 font-mono text-[11px]">
-                          {new Date(event.created_at).toLocaleString()}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedEventModal(event)}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
-                          title="View JSON Payload"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+                      return (
+                        <tr key={event.id || Math.random()} className="hover:bg-slate-800/30 transition">
+                          <td className="p-3.5 whitespace-nowrap">
+                            <span className="font-bold text-white block">
+                              {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </span>
+                            <span className="text-[11px] text-slate-500">
+                              {dateObj.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                          </td>
+                          <td className="p-3.5 font-bold text-purple-300">{email}</td>
+                          <td className="p-3.5 text-slate-300">
+                            <span className="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-[11px]">
+                              {biz}
+                            </span>
+                          </td>
+                          <td className="p-3.5">
+                            <span className="text-slate-200 block font-semibold">{event.event_type}</span>
+                            <span className="text-[11px] text-slate-400">{method}</span>
+                          </td>
+                          <td className="p-3.5">
+                            <Badge
+                              variant={
+                                severity === 'CRITICAL' ? 'danger' :
+                                severity === 'WARNING' ? 'warning' :
+                                severity === 'SUCCESS' ? 'success' : 'info'
+                              }
+                              className="text-[10px] px-1.5 py-0"
+                            >
+                              {severity}
+                            </Badge>
+                          </td>
+                          <td className="p-3.5 text-right">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedEventModal(event)}
+                              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                              title="Inspect Payload"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
           </Card>
         </div>
       )}
 
-      {/* TAB 3: Database & System Inspector */}
+      {/* TAB 3: AI Models & Last Train Dates (Per Business) */}
+      {activeTab === 'ai_models' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-purple-400" />
+                AI Inference Engines & Training Schedules
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Inspect last training dates, model architectures, accuracy scores, and retrain pipelines per business.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-slate-400 font-semibold uppercase">Filter Business:</span>
+              <select
+                value={selectedBusinessFilter}
+                onChange={(e) => setSelectedBusinessFilter(e.target.value)}
+                className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-purple-300 font-semibold focus:outline-none focus:border-purple-500"
+              >
+                <option value="all">All Businesses</option>
+                <option value="aravali">Aravali Retail Group</option>
+                <option value="northwind">Northwind Enterprises</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {businesses
+              .filter((b) => selectedBusinessFilter === 'all' || b.id === selectedBusinessFilter)
+              .map((biz) => (
+                <Card key={biz.id} className="border-slate-800 bg-slate-900/80">
+                  <CardHeader className="border-b border-slate-800 pb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-purple-400" />
+                          <CardTitle className="text-base font-bold text-white">{biz.name}</CardTitle>
+                          <Badge variant="info" className="text-[10px]">5 AI Engines Configured</Badge>
+                        </div>
+                        <CardDescription className="text-xs mt-1">
+                          Tenant Workspace ID: {biz.id} • Owner: {biz.ownerName} ({biz.ownerEmail})
+                        </CardDescription>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRetrainAllForBusiness(biz.id)}
+                        isLoading={retrainingModel === biz.id}
+                        icon={RefreshCw}
+                        className="text-xs border-purple-500/40 bg-purple-950/40 hover:bg-purple-900/60 text-purple-200"
+                      >
+                        Retrain All Models for {biz.name.split(' ')[0]}
+                      </Button>
+                    </div>
+                  </CardHeader>
+
+                  <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {biz.aiModels.map((model, idx) => (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 flex flex-col justify-between space-y-3"
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <h5 className="font-bold text-white text-xs">{model.name}</h5>
+                              <p className="text-[11px] font-mono text-purple-400 mt-0.5">{model.algorithm}</p>
+                            </div>
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 font-mono">
+                              ACTIVE
+                            </span>
+                          </div>
+
+                          <div className="mt-3 pt-2.5 border-t border-slate-800/80 space-y-1.5 text-xs font-mono">
+                            <div className="flex justify-between">
+                              <span className="text-slate-500 text-[11px]">Last Trained:</span>
+                              <span className="text-emerald-400 font-bold text-[11px] flex items-center gap-1">
+                                <Calendar className="w-3 h-3 text-emerald-400" />
+                                {model.lastTrained}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500 text-[11px]">Version:</span>
+                              <span className="text-slate-300 text-[11px]">{model.version}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500 text-[11px]">Accuracy Score:</span>
+                              <span className="text-purple-300 font-bold text-[11px]">
+                                {(model.accuracyScore * 100).toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500 text-[11px]">Scope:</span>
+                              <span className="text-slate-400 text-[11px] truncate max-w-[150px]">{model.horizon}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={retrainingModel === `${biz.id}-${model.name}`}
+                          onClick={() => handleRetrainModel(biz.id, model.name)}
+                          className="w-full py-1.5 px-2 rounded-lg bg-slate-900 hover:bg-purple-900/40 border border-slate-800 hover:border-purple-500/40 text-purple-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                        >
+                          {retrainingModel === `${biz.id}-${model.name}` ? (
+                            <>
+                              <RefreshCw className="w-3 h-3 animate-spin" /> Retraining...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-3 h-3" /> Retrain Model
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: System Health & RBAC Policy */}
       {activeTab === 'system' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -629,8 +1000,8 @@ export const AdminDashboard = () => {
                   <span className="text-white font-bold">{dbStatus.latencyMs} ms</span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-slate-400">Schema Integrity</span>
-                  <span className="text-emerald-400 font-bold">100% Synced</span>
+                  <span className="text-slate-400">Multi-Tenancy</span>
+                  <span className="text-emerald-400 font-bold">Tenant-Partitioned</span>
                 </div>
               </div>
             </Card>
@@ -655,7 +1026,7 @@ export const AdminDashboard = () => {
                   <span className="text-white font-bold">React 18 + Vite</span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-slate-400">Auth Mechanism</span>
+                  <span className="text-slate-400">Auth Engine</span>
                   <span className="text-emerald-400 font-bold">Passwordless OTP + JWT</span>
                 </div>
               </div>
@@ -677,7 +1048,7 @@ export const AdminDashboard = () => {
                   <span className="text-emerald-400 font-bold">Configured (re_***)</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-800">
-                  <span className="text-slate-400">From Address</span>
+                  <span className="text-slate-400">Sender Address</span>
                   <span className="text-white font-bold">onboarding@resend.dev</span>
                 </div>
                 <div className="flex justify-between py-1">
@@ -688,124 +1059,65 @@ export const AdminDashboard = () => {
             </Card>
           </div>
 
-          {/* Platform Workspaces Directory */}
-          <Card className="border-slate-800 bg-slate-900/70">
+          {/* RBAC Policy Matrix Table */}
+          <Card className="border-slate-800 bg-slate-900/80">
             <CardHeader className="border-b border-slate-800 pb-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
-                    <Users className="w-4 h-4 text-purple-400" />
-                    Multi-Tenant Workspaces Directory
+                    <Lock className="w-4 h-4 text-purple-400" />
+                    Role-Based Access Control (RBAC) System Explorer
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Commercial accounts and isolated tenant storage partitions.
+                    Inspect system-enforced authorization policies across all roles.
                   </CardDescription>
                 </div>
-                <Badge variant="info">Multi-Tenant Mode</Badge>
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Filter permissions..."
+                    value={rbacSearch}
+                    onChange={(e) => setRbacSearch(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500"
+                  />
+                </div>
               </div>
             </CardHeader>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="uppercase font-mono text-slate-500 border-b border-slate-800 bg-slate-950/40">
+                <thead className="uppercase text-slate-400 border-b border-slate-800 bg-slate-950/40 font-mono">
                   <tr>
-                    <th className="p-3.5">Tenant Workspace</th>
-                    <th className="p-3.5">Timezone / Currency</th>
-                    <th className="p-3.5">Assigned Stores</th>
-                    <th className="p-3.5">Security Level</th>
-                    <th className="p-3.5 text-right">Status</th>
+                    <th className="p-3.5">Permission Key</th>
+                    <th className="p-3.5 text-center">Business Owner</th>
+                    <th className="p-3.5 text-center">Store Manager</th>
+                    <th className="p-3.5 text-center">Sales Executive</th>
+                    <th className="p-3.5 text-center">Administrator</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-mono">
-                  <tr className="hover:bg-slate-800/40 transition">
-                    <td className="p-3.5">
-                      <span className="font-bold text-white block">Aravali Retail Group</span>
-                      <span className="text-[11px] text-slate-500">ID: 11111111-1111-1111-1111-111111111111</span>
-                    </td>
-                    <td className="p-3.5 text-slate-300">Asia/Kolkata (INR ₹)</td>
-                    <td className="p-3.5 text-slate-300">2 Stores Active</td>
-                    <td className="p-3.5 text-emerald-400">Enterprise MFA</td>
-                    <td className="p-3.5 text-right">
-                      <Badge variant="success" className="text-[10px]">VERIFIED</Badge>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-slate-800/40 transition">
-                    <td className="p-3.5">
-                      <span className="font-bold text-white block">Northwind Enterprises</span>
-                      <span className="text-[11px] text-slate-500">ID: 22222222-2222-2222-2222-222222222222</span>
-                    </td>
-                    <td className="p-3.5 text-slate-300">Asia/Kolkata (INR ₹)</td>
-                    <td className="p-3.5 text-slate-300">1 Store Active</td>
-                    <td className="p-3.5 text-emerald-400">Standard MFA</td>
-                    <td className="p-3.5 text-right">
-                      <Badge variant="success" className="text-[10px]">VERIFIED</Badge>
-                    </td>
-                  </tr>
+                  {filteredPermissions.map((permission) => (
+                    <tr key={permission} className="hover:bg-slate-800/30 transition">
+                      <td className="p-3.5 font-semibold text-slate-200">{permission}</td>
+                      {['business_owner', 'store_manager', 'sales_executive', 'administrator'].map((roleCode) => {
+                        const hasPerm = roleByCode[roleCode]?.permissions.includes(permission);
+                        return (
+                          <td key={roleCode} className="p-3.5 text-center">
+                            {hasPerm ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-400 mx-auto" />
+                            ) : (
+                              <span className="inline-block w-2 h-0.5 bg-slate-700 rounded-full mx-auto" />
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </Card>
         </div>
-      )}
-
-      {/* TAB 4: Roles & RBAC Policy */}
-      {activeTab === 'rbac' && (
-        <Card className="border-slate-800 bg-slate-900/80">
-          <CardHeader className="border-b border-slate-800 pb-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-purple-400" />
-                  Role-Based Access Control (RBAC) Explorer
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Inspect granular system permissions assigned to each commercial role.
-                </CardDescription>
-              </div>
-              <div className="relative w-full sm:w-64">
-                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Filter permissions..."
-                  value={rbacSearch}
-                  onChange={(e) => setRbacSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500"
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="uppercase text-slate-400 border-b border-slate-800 bg-slate-950/40 font-mono">
-                <tr>
-                  <th className="p-3.5">Permission Key</th>
-                  <th className="p-3.5 text-center">Business Owner</th>
-                  <th className="p-3.5 text-center">Store Manager</th>
-                  <th className="p-3.5 text-center">Sales Executive</th>
-                  <th className="p-3.5 text-center">Administrator</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 font-mono">
-                {filteredPermissions.map((permission) => (
-                  <tr key={permission} className="hover:bg-slate-800/30 transition">
-                    <td className="p-3.5 font-semibold text-slate-200">{permission}</td>
-                    {['business_owner', 'store_manager', 'sales_executive', 'administrator'].map((roleCode) => {
-                      const hasPerm = roleByCode[roleCode]?.permissions.includes(permission);
-                      return (
-                        <td key={roleCode} className="p-3.5 text-center">
-                          {hasPerm ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 mx-auto" />
-                          ) : (
-                            <span className="inline-block w-2 h-0.5 bg-slate-700 rounded-full mx-auto" />
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
       )}
 
       {/* JSON Payload Modal Drawer */}

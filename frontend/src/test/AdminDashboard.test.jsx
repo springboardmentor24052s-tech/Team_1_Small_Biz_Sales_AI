@@ -1,6 +1,6 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { AdminDashboard } from '../components/dashboards/AdminDashboard';
 import { AuthProvider } from '../context/AuthContext';
 import { ToastProvider } from '../context/ToastContext';
@@ -18,43 +18,42 @@ const renderAdminDashboard = () => {
   );
 };
 
-describe('Admin Dashboard Platform Command Center', () => {
-  it('renders platform gauges, AI telemetry cards, and tabs correctly', async () => {
+describe('Admin Dashboard Platform Operations & Governance', () => {
+  it('renders platform governance header, counters, and Business Owners directory', () => {
     renderAdminDashboard();
 
-    expect(screen.getByText('Platform & AI Operations Center')).toBeInTheDocument();
-    expect(screen.getByText('RESTRICTED SYSTEM ROOT • DEVELOPER CONSOLE')).toBeInTheDocument();
-    expect(screen.getByText('ONLINE')).toBeInTheDocument();
-    expect(screen.getByText('Resend API')).toBeInTheDocument();
-    expect(screen.getByText('5 / 5 Operational')).toBeInTheDocument();
+    expect(screen.getByText('Platform Governance & AI Operations')).toBeInTheDocument();
+    expect(screen.getByText('RESTRICTED SYSTEM ROOT • PLATFORM ADMIN CONSOLE')).toBeInTheDocument();
 
-    // Verify AI Engine telemetry cards are visible
-    expect(screen.getByText('Sales & Revenue Forecasting')).toBeInTheDocument();
-    expect(screen.getByText('Customer Segmentation')).toBeInTheDocument();
-    expect(screen.getByText('Product Recommendations')).toBeInTheDocument();
-    expect(screen.getByText('Customer Churn Predictor')).toBeInTheDocument();
-    expect(screen.getByText('Anomaly Detection Engine')).toBeInTheDocument();
+    // Business Owners & Teams tab by default
+    expect(screen.getByText('Aravali Retail Group')).toBeInTheDocument();
+    expect(screen.getByText('Northwind Enterprises')).toBeInTheDocument();
 
-    // Verify Tab buttons
-    expect(screen.getByText('Security Audit Trail')).toBeInTheDocument();
-    expect(screen.getByText('Database & System Inspector')).toBeInTheDocument();
-    expect(screen.getByText('RBAC Policy Explorer')).toBeInTheDocument();
+    // Verify employees under default expanded business
+    expect(screen.getByText('Vikram Mehta')).toBeInTheDocument();
+    expect(screen.getByText('Priya Verma')).toBeInTheDocument();
   });
 
-  it('switches between tabs and filters correctly', async () => {
+  it('navigates to Authentication & Login Timings with Business filter', () => {
     renderAdminDashboard();
 
-    // Switch to Database & System Inspector
-    const systemTab = screen.getByText('Database & System Inspector');
-    fireEvent.click(systemTab);
+    const authTab = screen.getByText('Authentication & Login Timings');
+    fireEvent.click(authTab);
 
-    expect(screen.getByText('Database Architecture')).toBeInTheDocument();
-    expect(screen.getByText('Multi-Tenant Workspaces Directory')).toBeInTheDocument();
+    expect(screen.getByText('Timestamp & Date')).toBeInTheDocument();
+    expect(screen.getByText('Actor Email')).toBeInTheDocument();
+    expect(screen.getByText('Business Workspace')).toBeInTheDocument();
+  });
 
-    // Switch to RBAC Policy Explorer
-    const rbacTab = screen.getByText('RBAC Policy Explorer');
-    fireEvent.click(rbacTab);
+  it('navigates to AI Models & Retrain Schedules and displays last trained dates', () => {
+    renderAdminDashboard();
 
-    expect(screen.getByText('Role-Based Access Control (RBAC) Explorer')).toBeInTheDocument();
+    const aiTab = screen.getByText('AI Models & Retrain Schedules');
+    fireEvent.click(aiTab);
+
+    expect(screen.getByText('AI Inference Engines & Training Schedules')).toBeInTheDocument();
+    expect(screen.getAllByText('Sales & Revenue Demand Forecasting').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Customer RFM Segmentation').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Last Trained:').length).toBeGreaterThanOrEqual(1);
   });
 });
