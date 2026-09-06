@@ -29,7 +29,14 @@ router = APIRouter(prefix="/sales", tags=["Sales"])
 @router.get("/catalog", response_model=list[SalesCatalogItem])
 def sales_catalog(
     db: DBSession,
-    user: User = Depends(require_permissions(Permissions.SALES_CREATE)),
+    user: User = Depends(
+        require_permissions(
+            Permissions.SALES_READ_ALL,
+            Permissions.SALES_READ_STORE,
+            Permissions.SALES_READ_OWN,
+            require_all=False,
+        )
+    ),
 ):
     if not user.store_id:
         raise HTTPException(status_code=422, detail="A store assignment is required")
