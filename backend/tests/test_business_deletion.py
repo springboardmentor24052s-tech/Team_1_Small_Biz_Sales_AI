@@ -81,6 +81,13 @@ def test_business_deletion_full_lifecycle_and_auto_restoration(
     err_text = manager_login.json().get("message") or manager_login.json().get("detail", "")
     assert "workspace is currently suspended" in err_text
 
+    # 5b. Authenticated API calls with old tokens are immediately rejected
+    blocked_api = client.get(
+        "/api/v1/users/me",
+        headers=auth_header(manager_token),
+    )
+    assert blocked_api.status_code in (401, 403)
+
     # 6. Business Owner logs in during the 15-day window -> AUTOMATICALLY RESTORES WORKSPACE!
     owner_restore_login = client.post(
         "/api/v1/auth/login",

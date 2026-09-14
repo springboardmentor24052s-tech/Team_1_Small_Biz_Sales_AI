@@ -258,7 +258,8 @@ export const AuthProvider = ({ children }) => {
     reauthenticate,
     updateProfile,
     uploadAvatar,
-    deleteAvatar
+    deleteAvatar,
+    clearSession
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

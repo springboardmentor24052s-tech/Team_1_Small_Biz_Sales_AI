@@ -95,7 +95,7 @@ const formatDate = (value, format) => {
 };
 
 export const SettingsModule = ({ onNavigate }) => {
-  const { currentRole, profile, updateProfile, uploadAvatar, deleteAvatar, api, refreshProfile, logout } = useAuth();
+  const { currentRole, profile, updateProfile, uploadAvatar, deleteAvatar, api, refreshProfile, logout, clearSession } = useAuth();
   const { setThemePreference } = useTheme();
   const { addToast } = useToast();
   const fileInput = useRef(null);
@@ -145,10 +145,11 @@ export const SettingsModule = ({ onNavigate }) => {
   };
 
   const handleConfirmDelete = async (e) => {
-    e?.preventDefault?.();
+    if (e?.preventDefault) e.preventDefault();
+    if (e?.stopPropagation) e.stopPropagation();
     const cleanOtp = deleteOtp.trim();
     if (cleanOtp.length !== 6) {
-      setDeleteError('Please enter a valid 6-digit OTP code');
+      setDeleteError('Please enter the 6-digit OTP code sent to your email.');
       return;
     }
     setIsConfirmingDelete(true);
@@ -158,14 +159,24 @@ export const SettingsModule = ({ onNavigate }) => {
         method: 'POST',
         body: JSON.stringify({ token: cleanOtp }),
       });
-      addToast(res?.message || 'Business workspace scheduled for deletion. 15-day grace period started.', 'success');
       setIsDeleteModalOpen(false);
-      setTimeout(() => {
-        logout?.();
-      }, 1200);
+      addToast(
+        res?.message || 'Business workspace scheduled for deletion. 15-day grace period started.',
+        'success'
+      );
+      // Immediately clear authentication tokens and session
+      if (typeof clearSession === 'function') {
+        clearSession();
+      }
+      // Clean URL hash and redirect back to login/home
+      if (typeof window !== 'undefined') {
+        window.location.hash = '';
+        window.location.reload();
+      }
     } catch (err) {
-      setDeleteError(err.message || 'Incorrect OTP code. Please check your email.');
-      addToast(err.message, 'error');
+      const msg = err.message || 'Incorrect OTP code. Please check your email.';
+      setDeleteError(msg);
+      addToast(msg, 'error');
     } finally {
       setIsConfirmingDelete(false);
     }
@@ -326,308 +337,310 @@ export const SettingsModule = ({ onNavigate }) => {
   const joinedDate = formatDate(profile?.joined_at, form.date_format);
 
   return (
-    <form onSubmit={saveSettings} className="mx-auto max-w-6xl space-y-6">
-      {/* Header Banner */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-950 via-slate-900 to-violet-950 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-indigo-800/40">
-        <div>
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-200 mb-1 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30">
-            {isAdmin ? <MonitorCog className="w-3.5 h-3.5" /> : <UserRound className="w-3.5 h-3.5" />}
-            <span>{isAdmin ? 'Internal Platform Console' : `${currentRole.name} Account Controls`}</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {isAdmin ? 'Platform Settings & Security' : 'Profile & Platform Preferences'}
-          </h1>
-          <p className="text-sm text-indigo-200 mt-1">
-            {isAdmin
-              ? 'Security policies and console preferences for the internal MarketMind Administrator.'
-              : 'Manage your commercial work profile, display settings, and automated alert preferences.'}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {savedAt && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-300 bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-400/30">
-              <CheckCircle2 className="w-4 h-4" />
-              Saved {savedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          )}
-          <Button type="submit" icon={Save} isLoading={saving}>
-            Save &amp; Apply
-          </Button>
-        </div>
-      </div>
-
-      {/* User Profile Card */}
-      {!isAdmin && (
-        <Card hoverEffect={false} className="overflow-hidden">
-          <div className="flex flex-col gap-6 bg-gradient-to-r from-indigo-950 via-slate-900 to-violet-950 p-6 text-white sm:flex-row sm:items-center border-b border-indigo-800/40">
-            <div className="relative">
-              <ProfileAvatar
-                profile={{ ...profile, avatar_url: previewAvatar || profile?.avatar_url, avatar_emoji: form.avatar_emoji }}
-                fallbackImage={currentRole.avatar}
-                className="h-24 w-24 rounded-2xl border-2 border-white/30 text-5xl shadow-xl"
-              />
-              <button
-                type="button"
-                onClick={() => fileInput.current?.click()}
-                className="absolute -bottom-2 -right-2 rounded-xl bg-indigo-600 p-2 text-white shadow-lg hover:bg-indigo-500 transition-colors"
-                title="Change profile photo"
-              >
-                <Camera className="h-4 w-4" />
-              </button>
-              <input
-                ref={fileInput}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={selectAvatar}
-              />
+    <div className="mx-auto max-w-6xl space-y-6">
+      <form onSubmit={saveSettings} className="space-y-6">
+        {/* Header Banner */}
+        <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-950 via-slate-900 to-violet-950 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-indigo-800/40">
+          <div>
+            <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-200 mb-1 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30">
+              {isAdmin ? <MonitorCog className="w-3.5 h-3.5" /> : <UserRound className="w-3.5 h-3.5" />}
+              <span>{isAdmin ? 'Internal Platform Console' : `${currentRole.name} Account Controls`}</span>
             </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="truncate text-2xl font-bold">{profile?.full_name || 'User Account'}</h2>
-              <p className="text-sm text-indigo-200">{profile?.email}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Badge variant="info">{profile?.role?.name || currentRole.name}</Badge>
-                <span className="rounded-full bg-white/10 px-3 py-1 text-xs">Joined {joinedDate}</span>
-                <span className="rounded-full bg-emerald-500/20 border border-emerald-400/30 px-3 py-1 text-xs text-emerald-200">
-                  Email Verified
-                </span>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {isAdmin ? 'Platform Settings & Security' : 'Profile & Platform Preferences'}
+            </h1>
+            <p className="text-sm text-indigo-200 mt-1">
+              {isAdmin
+                ? 'Security policies and console preferences for the internal MarketMind Administrator.'
+                : 'Manage your commercial work profile, display settings, and automated alert preferences.'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {savedAt && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-300 bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-400/30">
+                <CheckCircle2 className="w-4 h-4" />
+                Saved {savedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+            <Button type="submit" icon={Save} isLoading={saving}>
+              Save &amp; Apply
+            </Button>
+          </div>
+        </div>
+
+        {/* User Profile Card */}
+        {!isAdmin && (
+          <Card hoverEffect={false} className="overflow-hidden">
+            <div className="flex flex-col gap-6 bg-gradient-to-r from-indigo-950 via-slate-900 to-violet-950 p-6 text-white sm:flex-row sm:items-center border-b border-indigo-800/40">
+              <div className="relative">
+                <ProfileAvatar
+                  profile={{ ...profile, avatar_url: previewAvatar || profile?.avatar_url, avatar_emoji: form.avatar_emoji }}
+                  fallbackImage={currentRole.avatar}
+                  className="h-24 w-24 rounded-2xl border-2 border-white/30 text-5xl shadow-xl"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInput.current?.click()}
+                  className="absolute -bottom-2 -right-2 rounded-xl bg-indigo-600 p-2 text-white shadow-lg hover:bg-indigo-500 transition-colors"
+                  title="Change profile photo"
+                >
+                  <Camera className="h-4 w-4" />
+                </button>
+                <input
+                  ref={fileInput}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={selectAvatar}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="truncate text-2xl font-bold">{profile?.full_name || 'User Account'}</h2>
+                <p className="text-sm text-indigo-200">{profile?.email}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Badge variant="info">{profile?.role?.name || currentRole.name}</Badge>
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs">Joined {joinedDate}</span>
+                  <span className="rounded-full bg-emerald-500/20 border border-emerald-400/30 px-3 py-1 text-xs text-emerald-200">
+                    Email Verified
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInput.current?.click()}
+                  isLoading={uploading}
+                  className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+                >
+                  Upload Photo
+                </Button>
+                {profile?.avatar_url && (
+                  <Button
+                    type="button"
+                    variant="danger"
+                    icon={Trash2}
+                    onClick={removeAvatar}
+                    disabled={uploading}
+                  >
+                    Remove
+                  </Button>
+                )}
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => fileInput.current?.click()}
-                isLoading={uploading}
-                className="bg-white/10 hover:bg-white/20 text-white border-white/20"
-              >
-                Upload Photo
-              </Button>
-              {profile?.avatar_url && (
+
+            {!profile?.avatar_url && (
+              <div className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-6">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Default Avatar Emoji Selection
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {avatarChoices.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => updateField('avatar_emoji', emoji)}
+                      className={`flex h-12 w-12 items-center justify-center rounded-xl border text-2xl transition ${
+                        form.avatar_emoji === emoji
+                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 ring-2 ring-indigo-500/30'
+                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-indigo-300'
+                      }`}
+                      aria-label={`Use ${emoji} as default avatar`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  This avatar emoji appears in your top navigation header until a custom profile photo is uploaded.
+                </p>
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* Main Form Content */}
+        {isAdmin ? (
+          <AdminSecurity profile={profile} onNavigate={onNavigate} />
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Card hoverEffect={false} className="lg:col-span-2">
+              <CardHeader>
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserRound className="w-5 h-5 text-indigo-500" />
+                    <span>Personal Commercial Profile</span>
+                  </CardTitle>
+                  <CardDescription>Official contact details displayed across team &amp; sales records</CardDescription>
+                </div>
+              </CardHeader>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  id="profileName"
+                  label="Full Name"
+                  value={form.full_name}
+                  onChange={(event) => updateField('full_name', event.target.value)}
+                  required
+                />
+                <Input
+                  id="profilePhone"
+                  label="Phone Number"
+                  placeholder="+91 98765 43210"
+                  value={form.phone_number}
+                  onChange={(event) => updateField('phone_number', event.target.value)}
+                />
+                <Input
+                  id="profileTitle"
+                  label="Job Title"
+                  placeholder={currentRole.id === 'owner' ? 'Founder / Proprietor' : currentRole.name}
+                  value={form.job_title}
+                  onChange={(event) => updateField('job_title', event.target.value)}
+                />
+                <Input
+                  id="profileLocation"
+                  label="Location"
+                  placeholder="Jaipur, Rajasthan"
+                  value={form.location}
+                  onChange={(event) => updateField('location', event.target.value)}
+                />
+                <Input
+                  id="profileDateOfBirth"
+                  label="Date of Birth"
+                  type="date"
+                  value={form.date_of_birth}
+                  onChange={(event) => updateField('date_of_birth', event.target.value)}
+                />
+                <div>
+                  <label className={fieldLabel}>Joined MarketMind</label>
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    {joinedDate}
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">Recorded account registration timestamp</p>
+                </div>
+                <div className="md:col-span-2">
+                  <label htmlFor="profileBio" className={fieldLabel}>
+                    Short Business Bio
+                  </label>
+                  <textarea
+                    id="profileBio"
+                    rows="3"
+                    maxLength="500"
+                    value={form.bio}
+                    onChange={(event) => updateField('bio', event.target.value)}
+                    placeholder="Summary of business operations or store responsibilities..."
+                    className={selectClass}
+                  />
+                  <p className="mt-1 text-right text-xs text-slate-400">{form.bio.length}/500</p>
+                </div>
+              </div>
+            </Card>
+
+            <RoleDetails profile={profile} currentRole={currentRole} onNavigate={onNavigate} />
+          </div>
+        )}
+
+        {/* Business Owner Enterprise Profile Section */}
+        {isOwner && (
+          <BusinessProfileCard
+            bizForm={bizForm}
+            updateBizField={updateBizField}
+            saveBusinessProfile={saveBusinessProfile}
+            savingBiz={savingBiz}
+            savedBizAt={savedBizAt}
+          />
+        )}
+
+        {/* Preferences Section */}
+        <Preferences form={form} updateField={updateField} isAdmin={isAdmin} />
+
+        {/* Role Preferences Section */}
+        <RolePreferences
+          roleId={currentRole.id}
+          values={form.role_preferences}
+          update={updateRolePreference}
+        />
+
+        {/* Account Security Card */}
+        <Card hoverEffect={false}>
+          <CardHeader>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                <span>Account Telemetry &amp; Security</span>
+              </CardTitle>
+              <CardDescription>Authentication security status for your MarketMind account</CardDescription>
+            </div>
+          </CardHeader>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatusItem icon={CheckCircle2} label="Account Status" value={profile?.status || 'Active'} />
+            <StatusItem
+              icon={ShieldCheck}
+              label="Multi-Factor Authentication"
+              value={profile?.mfa_enabled ? 'Enabled & Verified' : isAdmin ? 'Required' : 'Standard Protection'}
+            />
+            <StatusItem
+              icon={Clock3}
+              label="Last Session Login"
+              value={
+                profile?.last_login_at
+                  ? `${formatDate(profile.last_login_at, form.date_format)} ${new Date(
+                      profile.last_login_at
+                    ).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`
+                  : 'Current Session'
+              }
+            />
+          </div>
+          <p className="mt-4 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <Lock className="w-3.5 h-3.5 text-slate-400" /> Passwords are encrypted with bcrypt hashes. Use "Forgot password" on the sign-in page to reset credentials.
+          </p>
+        </Card>
+
+        {/* Danger Zone for Business Owner */}
+        {isOwner && (
+          <Card hoverEffect={false} className="border-rose-300/60 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10">
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+                    <AlertTriangle className="w-5 h-5 text-rose-500" />
+                    <span>Danger Zone: Delete Business &amp; Workspace</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Permanently delete this business enterprise, all store locations, products, inventory, team members, and invoices.
+                  </CardDescription>
+                </div>
                 <Button
                   type="button"
                   variant="danger"
                   icon={Trash2}
-                  onClick={removeAvatar}
-                  disabled={uploading}
+                  onClick={() => {
+                    setDeleteStep('initial');
+                    setDeleteOtp('');
+                    setDeleteError('');
+                    setIsDeleteModalOpen(true);
+                  }}
+                  className="bg-rose-600 hover:bg-rose-700 text-white shrink-0"
                 >
-                  Remove
+                  Delete Business Account
                 </Button>
-              )}
-            </div>
-          </div>
-
-          {!profile?.avatar_url && (
-            <div className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-6">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Default Avatar Emoji Selection
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {avatarChoices.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => updateField('avatar_emoji', emoji)}
-                    className={`flex h-12 w-12 items-center justify-center rounded-xl border text-2xl transition ${
-                      form.avatar_emoji === emoji
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 ring-2 ring-indigo-500/30'
-                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-indigo-300'
-                    }`}
-                    aria-label={`Use ${emoji} as default avatar`}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                This avatar emoji appears in your top navigation header until a custom profile photo is uploaded.
-              </p>
-            </div>
-          )}
-        </Card>
-      )}
-
-      {/* Main Form Content */}
-      {isAdmin ? (
-        <AdminSecurity profile={profile} onNavigate={onNavigate} />
-      ) : (
-        <div className="grid gap-6 lg:grid-cols-3">
-          <Card hoverEffect={false} className="lg:col-span-2">
-            <CardHeader>
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <UserRound className="w-5 h-5 text-indigo-500" />
-                  <span>Personal Commercial Profile</span>
-                </CardTitle>
-                <CardDescription>Official contact details displayed across team &amp; sales records</CardDescription>
               </div>
             </CardHeader>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Input
-                id="profileName"
-                label="Full Name"
-                value={form.full_name}
-                onChange={(event) => updateField('full_name', event.target.value)}
-                required
-              />
-              <Input
-                id="profilePhone"
-                label="Phone Number"
-                placeholder="+91 98765 43210"
-                value={form.phone_number}
-                onChange={(event) => updateField('phone_number', event.target.value)}
-              />
-              <Input
-                id="profileTitle"
-                label="Job Title"
-                placeholder={currentRole.id === 'owner' ? 'Founder / Proprietor' : currentRole.name}
-                value={form.job_title}
-                onChange={(event) => updateField('job_title', event.target.value)}
-              />
-              <Input
-                id="profileLocation"
-                label="Location"
-                placeholder="Jaipur, Rajasthan"
-                value={form.location}
-                onChange={(event) => updateField('location', event.target.value)}
-              />
-              <Input
-                id="profileDateOfBirth"
-                label="Date of Birth"
-                type="date"
-                value={form.date_of_birth}
-                onChange={(event) => updateField('date_of_birth', event.target.value)}
-              />
-              <div>
-                <label className={fieldLabel}>Joined MarketMind</label>
-                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  {joinedDate}
-                </div>
-                <p className="mt-1 text-xs text-slate-400">Recorded account registration timestamp</p>
-              </div>
-              <div className="md:col-span-2">
-                <label htmlFor="profileBio" className={fieldLabel}>
-                  Short Business Bio
-                </label>
-                <textarea
-                  id="profileBio"
-                  rows="3"
-                  maxLength="500"
-                  value={form.bio}
-                  onChange={(event) => updateField('bio', event.target.value)}
-                  placeholder="Summary of business operations or store responsibilities..."
-                  className={selectClass}
-                />
-                <p className="mt-1 text-right text-xs text-slate-400">{form.bio.length}/500</p>
-              </div>
+            <div className="p-4 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-rose-200 dark:border-rose-900/40 text-xs text-slate-600 dark:text-slate-300 space-y-1.5">
+              <p className="font-semibold text-rose-600 dark:text-rose-400">
+                🛡️ 15-Day Automatic Protection &amp; Grace Period Policy:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-slate-500 dark:text-slate-400">
+                <li>When confirmed with your email OTP, the workspace will be suspended and all staff logins will be blocked.</li>
+                <li><strong>Auto-Restoration:</strong> If you log in again as the Business Owner within 15 days, your business will automatically be restored and reactivated without losing any data.</li>
+                <li>If you do not log in within 15 days, all data and history will be permanently and irreversibly purged.</li>
+              </ul>
             </div>
           </Card>
+        )}
+      </form>
 
-          <RoleDetails profile={profile} currentRole={currentRole} onNavigate={onNavigate} />
-        </div>
-      )}
-
-      {/* Business Owner Enterprise Profile Section */}
-      {isOwner && (
-        <BusinessProfileCard
-          bizForm={bizForm}
-          updateBizField={updateBizField}
-          saveBusinessProfile={saveBusinessProfile}
-          savingBiz={savingBiz}
-          savedBizAt={savedBizAt}
-        />
-      )}
-
-      {/* Preferences Section */}
-      <Preferences form={form} updateField={updateField} isAdmin={isAdmin} />
-
-      {/* Role Preferences Section */}
-      <RolePreferences
-        roleId={currentRole.id}
-        values={form.role_preferences}
-        update={updateRolePreference}
-      />
-
-      {/* Account Security Card */}
-      <Card hoverEffect={false}>
-        <CardHeader>
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-emerald-500" />
-              <span>Account Telemetry &amp; Security</span>
-            </CardTitle>
-            <CardDescription>Authentication security status for your MarketMind account</CardDescription>
-          </div>
-        </CardHeader>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatusItem icon={CheckCircle2} label="Account Status" value={profile?.status || 'Active'} />
-          <StatusItem
-            icon={ShieldCheck}
-            label="Multi-Factor Authentication"
-            value={profile?.mfa_enabled ? 'Enabled & Verified' : isAdmin ? 'Required' : 'Standard Protection'}
-          />
-          <StatusItem
-            icon={Clock3}
-            label="Last Session Login"
-            value={
-              profile?.last_login_at
-                ? `${formatDate(profile.last_login_at, form.date_format)} ${new Date(
-                    profile.last_login_at
-                  ).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`
-                : 'Current Session'
-            }
-          />
-        </div>
-        <p className="mt-4 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-          <Lock className="w-3.5 h-3.5 text-slate-400" /> Passwords are encrypted with bcrypt hashes. Use "Forgot password" on the sign-in page to reset credentials.
-        </p>
-      </Card>
-
-      {/* Danger Zone for Business Owner */}
-      {isOwner && (
-        <Card hoverEffect={false} className="border-rose-300/60 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10">
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-                  <AlertTriangle className="w-5 h-5 text-rose-500" />
-                  <span>Danger Zone: Delete Business &amp; Workspace</span>
-                </CardTitle>
-                <CardDescription>
-                  Permanently delete this business enterprise, all store locations, products, inventory, team members, and invoices.
-                </CardDescription>
-              </div>
-              <Button
-                type="button"
-                variant="danger"
-                icon={Trash2}
-                onClick={() => {
-                  setDeleteStep('initial');
-                  setDeleteOtp('');
-                  setDeleteError('');
-                  setIsDeleteModalOpen(true);
-                }}
-                className="bg-rose-600 hover:bg-rose-700 text-white shrink-0"
-              >
-                Delete Business Account
-              </Button>
-            </div>
-          </CardHeader>
-          <div className="p-4 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-rose-200 dark:border-rose-900/40 text-xs text-slate-600 dark:text-slate-300 space-y-1.5">
-            <p className="font-semibold text-rose-600 dark:text-rose-400">
-              🛡️ 15-Day Automatic Protection &amp; Grace Period Policy:
-            </p>
-            <ul className="list-disc list-inside space-y-1 text-slate-500 dark:text-slate-400">
-              <li>When confirmed with your email OTP, the workspace will be suspended and all staff logins will be blocked.</li>
-              <li><strong>Auto-Restoration:</strong> If you log in again as the Business Owner within 15 days, your business will automatically be restored and reactivated without losing any data.</li>
-              <li>If you do not log in within 15 days, all data and history will be permanently and irreversibly purged.</li>
-            </ul>
-          </div>
-        </Card>
-      )}
-
-      {/* Delete Business Confirmation Modal */}
+      {/* Delete Business Confirmation Modal (Sibling to form to avoid form nesting conflicts) */}
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => {
@@ -679,7 +692,7 @@ export const SettingsModule = ({ onNavigate }) => {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleConfirmDelete} className="space-y-4 pt-1">
+            <div className="space-y-4 pt-1">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                   Enter 6-Digit Deletion Confirmation OTP
@@ -694,6 +707,12 @@ export const SettingsModule = ({ onNavigate }) => {
                   onChange={(e) => {
                     setDeleteOtp(e.target.value.replace(/\D/g, '').slice(0, 6));
                     setDeleteError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleConfirmDelete(e);
+                    }
                   }}
                   placeholder="• • • • • •"
                   autoFocus
@@ -723,21 +742,22 @@ export const SettingsModule = ({ onNavigate }) => {
                   Cancel
                 </Button>
                 <Button
-                  type="submit"
+                  type="button"
                   variant="danger"
                   icon={Trash2}
                   isLoading={isConfirmingDelete}
                   disabled={deleteOtp.length !== 6}
+                  onClick={handleConfirmDelete}
                   className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
                 >
                   Confirm Deletion &amp; Suspend Business
                 </Button>
               </div>
-            </form>
+            </div>
           )}
         </div>
       </Modal>
-    </form>
+    </div>
   );
 };
 

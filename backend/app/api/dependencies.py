@@ -65,6 +65,11 @@ def get_current_user(
     user = session.user
     if user.status != UserStatus.ACTIVE:
         raise HTTPException(status_code=403, detail="Account is not active")
+    if user.tenant and (user.tenant.deletion_requested_at or not user.tenant.is_active):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This business workspace is currently suspended and pending owner deletion. Only the Business Owner can log in within the 15-day grace period to restore the workspace.",
+        )
     if str(user.tenant_id) != payload.get("tenant_id"):
         raise HTTPException(status_code=401, detail="Invalid tenant context")
 

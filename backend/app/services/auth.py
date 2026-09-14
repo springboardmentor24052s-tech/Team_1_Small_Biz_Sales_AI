@@ -242,6 +242,11 @@ def authenticate_user(
             actor_user_id=user.id,
             details={"message": "Business workspace successfully restored by owner login within 15-day grace period."},
         )
+    elif tenant and not tenant.is_active and user.role.code != RoleCode.ADMINISTRATOR:
+        raise HTTPException(
+            status_code=403,
+            detail="This business workspace has been deactivated. Please contact platform administration.",
+        )
 
     rate_limiter.record_auth_success(request, email)
     user.failed_login_count = 0
