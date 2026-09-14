@@ -168,3 +168,45 @@ def test_segment_summary_and_customer_access_follow_role_scope(
     )
     assert other_list.status_code == 200
     assert other_list.json()["total"] == 0
+
+    # Add a brand new customer created after the ML model run
+    new_cust = Customer(
+        tenant_id=tenant.id,
+        assigned_seller_id=assigned_sales.id,
+        source_system="manual",
+        external_customer_id="NEW-CUST-99",
+        company_name="New Wholesale Client Ltd",
+        contact_phone="+919876543210",
+        last_purchase=datetime(2026, 9, 14, tzinfo=UTC),
+        order_count=0,
+        item_quantity=0,
+        total_revenue=Decimal("0.00"),
+        recency_days=0,
+    )
+    db.add(new_cust)
+    db.commit()
+
+    # Business Owner list should return 3 customers (2 assigned + 1 unassigned heuristic)
+    owner_list = client.get(
+        "/api/v1/customer-segments",
+        headers=auth_header(login(client, owner.email)),
+    )
+    assert owner_list.status_code == 200
+    assert owner_list.json()["total"] == 3
+    assert any(c["external_customer_id"] == "NEW-CUST-99" for c in owner_list.json()["items"])
+
+    # Store Manager should see all 3 customers via /customers
+    manager_cust_list = client.get(
+        "/api/v1/customers",
+        headers=auth_header(login(client, manager.email)),
+    )
+    assert manager_cust_list.status_code == 200
+    assert manager_cust_list.json()["total"] == 3
+
+    # Assigned Sales Executive should see 3 customers (all assigned to them)
+    sales_list = client.get(
+        "/api/v1/customer-segments",
+        headers=auth_header(login(client, assigned_sales.email)),
+    )
+    assert sales_list.status_code == 200
+    assert sales_list.json()["total"] == 3
