@@ -217,18 +217,43 @@ def list_customer_segments(
                 | (Customer.location.ilike(search_pattern))
                 | (Customer.territory_route.ilike(search_pattern))
             )
-        total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
-        rows = db.execute(
-            query.order_by(
-                CustomerSegmentAssignment.engagement_score.desc(),
-                Customer.total_revenue.desc(),
+        rows = db.execute(query).all()
+        assigned_customer_ids = {customer.id for _, customer in rows}
+        assigned_items = [_response(assignment, customer) for assignment, customer in rows]
+
+        # Also load any newly registered tenant customers not yet in the historical batch model run
+        unassigned_query = select(Customer).where(Customer.tenant_id == user.tenant_id)
+        if (
+            Permissions.DASHBOARD_SEGMENTS_VIEW not in user.permission_codes
+            and Permissions.DASHBOARD_SEGMENTS_ASSIGNED in user.permission_codes
+        ):
+            unassigned_query = unassigned_query.where(Customer.assigned_seller_id == user.id)
+        if assigned_customer_ids:
+            unassigned_query = unassigned_query.where(Customer.id.not_in(assigned_customer_ids))
+        if search:
+            search_pattern = f"%{search.strip()}%"
+            unassigned_query = unassigned_query.where(
+                (Customer.external_customer_id.ilike(search_pattern))
+                | (Customer.company_name.ilike(search_pattern))
+                | (Customer.contact_email.ilike(search_pattern))
+                | (Customer.contact_phone.ilike(search_pattern))
+                | (Customer.gstin.ilike(search_pattern))
+                | (Customer.location.ilike(search_pattern))
+                | (Customer.territory_route.ilike(search_pattern))
             )
-            .limit(limit)
-            .offset(offset)
-        ).all()
+        unassigned_custs = db.scalars(unassigned_query).all()
+        unassigned_items = [_heuristic_segment_customer(c) for c in unassigned_custs]
+        if segment_code:
+            unassigned_items = [item for item in unassigned_items if item.segment_code == segment_code.strip()]
+
+        all_items = assigned_items + unassigned_items
+        all_items.sort(key=lambda x: (x.engagement_score or 0, x.total_revenue or 0), reverse=True)
+        total = len(all_items)
+        sliced = all_items[offset : offset + limit]
+
         return CustomerSegmentList(
             model_version=model_run.model_version,
-            items=[_response(assignment, customer) for assignment, customer in rows],
+            items=sliced,
             total=total,
             limit=limit,
             offset=offset,

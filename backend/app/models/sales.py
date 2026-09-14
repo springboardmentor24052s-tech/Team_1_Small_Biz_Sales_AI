@@ -66,10 +66,18 @@ class SalesTransaction(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     customer_snapshot: Mapped[dict | None] = mapped_column(JSON)
 
-
+    seller = relationship("User", foreign_keys=[seller_id], lazy="joined")
     line_items: Mapped[list["SalesLineItem"]] = relationship(
         back_populates="transaction", cascade="all, delete-orphan"
     )
+
+    @property
+    def seller_name(self) -> str | None:
+        return self.seller.full_name if self.seller else None
+
+    @property
+    def seller_role(self) -> str | None:
+        return self.seller.role.name if self.seller and self.seller.role else None
 
 
 class SalesLineItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):

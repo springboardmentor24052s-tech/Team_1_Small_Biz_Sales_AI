@@ -104,6 +104,8 @@ class SalesTransactionResponse(ORMModel):
     due_date: datetime | None = None
     hsn_code: str | None = None
     customer_id: UUID | None
+    seller_name: str | None = None
+    seller_role: str | None = None
 
     line_items: list[SalesLineItemResponse] = Field(default_factory=list)
     created_at: datetime

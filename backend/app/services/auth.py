@@ -84,8 +84,8 @@ def consume_security_token(
         raise HTTPException(
             status_code=400,
             detail=(
-                "Incorrect 6-digit OTP code. Please enter the valid code sent to your email or request a new OTP."
-                if purpose == SecurityTokenPurpose.EMAIL_VERIFICATION
+                "Incorrect 6-digit OTP code. Please enter the valid code sent to your email or click Resend OTP."
+                if purpose in (SecurityTokenPurpose.EMAIL_VERIFICATION, SecurityTokenPurpose.PASSWORD_RESET)
                 else "Invalid or incorrect security token."
             ),
         )
@@ -93,8 +93,8 @@ def consume_security_token(
         raise HTTPException(
             status_code=400,
             detail=(
-                "6-digit OTP code has expired. Please click Resend OTP to get a fresh code."
-                if purpose == SecurityTokenPurpose.EMAIL_VERIFICATION
+                "6-digit OTP code has expired. Please click Resend OTP to receive a fresh code."
+                if purpose in (SecurityTokenPurpose.EMAIL_VERIFICATION, SecurityTokenPurpose.PASSWORD_RESET)
                 else "Security token has expired. Please request a new one."
             ),
         )

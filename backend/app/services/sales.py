@@ -11,8 +11,10 @@ def scoped_sales_query(query: Select, user: User) -> Select:
     permissions = user.permission_codes
     if Permissions.SALES_READ_ALL in permissions:
         return query
-    if Permissions.SALES_READ_STORE in permissions and user.store_id:
-        return query.where(SalesTransaction.store_id == user.store_id)
+    if Permissions.SALES_READ_STORE in permissions:
+        if user.store_id:
+            return query.where(SalesTransaction.store_id == user.store_id)
+        return query
     if Permissions.SALES_READ_OWN in permissions:
         return query.where(SalesTransaction.seller_id == user.id)
     raise HTTPException(status_code=403, detail="Permission denied")

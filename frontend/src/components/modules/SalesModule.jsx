@@ -91,8 +91,9 @@ export const SalesModule = () => {
   const loadDirectClients = async () => {
     try {
       const data = await api('/customers?limit=200');
-      if (Array.isArray(data)) {
-        setDirectClients(data);
+      const list = Array.isArray(data) ? data : (data?.items || []);
+      if (list.length) {
+        setDirectClients(list);
       }
     } catch {
       // ignore
@@ -795,6 +796,7 @@ export const SalesModule = () => {
               <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 uppercase tracking-wider">
                 <th className="py-3 px-4 font-semibold">Invoice &amp; Order Type</th>
                 <th className="py-3 px-4 font-semibold">Client Company / Retailer</th>
+                <th className="py-3 px-4 font-semibold">Billed By (Employee)</th>
                 <th className="py-3 px-4 font-semibold">Status &amp; Terms</th>
                 <th className="py-3 px-4 font-semibold">Delivery &amp; Fulfillment</th>
                 <th className="py-3 px-4 font-semibold">Invoice Amount</th>
@@ -834,6 +836,23 @@ export const SalesModule = () => {
                           <p className="text-[10px] text-slate-400 truncate max-w-[170px]">
                             {customerObj?.gstin ? `GST: ${customerObj.gstin}` : 'Counter Sale'} · {customerObj?.location || 'Direct Store'}
                           </p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Billed By / Sales Employee */}
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold flex items-center justify-center text-[10px] shrink-0 border border-indigo-200 dark:border-indigo-700">
+                          {(deal.seller_name || profile?.name || 'SE').slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 dark:text-slate-100 truncate max-w-[130px]" title={deal.seller_name || profile?.name || 'Sales Executive'}>
+                            {deal.seller_name || (deal.seller_id === profile?.id ? profile?.name : 'Sales Executive')}
+                          </p>
+                          <span className="inline-block px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            {deal.seller_role || (deal.seller_id === profile?.id ? (profile?.role?.name || 'Sales Executive') : 'Sales Executive')}
+                          </span>
                         </div>
                       </div>
                     </td>
@@ -969,7 +988,7 @@ export const SalesModule = () => {
               })}
               {!filteredDeals.length && (
                 <tr>
-                  <td colSpan="7" className="py-10 text-center text-xs text-slate-400">
+                  <td colSpan="8" className="py-10 text-center text-xs text-slate-400">
                     No sales transactions match the selected filter or search query.
                   </td>
                 </tr>
@@ -1557,6 +1576,10 @@ export const SalesModule = () => {
                     <p className="font-bold text-xs uppercase">{custName}</p>
                     <p className="text-[10px]">Location: <span className="font-bold">{cust?.location || 'Registered Facility'}</span></p>
                     <p className="text-[10px]">GSTIN: <span className="font-bold">{cust?.gstin || 'N/A'}</span> · Route: {cust?.territory_route || 'Direct Route'}</p>
+                    <p className="text-[9.5px] text-slate-700 pt-1">
+                      Billed By: <strong className="text-black">{selected.seller_name || profile?.name || 'Sales Executive'}</strong>
+                      {selected.seller_role ? ` (${selected.seller_role})` : ''}
+                    </p>
                   </div>
 
                   <div className="text-right">

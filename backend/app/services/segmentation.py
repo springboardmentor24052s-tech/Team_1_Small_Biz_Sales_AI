@@ -39,12 +39,18 @@ def scoped_segment_query(
                 detail="Store Managers can access customer segment summaries only",
             )
         if user.store_id is None:
-            return query.where(false()), "store_summary"
+            return query, "store_summary"
+        from sqlalchemy import or_
         seller_ids = select(User.id).where(
             User.tenant_id == user.tenant_id,
-            User.store_id == user.store_id,
+            or_(User.store_id == user.store_id, User.store_id.is_(None)),
         )
-        return query.where(Customer.assigned_seller_id.in_(seller_ids)), "store_summary"
+        return query.where(
+            or_(
+                Customer.assigned_seller_id.in_(seller_ids),
+                Customer.assigned_seller_id.is_(None),
+            )
+        ), "store_summary"
     if Permissions.DASHBOARD_SEGMENTS_ASSIGNED in permissions:
         return query.where(Customer.assigned_seller_id == user.id), "assigned"
     raise HTTPException(status_code=403, detail="Permission denied")

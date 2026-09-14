@@ -68,6 +68,9 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
   const [isResetRequested, setIsResetRequested] = useState(false);
   const [resetToken, setResetToken] = useState('');
   const [resetPassword, setResetPassword] = useState('');
+  const [forgotError, setForgotError] = useState('');
+  const [forgotResendCountdown, setForgotResendCountdown] = useState(0);
+  const [isResendingForgotOtp, setIsResendingForgotOtp] = useState(false);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const [verifyToken, setVerifyToken] = useState('');
   const [verifyError, setVerifyError] = useState('');
@@ -99,6 +102,16 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
     }
     return () => clearInterval(timer);
   }, [resendCountdown]);
+
+  React.useEffect(() => {
+    let timer;
+    if (forgotResendCountdown > 0) {
+      timer = setInterval(() => {
+        setForgotResendCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [forgotResendCountdown]);
 
   React.useEffect(() => {
     try {
@@ -277,33 +290,73 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
     }
   };
 
+  const handleResendForgotOtp = async () => {
+    const targetEmail = forgotEmail.trim();
+    if (!targetEmail || isResendingForgotOtp || forgotResendCountdown > 0) return;
+    setIsResendingForgotOtp(true);
+    setForgotError('');
+    try {
+      const response = await requestPasswordReset(targetEmail);
+      if (response?.token) {
+        setResetToken(response.token);
+      }
+      setForgotResendCountdown(30);
+      addToast(response?.message || `Fresh 6-digit password reset OTP sent to ${targetEmail}`, 'info');
+    } catch (err) {
+      setForgotError(err.message || 'Failed to resend password reset OTP.');
+      addToast(err.message || 'Failed to resend password reset OTP.', 'danger');
+    } finally {
+      setIsResendingForgotOtp(false);
+    }
+  };
+
   const handleForgotSubmit = async (e) => {
     e.preventDefault();
-    if (!forgotEmail) return;
+    setForgotError('');
+    const targetEmail = forgotEmail.trim();
+    if (!targetEmail) {
+      setForgotError('Please enter your registered email address.');
+      return;
+    }
     setForgotSubmitted(true);
     try {
       if (!isResetRequested) {
-        const response = await requestPasswordReset(forgotEmail.trim());
-        setResetToken(response.token || '');
+        const response = await requestPasswordReset(targetEmail);
+        setResetToken(response?.token || '');
         setIsResetRequested(true);
-        addToast(response.message || '6-digit OTP sent to your email.', 'info');
+        setForgotResendCountdown(30);
+        addToast(response?.message || '6-digit OTP sent to your email.', 'info');
       } else {
-        if (!resetToken.trim()) throw new Error('Enter the 6-digit OTP code sent to your email.');
+        const cleanOtp = resetToken.trim();
+        if (!cleanOtp) {
+          setForgotError('Please enter the 6-digit OTP code sent to your email.');
+          return;
+        }
+        if (cleanOtp.length !== 6 || !/^\d+$/.test(cleanOtp)) {
+          setForgotError('Please enter a valid 6-digit numeric OTP code.');
+          return;
+        }
         const invalidPassword = passwordError(resetPassword);
-        if (invalidPassword) throw new Error(invalidPassword);
+        if (invalidPassword) {
+          setForgotError(invalidPassword);
+          return;
+        }
         const response = await confirmPasswordReset({
-          token: resetToken.trim(),
+          token: cleanOtp,
           newPassword: resetPassword
         });
-        addToast(response.message || 'Password updated successfully. You can now log in.', 'success');
+        addToast(response?.message || 'Password updated successfully! You can now log in.', 'success');
         setIsForgotModalOpen(false);
         setForgotEmail('');
         setIsResetRequested(false);
         setResetToken('');
         setResetPassword('');
+        setForgotError('');
       }
     } catch (error) {
-      addToast(error.message, 'danger');
+      const errMsg = error.message || 'Incorrect OTP code or unable to reset password.';
+      setForgotError(errMsg);
+      addToast(errMsg, 'danger');
     } finally {
       setForgotSubmitted(false);
     }
@@ -784,51 +837,123 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
       {/* Forgot Password Modal */}
       <Modal
         isOpen={isForgotModalOpen}
-        onClose={() => setIsForgotModalOpen(false)}
+        onClose={() => {
+          setIsForgotModalOpen(false);
+          setForgotError('');
+        }}
         title="Reset Account Password"
       >
         <form onSubmit={handleForgotSubmit} className="space-y-4">
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            {isResetRequested
-              ? 'Check your email inbox, enter the 6-digit OTP passcode, and choose your new account password.'
-              : 'Enter your registered email address. MarketMind will deliver a 6-digit password-reset OTP to your inbox.'}
-          </p>
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/50">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+              <Mail className="w-5 h-5" />
+            </div>
+            <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              {isResetRequested ? (
+                <>
+                  We dispatched a <strong className="text-indigo-600 dark:text-indigo-400 font-semibold">6-digit security OTP</strong> to{' '}
+                  <strong className="text-slate-900 dark:text-white font-semibold underline">{forgotEmail}</strong>. Enter it below with your new password.
+                </>
+              ) : (
+                'Enter your registered account email. MarketMind will immediately deliver a 6-digit password-reset OTP code to your inbox.'
+              )}
+            </div>
+          </div>
+
+          {forgotError && (
+            <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-500 dark:text-rose-400 flex items-center gap-2.5 animate-shake">
+              <AlertCircle className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0" />
+              <span className="font-semibold">{forgotError}</span>
+            </div>
+          )}
+
           <Input
             id="forgotEmail"
             label="Registered Email Address"
             type="email"
             placeholder="name@company.com"
             value={forgotEmail}
-            onChange={(e) => setForgotEmail(e.target.value)}
+            onChange={(e) => {
+              setForgotEmail(e.target.value);
+              setForgotError('');
+            }}
             icon={Mail}
             disabled={isResetRequested}
             required
           />
+
           {isResetRequested && (
             <>
-              <Input
-                id="resetToken"
-                label="6-Digit Security OTP"
-                placeholder="Enter 6-digit OTP code"
-                value={resetToken}
-                onChange={(e) => setResetToken(e.target.value)}
-                icon={CheckCircle2}
-                maxLength={6}
-                required
-              />
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                  6-Digit Security OTP
+                </label>
+                <div className="relative">
+                  <input
+                    id="resetToken"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    value={resetToken}
+                    onChange={(e) => {
+                      setResetToken(e.target.value.replace(/\D/g, '').slice(0, 6));
+                      setForgotError('');
+                    }}
+                    placeholder="• • • • • •"
+                    autoFocus
+                    className={`w-full text-center tracking-[0.5em] font-mono text-2xl font-bold py-3 px-4 rounded-xl border ${
+                      forgotError
+                        ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500'
+                        : 'border-slate-300 dark:border-slate-700 focus:ring-indigo-500 focus:border-indigo-500'
+                    } bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-700 placeholder:tracking-[0.3em]`}
+                    required
+                  />
+                </div>
+              </div>
+
+              {resetToken && resetToken.length === 6 && !forgotError && (
+                <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/60">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <CheckCircle2 className="w-4 h-4" /> 6-digit OTP code ready
+                  </span>
+                  <span className="font-mono text-[11px] opacity-80">Ready to verify</span>
+                </div>
+              )}
+
               <Input
                 id="resetPassword"
                 label="New Password"
                 type="password"
-                placeholder="At least 12 characters"
+                placeholder="At least 12 characters (A-Z, a-z, 0-9)"
                 value={resetPassword}
-                onChange={(e) => setResetPassword(e.target.value)}
+                onChange={(e) => {
+                  setResetPassword(e.target.value);
+                  setForgotError('');
+                }}
                 icon={Lock}
                 required
               />
+
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={handleResendForgotOtp}
+                  disabled={isResendingForgotOtp || forgotResendCountdown > 0}
+                  className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-50 disabled:no-underline flex items-center gap-1"
+                >
+                  {isResendingForgotOtp
+                    ? 'Sending OTP...'
+                    : forgotResendCountdown > 0
+                    ? `Resend OTP in ${forgotResendCountdown}s`
+                    : "Didn't receive OTP? Resend OTP"}
+                </button>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">Valid for 30 mins</span>
+              </div>
             </>
           )}
-          <div className="flex justify-end gap-2 pt-2">
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
             <Button
               type="button"
               variant="ghost"
@@ -837,12 +962,18 @@ export const Login = ({ initialMode = 'login', initialRole = 'owner', isDevelope
                 setResetToken('');
                 setResetPassword('');
                 setIsResetRequested(false);
+                setForgotError('');
               }}
             >
               Cancel
             </Button>
-            <Button type="submit" variant="primary" isLoading={forgotSubmitted}>
-              {isResetRequested ? 'Confirm New Password' : 'Send 6-Digit OTP Code'}
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={forgotSubmitted}
+              disabled={isResetRequested && (resetToken.length !== 6 || !resetPassword)}
+            >
+              {isResetRequested ? 'Verify OTP & Reset Password' : 'Send 6-Digit OTP Code'}
             </Button>
           </div>
         </form>

@@ -241,6 +241,11 @@ export const B2bInvoiceModal = ({ isOpen, onClose, transaction, customer }) => {
           <div className="flex justify-between items-end pt-2 text-[9px] border-t border-black">
             <div>
               <p className="font-bold">TERMS: 1. Subject to Mumbai Jurisdiction. 2. Interest @ 18% p.a. on late payment. E.&O.E.</p>
+              <p className="text-slate-700">
+                Billed / Issued by:{' '}
+                <strong className="text-black">{transaction.seller_name || 'Authorized Representative'}</strong>
+                {transaction.seller_role ? ` (${transaction.seller_role})` : ''}
+              </p>
             </div>
             <div className="text-right">
               <p className="font-bold">For MARKETMIND DISTRIBUTORS PVT LTD</p>
