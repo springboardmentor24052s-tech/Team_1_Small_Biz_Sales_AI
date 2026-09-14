@@ -1,4 +1,5 @@
 import json
+import logging
 import smtplib
 import urllib.error
 import urllib.request
@@ -6,9 +7,23 @@ from email.message import EmailMessage
 
 from app.core.config import settings
 
+logger = logging.getLogger("marketmind.email")
+
 
 class EmailDeliveryError(RuntimeError):
     pass
+
+
+def brevo_configured() -> bool:
+    key = ""
+    if settings.brevo_api_key:
+        key = settings.brevo_api_key.get_secret_value().strip()
+    elif settings.smtp_password:
+        candidate = settings.smtp_password.get_secret_value().strip()
+        if candidate.startswith(("xkeysib-", "xsmtpsib-")) or len(candidate) >= 60:
+            key = candidate
+    from_email = settings.brevo_from_email or settings.smtp_from_email or settings.smtp_username
+    return bool(key and from_email)
 
 
 def resend_configured() -> bool:
@@ -16,15 +31,59 @@ def resend_configured() -> bool:
 
 
 def smtp_configured() -> bool:
-    return bool(settings.smtp_host and settings.smtp_from_email)
+    return bool(settings.smtp_host and (settings.smtp_from_email or settings.smtp_username))
 
 
 def email_delivery_configured() -> bool:
-    return bool(resend_configured() or smtp_configured())
+    return bool(brevo_configured() or smtp_configured() or resend_configured())
 
 
 def require_production_email_delivery() -> None:
     pass
+
+
+def send_via_brevo_api(*, recipient: str, subject: str, body: str) -> bool:
+    api_key = ""
+    if settings.brevo_api_key:
+        api_key = settings.brevo_api_key.get_secret_value().strip()
+    elif settings.smtp_password:
+        api_key = settings.smtp_password.get_secret_value().strip()
+    from_email = settings.brevo_from_email or settings.smtp_from_email or settings.smtp_username
+
+    if not api_key or not from_email:
+        return False
+
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "accept": "application/json",
+        "api-key": api_key,
+        "content-type": "application/json",
+        "User-Agent": "MarketMind/1.0",
+    }
+    payload = {
+        "sender": {"name": "MarketMind Security", "email": from_email},
+        "to": [{"email": recipient}],
+        "subject": subject,
+        "textContent": body,
+    }
+
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            logger.info("Brevo API email delivered successfully to %s (HTTP %s)", recipient, response.status)
+            return response.status in (200, 201, 202)
+    except urllib.error.HTTPError as exc:
+        err_body = exc.read().decode("utf-8", errors="ignore")
+        logger.error("Brevo API delivery failed to %s: %s", recipient, err_body)
+        raise EmailDeliveryError(f"Brevo API failed: {err_body}") from exc
+    except Exception as exc:
+        logger.error("Brevo API network error to %s: %s", recipient, exc)
+        raise EmailDeliveryError(f"Brevo API error: {exc}") from exc
 
 
 def send_via_resend(*, recipient: str, subject: str, body: str) -> bool:
@@ -52,20 +111,25 @@ def send_via_resend(*, recipient: str, subject: str, body: str) -> bool:
     )
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
+            logger.info("Resend API email delivered successfully to %s (HTTP %s)", recipient, response.status)
             return response.status in (200, 201)
     except urllib.error.HTTPError as exc:
         err_body = exc.read().decode("utf-8", errors="ignore")
+        logger.error("Resend API delivery failed to %s: %s", recipient, err_body)
         raise EmailDeliveryError(f"Resend API delivery failed: {err_body}") from exc
     except Exception as exc:
+        logger.error("Resend API error to %s: %s", recipient, exc)
         raise EmailDeliveryError(f"Resend API error: {exc}") from exc
 
 
 def send_via_smtp(*, recipient: str, subject: str, body: str) -> bool:
     if not smtp_configured():
         return False
+    from_addr = settings.smtp_from_email or settings.smtp_username or "noreply@marketmind.ai"
+    sender_name = "MarketMind Security"
     message = EmailMessage()
     message["Subject"] = subject
-    message["From"] = settings.smtp_from_email or "MarketMind <noreply@marketmind.ai>"
+    message["From"] = f"{sender_name} <{from_addr}>" if "<" not in from_addr else from_addr
     message["To"] = recipient
     message.set_content(body)
     try:
@@ -89,31 +153,37 @@ def send_via_smtp(*, recipient: str, subject: str, body: str) -> bool:
                         settings.smtp_password.get_secret_value(),
                     )
                 smtp.send_message(message)
+        logger.info("SMTP email delivered successfully to %s via %s", recipient, settings.smtp_host)
+        return True
     except (OSError, smtplib.SMTPException) as exc:
-        raise EmailDeliveryError("SMTP email delivery failed") from exc
-    return True
+        logger.error("SMTP delivery failed to %s via %s: %s", recipient, settings.smtp_host, exc)
+        raise EmailDeliveryError(f"SMTP email delivery failed: {exc}") from exc
 
 
 def send_security_email(*, recipient: str, subject: str, body: str) -> bool:
     if recipient.endswith(("@example.com", ".example.com", "@marketmind.local")):
         return True
 
-    resend_failed = False
-    if resend_configured():
+    # 1. Try Brevo HTTP API (Fastest & most reliable over HTTPS)
+    if brevo_configured():
         try:
-            return send_via_resend(recipient=recipient, subject=subject, body=body)
-        except Exception:
-            resend_failed = True
+            return send_via_brevo_api(recipient=recipient, subject=subject, body=body)
+        except Exception as exc:
+            logger.warning("Brevo API attempt failed (%s), attempting SMTP...", exc)
 
+    # 2. Try Standard SMTP (Brevo / Gmail / Hostinger)
     if smtp_configured():
         try:
             return send_via_smtp(recipient=recipient, subject=subject, body=body)
-        except Exception:
-            if not resend_failed:
-                raise
+        except Exception as exc:
+            logger.warning("SMTP attempt failed (%s), attempting Resend fallback...", exc)
 
-    if resend_failed:
-        return False
+    # 3. Try Resend API (Fallback)
+    if resend_configured():
+        try:
+            return send_via_resend(recipient=recipient, subject=subject, body=body)
+        except Exception as exc:
+            logger.warning("Resend attempt failed: %s", exc)
 
     return False
 

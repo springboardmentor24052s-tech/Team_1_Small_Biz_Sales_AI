@@ -44,12 +44,30 @@ class Settings(BaseSettings):
         ]
     )
     expose_development_tokens: bool = True
-    smtp_host: str | None = None
-    smtp_port: int = 587
-    smtp_username: str | None = None
-    smtp_password: SecretStr | None = None
-    smtp_from_email: str | None = None
-    smtp_starttls: bool = True
+    smtp_host: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("MARKETMIND_SMTP_HOST", "SMTP_HOST", "smtp_host"),
+    )
+    smtp_port: int = Field(
+        default=587,
+        validation_alias=AliasChoices("MARKETMIND_SMTP_PORT", "SMTP_PORT", "smtp_port"),
+    )
+    smtp_username: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("MARKETMIND_SMTP_USERNAME", "SMTP_USERNAME", "SMTP_USER", "smtp_username"),
+    )
+    smtp_password: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("MARKETMIND_SMTP_PASSWORD", "SMTP_PASSWORD", "SMTP_KEY", "SMTP_PASS", "smtp_password"),
+    )
+    smtp_from_email: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("MARKETMIND_SMTP_FROM_EMAIL", "SMTP_FROM_EMAIL", "EMAIL_FROM", "smtp_from_email"),
+    )
+    smtp_starttls: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("MARKETMIND_SMTP_STARTTLS", "SMTP_STARTTLS", "smtp_starttls"),
+    )
     resend_api_key: SecretStr | None = Field(
         default=None,
         validation_alias=AliasChoices("MARKETMIND_RESEND_API_KEY", "RESEND_API_KEY", "resend_api_key"),
@@ -57,6 +75,14 @@ class Settings(BaseSettings):
     resend_from_email: str = Field(
         default="onboarding@resend.dev",
         validation_alias=AliasChoices("MARKETMIND_RESEND_FROM_EMAIL", "RESEND_FROM_EMAIL", "resend_from_email"),
+    )
+    brevo_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("MARKETMIND_BREVO_API_KEY", "BREVO_API_KEY", "brevo_api_key", "BREVO_KEY"),
+    )
+    brevo_from_email: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("MARKETMIND_BREVO_FROM_EMAIL", "BREVO_FROM_EMAIL", "brevo_from_email"),
     )
     initial_admin_email: str | None = None
     initial_admin_password: SecretStr | None = None
