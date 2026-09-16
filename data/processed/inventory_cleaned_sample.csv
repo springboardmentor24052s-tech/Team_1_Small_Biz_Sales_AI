@@ -1,0 +1,251 @@
+sku,design_number,stock_quantity,category,size,color,reorder_level,stock_status
+AN210-NAVY-M,AN210,3,Leggings,M,Navy Blue,5,low_stock
+BL0115-S,BL115,2,Blouse,S,Olive,5,low_stock
+BL016-63RED,BL016,24,Blouse,FREE,Red,5,in_stock
+BL024-74RED,BL024,103,Blouse,FREE,Red,5,in_stock
+BL031-79PINK,BL031,8,Blouse,FREE,Pink,5,in_stock
+BL035-161GOLD,BL035,448,Blouse,FREE,Gold,5,in_stock
+BL083-186GOLD,BL083,16,Blouse,FREE,Gold,5,in_stock
+BL095-L,BL095,51,Blouse,L,Multicolor,5,in_stock
+BL111-M,BL111,6,Blouse,M,Black,5,in_stock
+BTM006-L,BTM006,2,Bottom,L,Green,5,low_stock
+BTM026-NP-S,BTM026,6,Pant,S,Red,5,in_stock
+BTM026-NP-XXL,BTM026,0,Pant,XXL,Red,5,out_of_stock
+BTM027-NP-M,BTM027,14,Pant,M,Green,5,in_stock
+BTM033-NP-XXL,BTM033,3,Pant,XXL,Turquoise Blue,5,low_stock
+BTM042-PP-XXL,BTM042,6,Palazzo,XXL,Mustard,5,in_stock
+BTM048-PP-XS,BTM048,51,Palazzo,XS,Green,5,in_stock
+J0002-SKD-L,J0002,93,Kurta Set,L,Peach,5,in_stock
+J0006-SET-XS,J0006,149,Dress,XS,Mustard,5,in_stock
+J0019-SET-XS,J0019,9,Set,XS,Red,5,in_stock
+J0024-KR-S,J0024,176,Kurta,S,Sea Green,5,in_stock
+J0024-KR-XXL,J0024,92,Kurta,XXL,Sea Green,5,in_stock
+J0026-KR-XXL,J0026,1,Kurta,XXL,Turquoise Green,5,low_stock
+J0028-KR-XXL,J0028,1,Kurta,XXL,Red,5,low_stock
+J0029-KR-XS,J0029,0,Kurta,XS,Pink,5,out_of_stock
+J0047-TP-XL,J0047,2,Top,XL,Pink,5,low_stock
+J0073-KR-XXL,J0073,2,Kurta,XXL,Light Blue,5,low_stock
+J0075-KR-XXL,J0075,0,Kurta,XXL,Pink,5,out_of_stock
+J0085-TP-L,J0085,3,Crop Top,L,Blue,5,low_stock
+J0087-TP-S,J0087,28,Crop Top,S,Light Green,5,in_stock
+J0087-TP-XS,J0087,45,Crop Top,XS,Light Green,5,in_stock
+J0103-SKD-L,J0103,33,Kurta Set,L,Yellow,5,in_stock
+J0110-SKD-XXXL,J0110,1,Kurta Set,XXXL,Black,5,low_stock
+J0112-TP-L,J0112,4,Top,L,Green,5,low_stock
+J0113-TP-XXL,J0113,29,Top,XXL,Blue,5,in_stock
+J0117-TP-XXXL,J0117,48,Top,XXXL,White,5,in_stock
+J0127-SKD-XXXL,J0127,26,Kurta Set,XXXL,Multicolor,5,in_stock
+J0130-SET-XL,J0130,2,Kurta Set,XL,Green,5,low_stock
+J0132-KR-XS,J0132,6,Kurta,XS,Orange,5,in_stock
+J0148-SET-XXXL,J0148,21,Kurta Set,XXXL,Green,5,in_stock
+J0152-DR-XS,J0152,0,Dress,XS,Blue,5,out_of_stock
+J0155-KR-M,J0155,2,Kurta,M,Green,5,low_stock
+J0160-TP-XS,J0160,0,Top,XS,Blue,5,out_of_stock
+J0168-DR-XXXL,J0168,1,Dress,XXXL,Sky Blue,5,low_stock
+J0178-TP-XL,J0178,1,Top,XL,Multicolor,5,low_stock
+J0181-TP-XXXL,J0181,1,Top,XXXL,Pink,5,low_stock
+J0184-KR-L,J0184,4,Kurta,L,Orange,5,low_stock
+J0186-SET-XXXL,J0186,2,Kurta Set,XXXL,Black,5,low_stock
+J0194-DR-XS,J0194,28,Dress,XS,Green,5,in_stock
+J0223-SKD-S,J0223,28,Set,S,Purple,5,in_stock
+J0231-SKD-XXXL,J0231,13,Kurta Set,XXXL,Green,5,in_stock
+J0235-SKD-S,J0235,26,Kurta Set,S,Rust,5,in_stock
+J0239-SKD-M,J0239,14,Kurta Set,M,OFF WHITE,5,in_stock
+J0240-SKD-XS,J0240,41,Kurta Set,XS,OFF WHITE,5,in_stock
+J0251-SKD-L,J0251,7,Kurta Set,L,Mustard,5,in_stock
+J0252-SKD-XXL,J0252,6,Kurta Set,XXL,Orange,5,in_stock
+J0262-KR-XXL,J0262,2,Kurta,XXL,Grey,5,low_stock
+J0264-KR-S,J0264,2,Kurta,S,Pink,5,low_stock
+J0285-SKD-XL,J0285,86,Kurta Set,XL,Grey,5,in_stock
+J0292-TP-XL,J0292,3,Top,XL,OFF WHITE,5,low_stock
+J0295-DR-L,J0295,2,Dress,L,Black,5,low_stock
+J0295-DR-XL,J0295,3,Dress,XL,Black,5,low_stock
+J0302-DR-XXXL,J0302,2,Dress,XXXL,Grey,5,low_stock
+J0310-TP-XS,J0310,21,Top,XS,Multicolor,5,in_stock
+J0315-KR-L,J0315,2,Kurta,L,Grey,5,low_stock
+J0318-KR-XXL,J0318,2,Kurta,XXL,Black,5,low_stock
+J0345-SET-XS,J0345,0,Set,XS,Cream,5,out_of_stock
+J0353-KR-S,J0353,129,Kurta,S,Peach,5,in_stock
+J0392-TP-S,J0392,31,Top,S,Rust,5,in_stock
+J0396-DR-XXXL,J0396,2,Dress,XXXL,Yellow,5,low_stock
+J0398-DR-S,J0398,3,Dress,S,Wine,5,low_stock
+J0414-DR-L,J0414,1,Dress,L,CORAL ORANGE,5,low_stock
+J0416-DR-XS,J0416,12,Dress,XS,Pink,5,in_stock
+J0419-TP-XXXL,J0419,23,Top,XXXL,Maroon,5,in_stock
+J0431-DR-XXXL,J0431,52,Dress,XXXL,Blue,5,in_stock
+J0432-DR-XS,J0432,50,Dress,XS,Peach,5,in_stock
+JAN8620-KR-XXL,JAN8620,2,Kurta,XXL,Sky Blue,5,low_stock
+JAN8625-KR-XL,JAN8625,2,Kurta,XL,Black,5,low_stock
+JAN8635-KR-NP-XL,JAN8635,31,Set,XL,Pink,5,in_stock
+JAN8636-KR-NP-L,JAN8636,16,Set,L,Grey,5,in_stock
+JAN8642-TP-L,JAN8642,2,Top,L,Yellow,5,low_stock
+JAN8652-KR-NP-S,JAN8652,5,Set,S,Green,5,low_stock
+JAN8661-KR-NP-XXL,JAN8661,3,Set,XXL,Red,5,low_stock
+JAN8668-DR-XXL,JAN8668,0,Dress,XXL,Green,5,out_of_stock
+JAN8669-DR-L,JAN8669,2,Dress,L,LIGHT YELLOW,5,low_stock
+JNE1234-MULTI-KR-032-L,JNE1234,24,Kurta,L,Multicolor,5,in_stock
+JNE1234-MULTI-KR-032-M,JNE1234,21,Kurta,M,Multicolor,5,in_stock
+JNE1906-KR-031-XS,JNE1906,34,Kurta,XS,Black,5,in_stock
+JNE1951-KR-155-S,JNE1951,23,Kurta,S,Green,5,in_stock
+JNE1975-KR-309-XXXL,JNE1975,0,Kurta,XXXL,Yellow,5,out_of_stock
+JNE1977-KR-237-M,JNE1977,3,Kurta,M,Peach,5,low_stock
+JNE2032-KR-205-M,JNE2032,0,Kurta,M,Teal,5,out_of_stock
+JNE2049-KR-351-XS,JNE2049,20,Kurta,XS,Black,5,in_stock
+JNE2113-KR-381-XXL,JNE2113,6,Kurta,XXL,Multicolor,5,in_stock
+JNE2265-KR-501-XL,JNE2265,13,Kurta,XL,Purple,5,in_stock
+JNE2294-KR-A-XXL,JNE2294,3,Kurta,XXL,Yellow,5,low_stock
+JNE3225-KR-M,JNE3225,1,Kurta,M,Light Blue,5,low_stock
+JNE3323-KR-L,JNE3323,3,Kurta,L,Teal,5,low_stock
+JNE3357-KR-S,JNE3357,26,Kurta,S,Yellow,5,in_stock
+JNE3359-KR-XS,JNE3359,2,Kurta,XS,Grey,5,low_stock
+JNE3364-KR-1051-S,JNE3364,150,Kurta,S,Light Green,5,in_stock
+JNE3366-KR-1053-S,JNE3366,181,Kurta,S,Peach,5,in_stock
+JNE3373-KR-M,JNE3373,47,Kurta,M,Black,5,in_stock
+JNE3396-KR-S,JNE3396,45,Kurta,S,Brown,5,in_stock
+JNE3407-KR-S,JNE3407,0,Kurta,S,Olive Green,5,out_of_stock
+JNE3415-KR-XL,JNE3415,2,Kurta,XL,Red,5,low_stock
+JNE3424-KR-XL,JNE3424,15,Kurta,XL,Blue,5,in_stock
+JNE3434-KR-XXXL,JNE3434,2,Kurta,XXXL,Mustard,5,low_stock
+JNE3436-KR-L,JNE3436,5,Kurta,L,White,5,low_stock
+JNE3443-KR-S,JNE3443,176,Kurta,S,Beige,5,in_stock
+JNE3443-KR-XXL,JNE3443,89,Kurta,XXL,Beige,5,in_stock
+JNE3447-KR-XXXL,JNE3447,2,Kurta,XXXL,Beige,5,low_stock
+JNE3452-KR-M,JNE3452,6,Kurta,M,Navy Blue,5,in_stock
+JNE3453-KR-XL,JNE3453,55,Kurta,XL,Yellow,5,in_stock
+JNE3454-KR-XXL,JNE3454,33,Kurta,XXL,Peach,5,in_stock
+JNE3458-KR-M,JNE3458,24,Kurta,M,Brown,5,in_stock
+JNE3460-KR-L,JNE3460,24,Kurta,L,Maroon,5,in_stock
+JNE3467-KR-L,JNE3467,2,Kurta,L,Black,5,low_stock
+JNE3474-KR-XXL,JNE3474,34,Kurta,XXL,Turquoise Blue,5,in_stock
+JNE3482-KR-M,JNE3482,3,Kurta,M,Powder Blue,5,low_stock
+JNE3487-KR-XXL,JNE3487,13,Kurta,XXL,Peach,5,in_stock
+JNE3516-KR-XS,JNE3516,3,Kurta,XS,Mustard,5,low_stock
+JNE3522-KR-S,JNE3522,83,Kurta,S,Peach,5,in_stock
+JNE3539-KR-L,JNE3539,0,Kurta,L,Cream,5,out_of_stock
+JNE3543-KR-XL,JNE3543,3,Kurta,XL,Cream,5,low_stock
+JNE3553-KR-S,JNE3553,51,Kurta,S,Navy Blue,5,in_stock
+JNE3602-KR-S,JNE3602,42,Kurta,S,Pink,5,in_stock
+JNE3604-KR-M,JNE3604,67,Kurta,M,Magenta,5,in_stock
+JNE3626-KR-S,JNE3626,4,Kurta,S,Black,5,low_stock
+JNE3660-TP-XL,JNE3660,19,Top,XL,Sky Blue,5,in_stock
+JNE3661-TP-M,JNE3661,0,Top,M,Pink,5,out_of_stock
+JNE3662-TP-XS,JNE3662,6,Top,XS,Peach,5,in_stock
+JNE3668-TP-XL,JNE3668,2,Top,XL,Maroon,5,low_stock
+JNE3671-TU-XXL,JNE3671,3,Tunic,XXL,Pink,5,low_stock
+JNE3675-TU-XXXL,JNE3675,35,Tunic,XXXL,Pink,5,in_stock
+JNE3695-KR-S,JNE3695,6,Kurta,S,Yellow,5,in_stock
+JNE3706-DR-XL,JNE3706,5,Dress,XL,Cream,5,low_stock
+JNE3710-DR-XXL,JNE3710,5,Dress,XXL,Blue,5,low_stock
+JNE3714-KR-XXL,JNE3714,6,Kurta,XXL,TEAL GREEN,5,in_stock
+JNE3716-KR-L,JNE3716,104,Kurta,L,Teal,5,in_stock
+JNE3730-KR-XXL,JNE3730,10,Kurta,XXL,Olive,5,in_stock
+JNE3735-KR-L,JNE3735,6,Kurta,L,Beige,5,in_stock
+JNE3735-KR-XS,JNE3735,65,Kurta,XS,Beige,5,in_stock
+JNE3742-KR-M,JNE3742,51,Kurta,M,Green,5,in_stock
+JNE3745-KR-XXXL,JNE3745,3,Kurta,XXXL,Teal Green,5,low_stock
+JNE3749-KR-XL,JNE3749,6,Kurta,XL,Blue,5,in_stock
+JNE3751-KR-S,JNE3751,23,Kurta,S,White,5,in_stock
+JNE3762-KR-XXXL,JNE3762,3,Kurta,XXXL,Maroon,5,low_stock
+JNE3765-KR-XS,JNE3765,78,Kurta,XS,Mustard,5,in_stock
+JNE3768-KR-XXL,JNE3768,15,Kurta,XXL,Peach,5,in_stock
+JNE3769-KR-XS,JNE3769,8,Kurta,XS,Blue,5,in_stock
+JNE3770-KR-XL,JNE3770,41,Kurta,XL,Blue,5,in_stock
+JNE3785-KR-L,JNE3785,4,Kurta,L,CORAL,5,low_stock
+JNE3787-KR-M,JNE3787,2,Kurta,M,Blue,5,low_stock
+JNE3795-KR-XXL,JNE3795,151,Kurta,XXL,Blue,5,in_stock
+JNE3798-KR-XS,JNE3798,13,Kurta,XS,Teal,5,in_stock
+JNE3810-KR-S,JNE3810,37,Kurta,S,Black,5,in_stock
+JNE3819-KR-XL,JNE3819,2,Kurta,XL,Blue,5,low_stock
+JNE3821-KR-S,JNE3821,4,Kurta,S,Sea Green,5,low_stock
+JNE3821-KR-XS,JNE3821,7,Kurta,XS,Sea Green,5,in_stock
+JNE3822-KR-M,JNE3822,6,Kurta,M,Blue,5,in_stock
+JNE3822-KR-XXL,JNE3822,7,Kurta,XXL,Blue,5,in_stock
+JNE3831-KR-M,JNE3831,4,Kurta,M,Teal,5,low_stock
+JNE3841-KR-XXL,JNE3841,5,Kurta,XXL,Yellow,5,low_stock
+JNE3847-KR-M,JNE3847,4,Kurta,M,Teal Green,5,low_stock
+JNE3851-KR-S,JNE3851,35,Kurta,S,Green,5,in_stock
+JNE3855-KR-L,JNE3855,5,Kurta,L,Green,5,low_stock
+JNE3855-KR-XL,JNE3855,8,Kurta,XL,Green,5,in_stock
+JNE3869-DR-XL,JNE3869,3,Dress,XL,Pink,5,low_stock
+JNE3875-KR-L,JNE3875,90,Kurta,L,Green,5,in_stock
+JNE3879-DR-XXL,JNE3879,12,Dress,XXL,Turquoise,5,in_stock
+JNE3899-KR-L,JNE3899,12,Kurta,L,Yellow,5,in_stock
+JNE3899-KR-M,JNE3899,24,Kurta,M,Yellow,5,in_stock
+JNE3906-KR-XXXL,JNE3906,56,Kurti,XXXL,Navy Blue,5,in_stock
+JNE3909-KR-S,JNE3909,63,Kurta,S,Dark Blue,5,in_stock
+JNE3925-TU-XS,JNE3925,41,Top,XS,Pink,5,in_stock
+JNE3928-KR-XXXL,JNE3928,3,Kurta,XXXL,OFF WHITE,5,low_stock
+MEN5004-KR-XXXL,MEN5004,2,Kurta,XXXL,Blue,5,low_stock
+MEN5005-KR-S,MEN5005,2,Kurta,S,Multicolor,5,low_stock
+MEN5018-KR-S,MEN5018,23,Kurta,S,Blue,5,in_stock
+MEN5025-KR-S,MEN5025,10,Kurta,S,Blue,5,in_stock
+MEN5028-KR-M,MEN5028,7,Kurta,M,Brown,5,in_stock
+NW006-ST-SR-XS,NW006,28,Night Wear,XS,Beige,5,in_stock
+NW016-ST-SR-XXXL,NW016,25,Night Wear,XXXL,White,5,in_stock
+NW028-TP-PJ-S,NW028,23,Night Wear,S,Grey,5,in_stock
+NW033-ST-CP-XXXL,NW033,19,Night Wear,XXXL,Yellow,5,in_stock
+PJNE3291-KR-6XL,PJNE3291,24,Kurta,6XL,Green,5,in_stock
+PJNE3405-KR-4XL,PJNE3405,100,Kurta,4XL,Pink,5,in_stock
+SAR071,SAR071,6,Saree,FREE,Green,5,in_stock
+SAR134,SAR134,14,Saree,FREE,Yellow,5,in_stock
+SAR168,SAR168,16,Saree,FREE,NO REFERENCE,5,in_stock
+SET014-KR-PP-S,SET014,22,Kurta Set,S,Navy Blue,5,in_stock
+SET044-KR-NP-S,SET044,9,Kurta Set,S,Mustard,5,in_stock
+SET070-KR-NP-S,SET070,1,Set,S,Maroon,5,low_stock
+SET073-KR-SHA-XXXL,SET073,136,Kurta Set,XXXL,Dark Green,5,in_stock
+SET083-KR-PP-M,SET083,0,Kurta Set,M,Navy Blue,5,out_of_stock
+SET083-KR-PP-XXL,SET083,2,Kurta Set,XXL,Navy Blue,5,low_stock
+SET110-KR-PP-XL,SET110,2,Kurta Set,XL,Black,5,low_stock
+SET132-KR-NP-XXXL,SET132,3,Kurta Set,XXXL,Light Green,5,low_stock
+SET171-KR-NP-L,SET171,6,Kurta Set,L,Cream,5,in_stock
+SET183-KR-DH-S,SET183,293,Kurta Set,S,Olive Green,5,in_stock
+SET192-KR-NP-XL,SET192,4,Kurta Set,XL,Teal,5,low_stock
+SET194-KR-NP-XXXL,SET194,82,Kurta Set,XXXL,Mustard,5,in_stock
+SET201-KR-NP-XXL,SET201,1,Kurta Set,XXL,Olive,5,low_stock
+SET203-KR-DPT-XS,SET203,14,Kurta Set,XS,Maroon,5,in_stock
+SET209-KR-PP-XL,SET209,8,Kurta Set,XL,Pink,5,in_stock
+SET209-KR-PP-XXXL,SET209,2,Kurta Set,XXXL,Pink,5,low_stock
+SET214-KR-DPT-L,SET214,2,Kurta Set,L,Mustard,5,low_stock
+SET214-KR-DPT-XS,SET214,2,Kurta Set,XS,Mustard,5,low_stock
+SET219-KR-PP-XXXL,SET219,2,Kurta Set,XXXL,Turquoise Green,5,low_stock
+SET220-KR-PP-L,SET220,2,Kurta Set,L,White,5,low_stock
+SET229-KR-PP-S,SET229,36,Kurta Set,S,Mauve,5,in_stock
+SET234-KR-PP-XXL,SET234,0,Kurta Set,XXL,Green,5,out_of_stock
+SET236-KR-PP-XS,SET236,18,Set,XS,Pink,5,in_stock
+SET238-KR-PP-XXL,SET238,2,Kurta Set,XXL,Grey,5,low_stock
+SET246-KR-PP-XXXL,SET246,4,Kurta Set,XXXL,Red,5,low_stock
+SET248-KR-NP-XXL,SET248,4,Kurta Set,XXL,Teal,5,low_stock
+SET257-KR-PP-S,SET257,5,Set,S,Beige,5,low_stock
+SET261-KR-PP-M,SET261,0,Kurta Set,M,Turquoise,5,out_of_stock
+SET262-KR-NP-M,SET262,1,Kurta Set,M,Green,5,low_stock
+SET264-KR-NP-XL,SET264,81,Kurta Set,XL,Gold,5,in_stock
+SET268-KR-NP-XL,SET268,176,Kurta Set,XL,OFF WHITE,5,in_stock
+SET269-KR-NP-XXL,SET269,13,Set,XXL,Green,5,in_stock
+SET270-KR-PP-XXL,SET270,5,Kurta Set,XXL,Green,5,low_stock
+SET280-KR-PP-XS,SET280,7,Kurta Set,XS,Pink,5,in_stock
+SET280-KR-PP-XXL,SET280,2,Kurta Set,XXL,Pink,5,low_stock
+SET293-KR-NP-M,SET293,6,Kurta Set,M,Blue,5,in_stock
+SET295-KR-NP-XS,SET295,4,Kurta Set,XS,Black,5,low_stock
+SET299-KR-PP-M,SET299,46,Set,M,Blue,5,in_stock
+SET300-KR-NP-XXXL,SET300,7,Set,XXXL,CORAL,5,in_stock
+SET303-KR-NP-XS,SET303,47,Kurta Set,XS,Teal,5,in_stock
+SET308-KR-PP-XXXL,SET308,27,Kurta Set,XXXL,Grey,5,in_stock
+SET315-KR-PP-XS,SET315,32,Kurta Set,XS,White,5,in_stock
+SET317-KR-PP-XXXL,SET317,7,Kurta Set,XXXL,Olive Green,5,in_stock
+SET328-KR-NP-XXXL,SET328,38,Kurta Set,XXXL,Black,5,in_stock
+SET349-KR-NP-S,SET349,9,Set,S,Pink,5,in_stock
+SET357-KR-NP-S,SET357,1,Set,S,Pink,5,low_stock
+SET360-KR-NP-S,SET360,13,Set,S,Light Pink,5,in_stock
+SET361-KR-NP-XXL,SET361,0,Set,XXL,White,5,out_of_stock
+SET373-KR-PP-XXXL,SET373,52,Set,XXXL,Maroon,5,in_stock
+SET375-KR-NP-L,SET375,8,Set,L,Maroon,5,in_stock
+SET388-KR-NP-M,SET388,0,Set,M,White,5,out_of_stock
+SET396-KR-PP-XL,SET396,5,Kurta Set,XL,White,5,low_stock
+SET397-KR-NP-XS,SET397,6,Kurta Set,XS,TEAL BLUE,5,in_stock
+SET409-KR-NP-XXL,SET409,74,Set,XXL,Wine,5,in_stock
+SET432-KR-PP-S,SET432,88,Set,S,Wine,5,in_stock
+SET433-KR-NP-L,SET433,50,Set,L,Teal,5,in_stock
+SET436-KR-NP-XS,SET436,41,Set,XS,Pink,5,in_stock
+SET438-KR-NP-XL,SET438,66,Set,XL,Pink,5,in_stock
+SET438-KR-NP-XXL,SET438,64,Set,XXL,Pink,5,in_stock
+SET442-KR-NP-S,SET442,51,Set,S,Sky Blue,5,in_stock

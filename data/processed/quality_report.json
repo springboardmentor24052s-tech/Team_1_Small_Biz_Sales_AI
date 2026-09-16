@@ -1,0 +1,35 @@
+{
+  "scope": "MarketMind Milestone 1",
+  "sampling": {
+    "rows_per_committed_sample": 250,
+    "random_seed": 42,
+    "note": "Quality counts are calculated from the full local source files."
+  },
+  "sales": {
+    "source_rows": 128975,
+    "output_rows": 128969,
+    "duplicates_removed": 6,
+    "invalid_required_rows_removed": 0,
+    "cancelled_rows": 18329,
+    "return_rows": 2098,
+    "missing_amount_rows": 7792,
+    "non_positive_quantity_rows": 12804
+  },
+  "inventory": {
+    "source_rows": 9271,
+    "output_rows": 9170,
+    "duplicates_removed": 38,
+    "invalid_rows_removed": 48,
+    "low_stock_skus": 3359,
+    "out_of_stock_skus": 533
+  },
+  "customers": {
+    "source_rows": 1067371,
+    "output_rows": 797885,
+    "customer_summary_rows": 5881,
+    "duplicates_removed": 34335,
+    "missing_customer_rows": 235151,
+    "invalid_rows_removed": 235151,
+    "return_rows": 18390
+  }
+}

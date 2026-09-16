@@ -1,0 +1,6 @@
+sku,stock_quantity,reorder_level
+SKU-POS-501,150,25
+SKU-POS-502,45,10
+SKU-POS-503,18,5
+SKU-POS-504,30,8
+SKU-POS-505,80,15

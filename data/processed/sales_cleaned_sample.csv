@@ -1,0 +1,251 @@
+order_id,order_date,order_status,fulfilment,sales_channel,ship_service_level,style,sku,category,size,asin,courier_status,quantity,currency,amount,ship_state,is_b2b,fulfilled_by,transaction_type,quality_status
+171-3575639-3022711,2022-04-01,Cancelled,Merchant,Amazon.in,Standard,JNE3834,JNE3834-KR-XL,Kurta,XL,B09Q3JQJ67,,0,INR,522.86,WEST BENGAL,False,Easy Ship,cancelled,non_positive_quantity
+171-9794601-6978764,2022-04-01,Shipped,Amazon,Amazon.in,Expedited,JNE3405,JNE3405-KR-XXXL,Kurta,3XL,B081WZ4T3V,Shipped,1,INR,449.0,TELANGANA,False,,sale,valid
+405-3885266-7013123,2022-04-01,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3800,JNE3800-KR-XXL,Western Dress,XXL,B09SDYNZQ5,Shipped,1,INR,761.0,MAHARASHTRA,False,Easy Ship,sale,valid
+405-9816382-5223502,2022-04-01,Shipped,Amazon,Amazon.in,Expedited,J0249,J0249-SKD-L,Set,L,B09M6T674G,Shipped,1,INR,927.0,KARNATAKA,False,,sale,valid
+403-6182499-0788348,2022-04-02,Shipped,Amazon,Amazon.in,Expedited,J0338,J0338-DR-L,Western Dress,L,B09832FGG4,Shipped,2,INR,2066.0,KARNATAKA,False,,sale,valid
+406-2376265-6110752,2022-04-02,Shipped,Amazon,Amazon.in,Expedited,JNE3630,JNE3630-KR-XL,Kurta,XL,B09CT26638,Shipped,1,INR,481.0,WEST BENGAL,False,,sale,valid
+407-1390157-3417957,2022-04-02,Shipped,Amazon,Amazon.in,Expedited,J0341,J0341-DR-L,Western Dress,L,B099NRCT7B,Shipped,1,INR,1033.0,TAMIL NADU,False,,sale,valid
+406-8514105-8011505,2022-04-03,Shipped,Amazon,Amazon.in,Expedited,SET268,SET268-KR-NP-L,Set,L,B08XQ8MCKP,Shipped,1,INR,698.0,MAHARASHTRA,False,,sale,valid
+171-1121118-7909164,2022-04-04,Shipped,Amazon,Amazon.in,Expedited,JNE3679,JNE3679-TU-L,Top,L,B0943J4SL3,Shipped,1,INR,425.0,TELANGANA,False,,sale,valid
+171-5572739-8932341,2022-04-04,Shipped,Amazon,Amazon.in,Expedited,SET351,SET351-KR-NP-M,Set,M,B09KXV7YB4,Shipped,1,INR,599.0,HARYANA,False,,sale,valid
+407-5247299-7433907,2022-04-04,Cancelled,Amazon,Amazon.in,Expedited,SET331,SET331-KR-NP-XXL,Set,XXL,B09NQ3P98W,Cancelled,0,INR,,UTTARAKHAND,False,,cancelled,non_positive_quantity
+402-2071796-2139518,2022-04-05,Cancelled,Amazon,Amazon.in,Expedited,SET044,SET044-KR-NP-XL,Set,XL,B07Q2MWDYN,Unshipped,1,INR,542.0,TELANGANA,False,,cancelled,valid
+402-9045603-0549929,2022-04-05,Shipped,Amazon,Amazon.in,Expedited,SET252,SET252-KR-PP-S,Set,S,B08TH684BJ,Shipped,1,INR,759.0,TELANGANA,False,,sale,valid
+403-0250267-0284362,2022-04-05,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET339,SET339-KR-NP-M,Set,M,B09RSSRWPJ,Shipped,1,INR,646.0,SIKKIM,False,Easy Ship,sale,valid
+403-5121358-0151540,2022-04-05,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3641,JNE3641-TP-N-XS,Top,XS,B08ZH9LS2B,Shipped,1,INR,359.0,RAJASTHAN,False,Easy Ship,sale,valid
+404-8227205-7916310,2022-04-05,Shipped,Amazon,Amazon.in,Expedited,MEN5009,MEN5009-KR-M,Kurta,M,B08YYX8VKT,Shipped,1,INR,495.0,GUJARAT,False,,sale,valid
+404-1982868-9156347,2022-04-06,Shipped,Amazon,Amazon.in,Expedited,JNE3679,JNE3679-TU-S,Top,S,B09432Q9ZS,Shipped,1,INR,412.0,MAHARASHTRA,False,,sale,valid
+405-1755628-2768310,2022-04-06,Shipped,Amazon,Amazon.in,Expedited,SET265,SET265-KR-NP-XXL,Set,XXL,B0983DD4G7,Shipped,1,INR,888.0,TELANGANA,False,,sale,valid
+406-7519796-1229902,2022-04-06,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3797,JNE3797-KR-XXL,Western Dress,XXL,B09SDXSQ33,Shipped,1,INR,715.0,PUNJAB,False,Easy Ship,sale,valid
+405-5789138-9683542,2022-04-08,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3801,JNE3801-KR-M,Kurta,M,B09SDZ4FH9,Shipped,1,INR,725.0,MADHYA PRADESH,False,Easy Ship,sale,valid
+405-8901763-9537140,2022-04-08,Cancelled,Amazon,Amazon.in,Expedited,J0237,J0237-SKD-XXXL,Set,3XL,B08YN9VTD5,Cancelled,0,INR,,TAMIL NADU,False,,cancelled,non_positive_quantity
+408-8678875-8872306,2022-04-08,Shipped,Amazon,Amazon.in,Expedited,JNE3405,JNE3405-KR-L,Kurta,L,B081WSCKPQ,Shipped,1,INR,399.0,DELHI,False,,sale,valid
+408-7245041-7741147,2022-04-09,Shipped,Amazon,Amazon.in,Expedited,JNE3802,JNE3802-KR-XL,Kurta,XL,B09K3T96QK,Shipped,1,INR,459.0,ANDHRA PRADESH,False,,sale,valid
+402-3984745-7849942,2022-04-10,Shipped,Amazon,Amazon.in,Expedited,JNE3396,JNE3396-KR-XL,Kurta,XL,B083ZZGZBV,Shipped,1,INR,487.0,DELHI,False,,sale,valid
+403-9793438-3036361,2022-04-10,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,NW037,NW037-TP-SR-XXXL,Set,3XL,B099NQT8H8,Shipped,1,INR,449.0,UTTAR PRADESH,False,Easy Ship,sale,valid
+406-4784045-0829102,2022-04-10,Shipped,Amazon,Amazon.in,Expedited,JNE2032,JNE2032-KR-205-XXL,Kurta,XXL,B0768HCX12,Shipped,1,INR,316.0,UTTAR PRADESH,False,,sale,valid
+403-5101016-0944310,2022-04-11,Shipped,Amazon,Amazon.in,Expedited,SET405,SET405-KR-NP-XXXL,Set,3XL,B09QJ3QCXF,Shipped,1,INR,725.0,MAHARASHTRA,False,,sale,valid
+405-8115158-7327556,2022-04-11,Shipped,Amazon,Amazon.in,Expedited,J0002,J0002-SKD-L,Set,L,B0894X3VKQ,Shipped,1,INR,1115.0,MAHARASHTRA,False,,sale,valid
+406-1033098-5294761,2022-04-11,Cancelled,Amazon,Amazon.in,Expedited,SET393,SET393-KR-NP-M,Set,M,B09QJ4YB1F,Cancelled,0,INR,,TELANGANA,False,,cancelled,non_positive_quantity
+171-2957266-3175552,2022-04-12,Shipped,Amazon,Amazon.in,Expedited,SET303,SET303-KR-NP-XXL,Set,XXL,B09K3FPFL9,Shipped,1,INR,888.0,KARNATAKA,False,,sale,valid
+402-9545237-5057168,2022-04-12,Shipped,Amazon,Amazon.in,Expedited,JNE3399,JNE3399-KR-XL,Kurta,XL,B082W8B28G,Shipped,1,INR,435.0,TAMIL NADU,False,,sale,valid
+403-2921633-1318754,2022-04-12,Shipped,Amazon,Amazon.in,Expedited,J0230,J0230-SKD-S,Set,S,B08XNJ19QH,Shipped,1,INR,1112.0,ANDHRA PRADESH,False,,sale,valid
+404-0216719-4287561,2022-04-12,Shipped,Amazon,Amazon.in,Expedited,SET268,SET268-KR-NP-XL,Set,XL,B08XQBF1G4,Shipped,1,INR,788.0,GUJARAT,False,,sale,valid
+404-8001708-0795536,2022-04-12,Shipped,Amazon,Amazon.in,Expedited,SET282,SET282-KR-PP-M,Set,M,B09CTCDDQ4,Shipped,1,INR,1033.0,HARYANA,False,,sale,valid
+405-7898111-7890729,2022-04-12,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET331,SET331-KR-NP-L,Set,L,B09NQ4XYV9,Shipped,1,INR,597.0,UTTAR PRADESH,False,Easy Ship,sale,valid
+408-6353578-8825133,2022-04-12,Shipped,Amazon,Amazon.in,Expedited,SET269,SET269-KR-NP-XL,Set,XL,B0983CBSJ3,Shipped,1,INR,824.0,KARNATAKA,False,,sale,valid
+405-7084753-4516318,2022-04-13,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET350,SET350-KR-NP-L,Set,L,B09RKDXRZK,Shipped,1,INR,1299.0,MADHYA PRADESH,False,Easy Ship,sale,valid
+407-5442663-7365116,2022-04-13,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3813,JNE3813-KR-M,Kurta,M,B09SDXQ3XB,Shipped,1,INR,635.0,TELANGANA,False,Easy Ship,sale,valid
+407-9657159-6045944,2022-04-14,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET258,SET258-KR-PP-XL,Set,XL,B0983FXQQ2,Shipped,1,INR,881.0,DELHI,False,Easy Ship,sale,valid
+171-1996139-4625934,2022-04-15,Shipped,Amazon,Amazon.in,Expedited,J0343,J0343-DR-M,Western Dress,M,B0982ZJ666,Shipped,1,INR,744.0,KARNATAKA,False,,sale,valid
+402-2673194-0471524,2022-04-15,Shipped,Amazon,Amazon.in,Expedited,J0003,J0003-SET-M,Set,M,B0894XH3LN,Shipped,1,INR,654.0,UTTAR PRADESH,False,,sale,valid
+403-8910023-2036330,2022-04-17,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3818,JNE3818-KR-XXXL,Kurta,3XL,B09LTZSL1K,Shipped,1,INR,499.0,KARNATAKA,False,Easy Ship,sale,valid
+171-0857648-7119534,2022-04-18,Shipped,Amazon,Amazon.in,Expedited,JNE3454,JNE3454-KR-L,Kurta,L,B08B3YBJ97,Shipped,1,INR,419.0,KARNATAKA,False,,sale,valid
+171-8077956-0454717,2022-04-18,Cancelled,Merchant,Amazon.in,Standard,JNE3291,JNE3291-KR-L,Kurta,L,B07R5X9WJB,,0,INR,420.95,TAMIL NADU,False,Easy Ship,cancelled,non_positive_quantity
+403-1766130-4733928,2022-04-18,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET377,SET377-KR-NP-XXL,Set,XXL,B09TZTF5VF,Shipped,1,INR,1238.0,DELHI,False,Easy Ship,sale,valid
+404-1860386-3954747,2022-04-18,Shipped,Amazon,Amazon.in,Expedited,SET268,SET268-KR-NP-XXL,Set,XXL,B08XQ8MJZG,Shipped,1,INR,788.0,WEST BENGAL,False,,sale,valid
+404-1926469-5352352,2022-04-19,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET291,SET291-KR-PP-XL,Set,XL,B099NJV9X7,Shipped,1,INR,599.0,MAHARASHTRA,False,Easy Ship,sale,valid
+407-2065310-4873140,2022-04-19,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3751,JNE3751-KR-M,Kurta,M,B09KXR6L97,Shipped,1,INR,368.0,KARNATAKA,False,Easy Ship,sale,valid
+407-9804186-9191523,2022-04-19,Cancelled,Amazon,Amazon.in,Expedited,J0008,J0008-SKD-XS,Set,XS,B0894WWGK9,Cancelled,0,INR,,BIHAR,False,,cancelled,non_positive_quantity
+408-6697338-7613114,2022-04-19,Shipped,Amazon,Amazon.in,Expedited,JNE3405,JNE3405-KR-XXXL,Kurta,3XL,B081WZ4T3V,Shipped,1,INR,399.0,TAMIL NADU,False,,sale,valid
+402-3269141-6553967,2022-04-20,Shipped,Amazon,Amazon.in,Expedited,SET278,SET278-KR-NP-XS,Set,XS,B0983DSS8R,Shipped,1,INR,1523.0,KARNATAKA,True,,sale,valid
+406-5341711-2456312,2022-04-20,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,J0219,J0219-BL-M,Blouse,M,B09PBXB73K,Shipped,1,INR,625.0,TAMIL NADU,False,Easy Ship,sale,valid
+407-1494696-6784312,2022-04-20,Shipped,Amazon,Amazon.in,Expedited,J0012,J0012-SKD-XS,Set,XS,B0894Y2NJQ,Shipped,1,INR,1140.0,GOA,False,,sale,valid
+171-8062578-4629155,2022-04-21,Cancelled,Amazon,Amazon.in,Expedited,JNE3447,JNE3447-KR-S,Kurta,S,B081X5328X,Unshipped,1,INR,295.0,WEST BENGAL,False,,cancelled,valid
+404-6811700-4497946,2022-04-21,Shipped,Amazon,Amazon.in,Expedited,JNE2291,JNE2291-KR-602-L,Kurta,L,B07GRVC75J,Shipped,1,INR,376.0,KARNATAKA,False,,sale,valid
+405-0823241-2734764,2022-04-21,Cancelled,Amazon,Amazon.in,Expedited,JNE3613,JNE3613-KR-XL,Kurta,XL,B08XVKMPHJ,Cancelled,0,INR,,ASSAM,False,,cancelled,non_positive_quantity
+402-4768594-8665935,2022-04-22,Shipped,Amazon,Amazon.in,Expedited,MEN5032,MEN5032-KR-M,Kurta,M,B08YZ1BNXR,Shipped,1,INR,562.0,MAHARASHTRA,False,,sale,valid
+403-9484832-6592355,2022-04-22,Shipped,Amazon,Amazon.in,Expedited,JNE3706,JNE3706-DR-XL,Western Dress,XL,B09832FD39,Shipped,1,INR,413.0,TAMIL NADU,False,,sale,valid
+405-4677441-7291535,2022-04-22,Shipped,Amazon,Amazon.in,Expedited,JNE3716,JNE3716-KR-XXL,Kurta,XXL,B099NPKT7D,Shipped,1,INR,399.0,TELANGANA,False,,sale,valid
+408-2317266-7889118,2022-04-22,Shipped,Amazon,Amazon.in,Expedited,JNE3613,JNE3613-KR-XL,Kurta,XL,B08XVKMPHJ,Shipped,1,INR,399.0,HARYANA,False,,sale,valid
+171-1443270-1348364,2022-04-23,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,J0371,J0371-SKD-XXL,Set,XXL,B09K3QPWXK,Shipped,1,INR,1099.0,CHHATTISGARH,False,Easy Ship,sale,valid
+405-8832439-4307526,2022-04-23,Shipped,Amazon,Amazon.in,Expedited,JNE3567,JNE3567-KR-S,Kurta,S,B08KS1W7V8,Shipped,1,INR,399.0,KERALA,False,,sale,valid
+408-0519111-3865943,2022-04-23,Cancelled,Amazon,Amazon.in,Expedited,SET110,SET110-KR-PP-XS,Set,XS,B0822TFD7Y,Cancelled,0,INR,,WEST BENGAL,False,,cancelled,non_positive_quantity
+171-0590072-2342756,2022-04-24,Shipped,Amazon,Amazon.in,Expedited,J0283,J0283-SET-L,Set,L,B08QGQKRFY,Shipped,1,INR,1033.0,ANDHRA PRADESH,False,,sale,valid
+171-5502501-7313132,2022-04-24,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET324,SET324-KR-NP-M,Set,M,B09NQ4NM75,Shipped,1,INR,597.0,KERALA,False,Easy Ship,sale,valid
+402-0931709-6425934,2022-04-24,Shipped,Amazon,Amazon.in,Expedited,JNE3516,JNE3516-KR-E-S,Kurta,S,B08LGVDF55,Shipped,1,INR,362.0,RAJASTHAN,False,,sale,valid
+402-4037946-9215561,2022-04-24,Shipped,Amazon,Amazon.in,Expedited,JNE3510,JNE3510-KR-XS,Kurta,XS,B08WPZCCFT,Shipped,1,INR,429.0,GUJARAT,False,,sale,valid
+404-4097422-2599541,2022-04-24,Shipped,Amazon,Amazon.in,Expedited,SET272,SET272-KR-PP-XXL,Set,XXL,B0983FJSXK,Shipped,1,INR,852.0,UTTAR PRADESH,False,,sale,valid
+406-8742858-5525914,2022-04-24,Shipped,Amazon,Amazon.in,Expedited,JNE3807,JNE3807-KR-XXXL,Kurta,3XL,B09RKC6J4R,Shipped,1,INR,666.0,WEST BENGAL,False,,sale,valid
+407-3068306-5501115,2022-04-24,Shipped,Amazon,Amazon.in,Expedited,JNE3834,JNE3834-KR-XXL,Kurta,XXL,B09Q3HSGH3,Shipped,1,INR,521.0,DELHI,False,,sale,valid
+171-3207825-4891559,2022-04-25,Shipped,Amazon,Amazon.in,Expedited,SET320,SET320-KR-NP-XXXL,Set,3XL,B09RKD5K4Z,Shipped,1,INR,856.0,DELHI,False,,sale,valid
+403-0469881-6300300,2022-04-25,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,MEN5032,MEN5032-KR-S,Kurta,S,B08YYXJJ4V,Shipped,1,INR,562.0,HARYANA,False,Easy Ship,sale,valid
+406-6314156-9425966,2022-04-25,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,MEN5031,MEN5031-KR-L,Kurta,L,B08YZ1JSM7,Shipped,1,INR,549.0,WEST BENGAL,False,Easy Ship,sale,valid
+406-8649792-8089149,2022-04-25,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,J0299,J0299-KR-XS,Kurta,XS,B099FDMPVZ,Shipped,1,INR,345.0,UTTAR PRADESH,False,Easy Ship,sale,valid
+408-3853496-5974748,2022-04-25,Cancelled,Amazon,Amazon.in,Expedited,SET058,SET058-KR-NP-L,Set,L,B07R487XRD,Cancelled,0,INR,,TELANGANA,False,,cancelled,non_positive_quantity
+171-8084196-6067563,2022-04-26,Shipped - Returned to Seller,Merchant,Amazon.in,Standard,JNE3795,JNE3795-KR-L,Kurta,L,B09HMM2G1B,Shipped,1,INR,517.0,UTTAR PRADESH,False,Easy Ship,return,valid
+402-1177837-3645152,2022-04-26,Shipped,Amazon,Amazon.in,Expedited,SET110,SET110-KR-PP-M,Set,M,B0822TDMYH,Shipped,1,INR,788.0,KERALA,False,,sale,valid
+405-0415874-3857965,2022-04-26,Shipped,Amazon,Amazon.in,Expedited,JNE3405,JNE3405-KR-XXXL,Kurta,3XL,B081WZ4T3V,Shipped,1,INR,399.0,WEST BENGAL,False,,sale,valid
+408-9275256-9596302,2022-04-26,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3568,JNE3568-KR-L,Kurta,L,B08KS2BPL8,Shipped,1,INR,0.0,MAHARASHTRA,False,Easy Ship,sale,valid
+405-7586279-7719530,2022-04-27,Shipped,Amazon,Amazon.in,Expedited,SET183,SET183-KR-DH-XL,Set,XL,B08B3ZCRC5,Shipped,1,INR,759.0,CHHATTISGARH,False,,sale,valid
+408-9052249-6698753,2022-04-27,Shipped,Amazon,Amazon.in,Expedited,J0343,J0343-DR-XXL,Western Dress,XXL,B09831TPR5,Shipped,1,INR,744.0,WEST BENGAL,False,,sale,valid
+408-9448786-6697125,2022-04-27,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET324,SET324-KR-NP-XL,Set,XL,B09NQ4QS13,Shipped,1,INR,0.0,BIHAR,False,Easy Ship,sale,valid
+402-2105555-6827522,2022-04-28,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE1998,JNE1998-KR-311-XXL,Kurta,XXL,B078NTPQHT,Shipped,1,INR,295.0,KARNATAKA,False,Easy Ship,sale,valid
+403-9311781-4634701,2022-04-28,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3794,JNE3794-KR-XXXL,Kurta,3XL,B09HMHM56Y,Shipped,1,INR,517.0,KERALA,False,Easy Ship,sale,valid
+404-1071598-3355562,2022-04-28,Cancelled,Amazon,Amazon.in,Expedited,SET279,SET279-LC-S,Set,S,B09CT6L67S,Unshipped,1,INR,888.0,PUNJAB,False,,cancelled,valid
+171-9673855-2321133,2022-04-29,Shipped,Amazon,Amazon.in,Expedited,SET288,SET288-KR-NP-XS,Set,XS,B09M6TJG5T,Shipped,1,INR,684.0,HARYANA,False,,sale,valid
+404-4101613-8698765,2022-04-30,Cancelled,Amazon,Amazon.in,Expedited,SET197,SET197-KR-NP-L,Set,L,B08B3YPD63,Cancelled,0,INR,,TELANGANA,False,,cancelled,non_positive_quantity
+404-6408992-6781106,2022-04-30,Shipped,Amazon,Amazon.in,Expedited,JNE3468,JNE3468-KR-L,Kurta,L,B08RP69C9N,Shipped,1,INR,352.0,TAMIL NADU,False,,sale,valid
+405-7258660-0843511,2022-04-30,Cancelled,Amazon,Amazon.in,Expedited,J0341,J0341-DR-L,Western Dress,L,B099NRCT7B,Cancelled,0,INR,,UTTARAKHAND,False,,cancelled,non_positive_quantity
+403-0293259-3728346,2022-05-01,Shipped,Amazon,Amazon.in,Expedited,JNE3645,JNE3645-TP-N-XS,Top,XS,B08ZJ2CB3B,Shipped,1,INR,460.0,KARNATAKA,False,,sale,valid
+403-5109313-2587540,2022-05-01,Shipped,Amazon,Amazon.in,Expedited,JNE3716,JNE3716-KR-M,Kurta,M,B099FDKFX7,Shipped,1,INR,399.0,UTTAR PRADESH,False,,sale,valid
+404-8512451-9758722,2022-05-01,Shipped,Amazon,Amazon.in,Expedited,J0008,J0008-SKD-XL,Set,XL,B0894X711G,Shipped,1,INR,1133.0,MAHARASHTRA,False,,sale,valid
+407-9471390-1145159,2022-05-01,Shipped,Amazon,Amazon.in,Expedited,JNE3659,JNE3659-TP-N-S,Top,S,B08ZHPC5JP,Shipped,1,INR,493.0,KARNATAKA,False,,sale,valid
+408-0068723-5708306,2022-05-01,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,J0117,J0117-TP-M,Top,M,B08N4TGTRV,Shipped,1,INR,518.0,CHHATTISGARH,False,Easy Ship,sale,valid
+404-4117828-2379530,2022-05-02,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,J0096,J0096-KR-M,Kurta,M,B089G1HM97,Shipped,1,INR,568.0,UTTAR PRADESH,False,Easy Ship,sale,valid
+405-6251660-2020312,2022-05-02,Shipped,Amazon,Amazon.in,Expedited,PJNE3440,PJNE3440-KR-N-5XL,Kurta,5XL,B09LD1P9KP,Shipped,1,INR,534.0,MAHARASHTRA,False,,sale,valid
+405-8358790-8718715,2022-05-02,Shipped,Amazon,Amazon.in,Expedited,SET197,SET197-KR-NP-L,Set,L,B08B3YPD63,Shipped,1,INR,759.0,DELHI,False,,sale,valid
+402-4627834-2438729,2022-05-03,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,J0117,J0117-TP-M,Top,M,B08N4TGTRV,Shipped,1,INR,487.0,HARYANA,False,Easy Ship,sale,valid
+408-3045772-6656333,2022-05-03,Shipped,Amazon,Amazon.in,Expedited,SET265,SET265-KR-NP-XXL,Set,XXL,B0983DD4G7,Shipped,1,INR,835.0,CHHATTISGARH,False,,sale,valid
+402-0419265-5100366,2022-05-04,Shipped,Amazon,Amazon.in,Expedited,PJNE2100,PJNE2100-KR-N-5XL,Kurta,5XL,B09LD59CMC,Shipped,1,INR,458.0,MAHARASHTRA,False,,sale,valid
+403-1783449-5227509,2022-05-04,Shipped,Amazon,Amazon.in,Expedited,SET374,SET374-KR-NP-XXL,Set,XXL,B09NDKN86H,Shipped,1,INR,597.0,TAMIL NADU,False,,sale,valid
+404-4222801-8918744,2022-05-04,Cancelled,Merchant,Amazon.in,Standard,SET377,SET377-KR-NP-XXL,Set,XXL,B09TZTF5VF,,0,INR,1105.36,MAHARASHTRA,False,Easy Ship,cancelled,non_positive_quantity
+171-7162474-2949126,2022-05-05,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3611,JNE3611-KR-L,Kurta,L,B08XVQMSJV,Shipped,1,INR,469.0,TAMIL NADU,False,Easy Ship,sale,valid
+171-8398853-7657162,2022-05-05,Cancelled,Merchant,Amazon.in,Standard,SET278,SET278-KR-NP-S,Set,S,B0983F2ZJW,,0,INR,1359.82,MAHARASHTRA,False,Easy Ship,cancelled,non_positive_quantity
+402-8699516-5262721,2022-05-05,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,J0013,J0013-SKD-XXL,Set,XXL,B08CMRGFFJ,Shipped,1,INR,1072.0,JHARKHAND,False,Easy Ship,sale,valid
+408-3586962-4298723,2022-05-05,Shipped,Amazon,Amazon.in,Expedited,JNE3905,JNE3905-DR-M,Western Dress,M,B09YYRG28X,Shipped,1,INR,625.0,HARYANA,False,,sale,valid
+402-9345481-6438724,2022-05-06,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,J0097,J0097-KR-M,Kurta,M,B08BJT3PSM,Shipped,1,INR,534.0,DELHI,False,Easy Ship,sale,valid
+404-4490007-6357116,2022-05-06,Shipped,Amazon,Amazon.in,Expedited,J0396,J0396-DR-M,Western Dress,M,B09SDYMTMZ,Shipped,1,INR,807.0,KARNATAKA,False,,sale,valid
+405-8255299-5377953,2022-05-06,Shipped,Amazon,Amazon.in,Expedited,BL009,BL009-61BLACK,Blouse,Free,B077Z4ZBHC,Shipped,1,INR,344.0,MAHARASHTRA,False,,sale,valid
+403-4103442-7559546,2022-05-07,Shipped,Amazon,Amazon.in,Expedited,SET145,SET145-KR-NP-XXL,Set,XXL,B0822VCQQC,Shipped,1,INR,774.0,DELHI,False,,sale,valid
+403-8554307-2677907,2022-05-07,Shipped,Amazon,Amazon.in,Expedited,JNE3764,JNE3764-KR-XXXL,Kurta,3XL,B09K3SSDSZ,Shipped,1,INR,387.0,ANDHRA PRADESH,False,,sale,valid
+405-0370914-7092366,2022-05-07,Shipped,Amazon,Amazon.in,Expedited,J0119,J0119-TP-XL,Top,XL,B08RYPWC3J,Shipped,1,INR,550.0,UTTAR PRADESH,False,,sale,valid
+405-0903508-6745951,2022-05-07,Shipped,Amazon,Amazon.in,Expedited,J0297,J0297-TP-L,Top,L,B099S6YS1J,Shipped,1,INR,550.0,KARNATAKA,False,,sale,valid
+408-9796312-6105158,2022-05-07,Shipped,Amazon,Amazon.in,Expedited,SET224,SET224-KR-NP-XXXL,Set,3XL,B08MXGD5FG,Shipped,1,INR,1098.0,KARNATAKA,False,,sale,valid
+404-5482633-4285115,2022-05-08,Shipped,Amazon,Amazon.in,Expedited,J0003,J0003-SET-XS,Set,XS,B0894WW15B,Shipped,1,INR,664.0,NAGALAND,False,,sale,valid
+S02-6165178-1614303,2022-05-08,Shipped,Amazon,Non-Amazon,Standard,JNE3291,JNE3291-KR-L,Kurta,L,B07R5X9WJB,Unshipped,1,INR,,GUJARAT,False,,sale,missing_amount
+403-0128079-7418751,2022-05-09,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3619,JNE3619-KR-M,Kurta,M,B091Q8446G,Shipped,1,INR,301.0,TAMIL NADU,False,Easy Ship,sale,valid
+407-7747026-4021100,2022-05-09,Shipped,Amazon,Amazon.in,Expedited,PJNE2100,PJNE2100-KR-N-4XL,Kurta,4XL,B09LD22L9Q,Shipped,1,INR,764.0,KARNATAKA,False,,sale,valid
+408-6831534-9465134,2022-05-09,Shipped,Amazon,Amazon.in,Standard,J0166,J0166-DR-XS,Western Dress,XS,B08QGR275F,Shipped,1,INR,0.0,DELHI,False,,sale,valid
+404-0891801-1369153,2022-05-10,Shipped,Amazon,Amazon.in,Expedited,J0119,J0119-TP-XL,Top,XL,B08RYPWC3J,Shipped,1,INR,574.0,UTTAR PRADESH,False,,sale,valid
+404-1834722-4248320,2022-05-10,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3706,JNE3706-DR-XXL,Western Dress,XXL,B0982ZBG32,Shipped,1,INR,443.0,HARYANA,False,Easy Ship,sale,valid
+171-2395389-5880339,2022-05-11,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET363,SET363-KR-NP-L,Set,L,B09TH68L97,Shipped,1,INR,1149.0,KERALA,False,Easy Ship,sale,valid
+171-5057375-2831560,2022-05-11,Cancelled,Merchant,Amazon.in,Standard,SET147,SET147-KR-NP-XXXL,Set,3XL,B0899ZLBW4,,0,INR,651.43,TAMIL NADU,False,Easy Ship,cancelled,non_positive_quantity
+171-5591609-4227501,2022-05-11,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,MEN5009,MEN5009-KR-XL,Kurta,XL,B08YYTCPYX,Shipped,1,INR,709.0,MAHARASHTRA,False,Easy Ship,sale,valid
+404-1275629-4282767,2022-05-11,Cancelled,Amazon,Amazon.in,Expedited,PJNE2270,PJNE2270-KR-N-5XL,Kurta,5XL,B09LD23ZZN,Cancelled,0,INR,,KARNATAKA,False,,cancelled,non_positive_quantity
+404-7784326-5675525,2022-05-11,Cancelled,Merchant,Amazon.in,Standard,JNE3797,JNE3797-KR-M,Western Dress,M,B09SDY8DCT,,0,INR,734.29,DELHI,False,Easy Ship,cancelled,non_positive_quantity
+405-2536496-1541941,2022-05-11,Shipped,Amazon,Amazon.in,Expedited,J0334,J0334-TP-M,Top,M,B0986ZWRKD,Shipped,1,INR,599.0,TELANGANA,False,,sale,valid
+405-7477326-1738735,2022-05-11,Shipped,Amazon,Amazon.in,Expedited,J0207,J0207-DR-XL,Western Dress,XL,B0967P5TP9,Shipped,1,INR,885.0,KARNATAKA,False,,sale,valid
+171-2642099-4218722,2022-05-13,Shipped,Amazon,Amazon.in,Expedited,J0254,J0254-SKD-S,Set,S,B09M6SMZ1M,Shipped,1,INR,750.0,TAMIL NADU,False,,sale,valid
+402-6264972-3269125,2022-05-13,Shipped,Amazon,Amazon.in,Expedited,MEN5008,MEN5008-KR-M,Kurta,M,B08YZ2L9TX,Shipped,1,INR,709.0,KARNATAKA,False,,sale,valid
+402-8572903-6502717,2022-05-13,Shipped - Returned to Seller,Merchant,Amazon.in,Standard,SET329,SET329-KR-NP-XXL,Set,XXL,B09K3JK4P9,Shipped,1,INR,666.0,ANDAMAN & NICOBAR,False,Easy Ship,return,valid
+403-4546759-3866766,2022-05-13,Cancelled,Amazon,Amazon.in,Expedited,SET436,SET436-KR-NP-XXL,Set,XXL,B09YNZSY8T,Cancelled,0,INR,,WEST BENGAL,False,,cancelled,non_positive_quantity
+403-8731562-2132329,2022-05-13,Shipped,Amazon,Amazon.in,Expedited,JNE3294,JNE3294-KR-XXL,Kurta,XXL,B07R41S1YG,Shipped,1,INR,449.0,TELANGANA,False,,sale,valid
+402-6114305-5421117,2022-05-14,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3603,JNE3603-KR-M,Kurta,M,B08RYN2W4K,Shipped,1,INR,301.0,KARNATAKA,False,Easy Ship,sale,valid
+404-5112334-0721124,2022-05-14,Cancelled,Amazon,Amazon.in,Expedited,MEN5011,MEN5011-KR-L,Kurta,L,B08YZ243V6,Unshipped,1,INR,709.0,GUJARAT,False,,cancelled,valid
+406-8532058-7080311,2022-05-14,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3368,JNE3368-KR-S,Kurta,S,B081WYJ6CV,Shipped,1,INR,471.0,DELHI,False,Easy Ship,sale,valid
+402-2703312-8609121,2022-05-15,Shipped,Amazon,Amazon.in,Expedited,JNE3800,JNE3800-KR-M,Western Dress,M,B09SDXQ3X9,Shipped,1,INR,771.0,KERALA,False,,sale,valid
+404-5344445-5354704,2022-05-16,Cancelled,Merchant,Amazon.in,Standard,MEN5026,MEN5026-KR-M,Kurta,M,B08YZ3NKT8,,0,INR,1350.48,TAMIL NADU,False,Easy Ship,cancelled,non_positive_quantity
+171-2318342-5037118,2022-05-17,Shipped,Amazon,Amazon.in,Expedited,JNE3640,JNE3640-TP-N-XL,Top,XL,B08ZJ297YM,Shipped,1,INR,518.0,MAHARASHTRA,False,,sale,valid
+403-8638962-5046768,2022-05-17,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,J0308,J0308-DR-XL,Western Dress,XL,B099NS3FWG,Shipped,1,INR,665.0,KERALA,False,Easy Ship,sale,valid
+405-1555766-4476361,2022-05-17,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3440,JNE3440-KR-N-XXXL,Kurta,3XL,B09HMTKV2L,Shipped,1,INR,435.0,MAHARASHTRA,False,Easy Ship,sale,valid
+407-5957596-9393965,2022-05-17,Cancelled,Amazon,Amazon.in,Expedited,SET398,SET398-KR-PP-M,Set,M,B09RPRS8JL,Unshipped,1,INR,1186.0,KARNATAKA,False,,cancelled,valid
+404-8375002-0821904,2022-05-18,Shipped,Amazon,Amazon.in,Expedited,JNE3797,JNE3797-KR-XS,Western Dress,XS,B09SDY9SQ6,Shipped,1,INR,771.0,WEST BENGAL,False,,sale,valid
+407-7067605-0350738,2022-05-18,Cancelled,Merchant,Amazon.in,Standard,JNE3573,JNE3573-KR-XXL,Kurta,XXL,B08PCS3W6R,,0,INR,362.86,UTTAR PRADESH,False,Easy Ship,cancelled,non_positive_quantity
+404-5287784-9275556,2022-05-19,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET357,SET357-KR-NP-XL,Set,XL,B09Y3FNR5D,Shipped,1,INR,771.0,UTTAR PRADESH,False,Easy Ship,sale,valid
+406-4680270-0493909,2022-05-19,Cancelled,Merchant,Amazon.in,Standard,SET357,SET357-KR-NP-XXXL,Set,3XL,B09Y3F7W6T,,0,INR,,MADHYA PRADESH,False,Easy Ship,cancelled,non_positive_quantity
+407-4911567-6490731,2022-05-19,Shipped,Amazon,Amazon.in,Expedited,JNE3725,JNE3725-KR-S,Kurta,S,B098117KSN,Shipped,1,INR,448.0,TAMIL NADU,False,,sale,valid
+408-3065883-9558716,2022-05-19,Shipped,Amazon,Amazon.in,Expedited,MEN5012,MEN5012-KR-XL,Kurta,XL,B08YZ48C1K,Shipped,1,INR,655.0,TELANGANA,False,,sale,valid
+402-5740825-7482741,2022-05-20,Cancelled,Merchant,Amazon.in,Standard,SET383,SET383-KR-NP-S,Set,S,B09K3N11KK,,0,INR,,UTTARAKHAND,False,Easy Ship,cancelled,non_positive_quantity
+405-0719182-6431530,2022-05-20,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3625,JNE3625-DR-M,Western Dress,M,B08W521STV,Shipped,1,INR,434.0,UTTAR PRADESH,False,Easy Ship,sale,valid
+407-9384542-9075561,2022-05-20,Shipped,Amazon,Amazon.in,Expedited,SET276,SET276-KR-PP-XS,Set,XS,B0983DV331,Shipped,1,INR,1238.0,DELHI,False,,sale,valid
+404-7955685-1418710,2022-05-21,Cancelled,Merchant,Amazon.in,Standard,SET357,SET357-KR-NP-M,Set,M,B09Y3MWCDM,,0,INR,734.29,TELANGANA,False,Easy Ship,cancelled,non_positive_quantity
+405-0108387-8878749,2022-05-21,Shipped,Amazon,Amazon.in,Expedited,JNE3766,JNE3766-KR-XXL,Kurta,XXL,B09K3W66GK,Shipped,1,INR,517.0,MADHYA PRADESH,False,,sale,valid
+408-3148639-0985959,2022-05-21,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,J0339,J0339-DR-L,Western Dress,L,B098315N2Z,Shipped,1,INR,825.0,KERALA,False,Easy Ship,sale,valid
+171-2577048-6545940,2022-05-23,Shipped,Amazon,Amazon.in,Expedited,SET357,SET357-KR-NP-L,Set,L,B09Y3G52V3,Shipped,1,INR,771.0,UTTAR PRADESH,False,,sale,valid
+402-3192241-2567556,2022-05-23,Shipped,Amazon,Amazon.in,Expedited,J0004,J0004-SKD-S,Set,S,B0894Y659D,Shipped,1,INR,1186.0,MAHARASHTRA,False,,sale,valid
+408-2741007-3339525,2022-05-23,Shipped,Amazon,Amazon.in,Expedited,JNE3487,JNE3487-KR-S,Kurta,S,B08RP1Z6L4,Shipped,1,INR,345.0,GUJARAT,False,,sale,valid
+404-7658121-7393161,2022-05-24,Shipped,Amazon,Amazon.in,Expedited,JNE3620,JNE3620-KR-M,Kurta,M,B091Q9FQ4B,Shipped,1,INR,325.0,MAHARASHTRA,False,,sale,valid
+402-9019772-6397954,2022-05-25,Shipped,Amazon,Amazon.in,Expedited,JNE3784,JNE3784-KR-L,Kurta,L,B09K3TM23D,Shipped,1,INR,517.0,KARNATAKA,False,,sale,valid
+403-5590120-7452348,2022-05-25,Shipped,Amazon,Amazon.in,Expedited,MEN5004,MEN5004-KR-XXL,Kurta,XXL,B08YZ16M9S,Shipped,1,INR,709.0,UTTARAKHAND,False,,sale,valid
+407-4828234-7541134,2022-05-25,Shipped,Amazon,Amazon.in,Expedited,JNE3801,JNE3801-KR-M,Kurta,M,B09SDZ4FH9,Shipped,1,INR,771.0,ANDHRA PRADESH,False,,sale,valid
+407-9402095-4053939,2022-05-25,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3905,JNE3905-DR-XS,Western Dress,XS,B09YYRHFQ1,Shipped,1,INR,625.0,KARNATAKA,False,Easy Ship,sale,valid
+171-3132374-3141122,2022-05-26,Shipped,Amazon,Amazon.in,Expedited,JNE3797,JNE3797-KR-XL,Western Dress,XL,B09SDXRYBG,Shipped,1,INR,771.0,MAHARASHTRA,False,,sale,valid
+405-6976411-7860346,2022-05-26,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,NW030,NW030-TP-PJ-XXL,Set,XXL,B09G2R8XLM,Shipped,1,INR,582.0,MAHARASHTRA,False,Easy Ship,sale,valid
+407-4231003-5143509,2022-05-26,Shipped,Amazon,Amazon.in,Expedited,J0119,J0119-TP-XXL,Top,XXL,B08RYRBZPC,Shipped,1,INR,574.0,TELANGANA,False,,sale,valid
+171-7746605-6083502,2022-05-27,Shipped,Amazon,Amazon.in,Expedited,JNE3781,JNE3781-KR-XXL,Kurta,XXL,B09K3XTK9M,Shipped,1,INR,432.0,MAHARASHTRA,False,,sale,valid
+403-2693076-7104359,2022-05-27,Shipped,Amazon,Amazon.in,Expedited,PJNE2014,PJNE2014-KR-N-5XL,Kurta,5XL,B09LD4D16J,Shipped,1,INR,798.0,TAMIL NADU,False,,sale,valid
+403-4624796-5636312,2022-05-27,Shipped,Amazon,Amazon.in,Expedited,JNE3798,JNE3798-KR-L,Western Dress,L,B09SDX13G7,Shipped,1,INR,771.0,MAHARASHTRA,False,,sale,valid
+407-3858699-1656343,2022-05-28,Shipped,Amazon,Amazon.in,Expedited,SET293,SET293-KR-NP-XS,Set,XS,B09K3938KW,Shipped,1,INR,736.0,ODISHA,False,,sale,valid
+408-6467874-0290737,2022-05-28,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET327,SET327-KR-DPT-M,Set,M,B09PN41YXK,Shipped,1,INR,999.0,KARNATAKA,False,Easy Ship,sale,valid
+408-4366137-6563535,2022-05-29,Cancelled,Amazon,Amazon.in,Expedited,JNE3440,JNE3440-KR-N-XXL,Kurta,XXL,B081XBQBGF,Unshipped,1,INR,435.0,ANDHRA PRADESH,False,,cancelled,valid
+408-4527426-7373951,2022-05-29,Shipped,Amazon,Amazon.in,Expedited,SET357,SET357-KR-NP-M,Set,M,B09Y3MWCDM,Shipped,1,INR,771.0,MAHARASHTRA,False,,sale,valid
+407-3942544-1532366,2022-05-30,Shipped,Amazon,Amazon.in,Expedited,JNE3560,JNE3560-KR-XL,Kurta,XL,B08PCSJ2M6,Shipped,1,INR,544.0,TELANGANA,False,,sale,valid
+407-9758460-8822765,2022-05-30,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3905,JNE3905-DR-XS,Western Dress,XS,B09YYRHFQ1,Shipped,1,INR,625.0,WEST BENGAL,False,Easy Ship,sale,valid
+402-0506809-8680342,2022-05-31,Shipped,Amazon,Amazon.in,Expedited,JNE3866,JNE3866-KR-L,Kurta,L,B09TZXBKLL,Shipped,1,INR,753.0,KERALA,False,,sale,valid
+404-5963451-7335564,2022-05-31,Shipped,Amazon,Amazon.in,Expedited,J0308,J0308-DR-XS,Western Dress,XS,B099NR97XL,Shipped,1,INR,665.0,KERALA,False,,sale,valid
+405-3368365-8701903,2022-05-31,Shipped,Amazon,Amazon.in,Expedited,JNE3707,JNE3707-DR-XL,Western Dress,XL,B098327WXY,Shipped,1,INR,475.0,UTTAR PRADESH,False,,sale,valid
+407-4996655-1537939,2022-05-31,Cancelled,Amazon,Amazon.in,Expedited,J0126,J0126-SKD-XL,Set,XL,B08TZYS47B,Cancelled,0,INR,,HARYANA,False,,cancelled,non_positive_quantity
+405-2815048-8034709,2022-06-01,Shipped,Amazon,Amazon.in,Expedited,JNE3030,JNE3030-KR-XL,Kurta,XL,B07JKZNYPH,Shipped,1,INR,736.0,KARNATAKA,False,,sale,valid
+408-1560141-0805110,2022-06-01,Shipped,Amazon,Amazon.in,Expedited,J0157,J0157-DR-M,Western Dress,M,B0983292DV,Shipped,1,INR,659.0,KARNATAKA,False,,sale,valid
+402-1196985-9171548,2022-06-02,Shipped,Amazon,Amazon.in,Expedited,J0301,J0301-TP-S,Top,S,B099S7RVXG,Shipped,1,INR,487.0,MAHARASHTRA,False,,sale,valid
+403-8810024-4133102,2022-06-02,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,J0399,J0399-DR-XS,Western Dress,XS,B09SDYRP84,Shipped,1,INR,744.0,ANDHRA PRADESH,False,Easy Ship,sale,valid
+404-5577346-3005136,2022-06-02,Shipped,Amazon,Amazon.in,Expedited,JNE3484,JNE3484-KR-XL,Kurta,XL,B08W9KCKQD,Shipped,1,INR,301.0,TELANGANA,False,,sale,valid
+171-3976547-1968303,2022-06-03,Shipped,Amazon,Amazon.in,Expedited,JNE3928,JNE3928-KR-XXXL,Kurta,3XL,B09XKD2LBH,Shipped,1,INR,568.0,JHARKHAND,False,,sale,valid
+171-4788660-7217902,2022-06-03,Shipped,Amazon,Amazon.in,Expedited,J0339,J0339-DR-L,Western Dress,L,B098315N2Z,Shipped,1,INR,786.0,TELANGANA,False,,sale,valid
+403-7509317-2033103,2022-06-03,Shipped,Amazon,Amazon.in,Expedited,JNE2270,JNE2270-KR-487-A-M,Kurta,M,B07H7FZD32,Shipped,1,INR,518.0,DELHI,False,,sale,valid
+171-3066241-5565142,2022-06-04,Shipped,Amazon,Amazon.in,Expedited,JNE3710,JNE3710-DR-XXXL,Western Dress,3XL,B091T18F3W,Shipped,1,INR,956.0,MAHARASHTRA,False,,sale,valid
+408-2874611-7891507,2022-06-04,Shipped,Amazon,Amazon.in,Standard,JNE3618,JNE3618-KR-XXL,Kurta,XXL,B091Q9J9QL,Shipped,1,INR,0.0,PUNJAB,False,,sale,valid
+403-0367785-2525958,2022-06-06,Shipped,Amazon,Amazon.in,Expedited,JNE3738,JNE3738-KR-XXL,Kurta,XXL,B099NN5V8M,Shipped,1,INR,383.0,TELANGANA,False,,sale,valid
+407-2959668-0116360,2022-06-06,Shipped,Amazon,Amazon.in,Expedited,SET341,SET341-KR-NP-XL,Set,XL,B09NPX3HG3,Shipped,1,INR,857.0,UTTAR PRADESH,False,,sale,valid
+408-3173743-7374737,2022-06-06,Shipped,Amazon,Amazon.in,Expedited,SET229,SET229-KR-PP-XXL,Set,XXL,B08QGMTZHX,Shipped,1,INR,845.0,KARNATAKA,False,,sale,valid
+171-0544563-3987537,2022-06-07,Shipped,Amazon,Amazon.in,Expedited,J0228,J0228-SKD-XL,Set,XL,B09M6T8JXP,Shipped,1,INR,1613.0,TELANGANA,False,,sale,valid
+171-3490970-0193161,2022-06-07,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3797,JNE3797-KR-XS,Western Dress,XS,B09SDY9SQ6,Shipped,1,INR,735.0,TAMIL NADU,False,Easy Ship,sale,valid
+171-9100889-7650715,2022-06-07,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,J0341,J0341-DR-S,Western Dress,S,B099NR7612,Shipped,1,INR,1168.0,HARYANA,False,Easy Ship,sale,valid
+406-3786675-1569110,2022-06-07,Cancelled,Amazon,Amazon.in,Expedited,J0283,J0283-SET-L,Set,L,B08QGQKRFY,Cancelled,0,INR,,MAHARASHTRA,False,,cancelled,non_positive_quantity
+408-9812494-2355503,2022-06-07,Shipped,Amazon,Amazon.in,Expedited,SET187,SET187-KR-DH-M,Set,M,B08B412RJH,Shipped,1,INR,671.0,MAHARASHTRA,False,,sale,valid
+407-7700900-1541143,2022-06-08,Shipped,Amazon,Amazon.in,Expedited,SET331,SET331-KR-NP-S,Set,S,B09NQ47F17,Shipped,1,INR,635.0,ANDHRA PRADESH,False,,sale,valid
+408-2929551-0629945,2022-06-08,Shipped,Amazon,Amazon.in,Expedited,SET278,SET278-KR-NP-M,Set,M,B0983F3BLZ,Shipped,1,INR,1442.0,UTTAR PRADESH,False,,sale,valid
+171-9941836-7951511,2022-06-09,Shipped,Amazon,Amazon.in,Expedited,JNE3793,JNE3793-KR-M,Kurta,M,B09NQ75RF7,Shipped,1,INR,349.0,MAHARASHTRA,False,,sale,valid
+405-1310118-2335521,2022-06-09,Shipped,Amazon,Amazon.in,Expedited,JNE3506,JNE3506-KR-XXL,Kurta,XXL,B08WQCD1RK,Shipped,1,INR,635.0,MAHARASHTRA,False,,sale,valid
+171-3849799-3115559,2022-06-10,Shipped,Amazon,Amazon.in,Expedited,JNE3790,JNE3790-KR-XXXL,Kurta,3XL,B09KXPYTCZ,Shipped,1,INR,301.0,ANDHRA PRADESH,False,,sale,valid
+404-2339377-2064365,2022-06-10,Shipped,Amazon,Amazon.in,Expedited,JNE3784,JNE3784-KR-XS,Kurta,XS,B09K3X66GN,Shipped,1,INR,486.0,KERALA,False,,sale,valid
+406-5097641-1903539,2022-06-10,Shipped,Amazon,Amazon.in,Expedited,SET392,SET392-KR-NP-XL,Set,XL,B09RKF8L5N,Shipped,1,INR,799.0,TAMIL NADU,False,,sale,valid
+404-4592724-6597962,2022-06-11,Shipped,Amazon,Amazon.in,Expedited,SET345,SET345-KR-NP-S,Set,S,B09KXV6T8Q,Shipped,1,INR,635.0,ANDHRA PRADESH,False,,sale,valid
+408-3314097-8213104,2022-06-11,Shipped,Amazon,Amazon.in,Expedited,JNE3885,JNE3885-KR-XXL,Kurta,XXL,B09TZXWWXN,Shipped,1,INR,526.0,MAHARASHTRA,False,,sale,valid
+408-4844713-0993140,2022-06-11,Shipped,Amazon,Amazon.in,Expedited,J0049,J0049-TP-XXL,Top,XXL,B08C35KN3J,Shipped,1,INR,321.0,MADHYA PRADESH,False,,sale,valid
+402-5157951-4319537,2022-06-12,Cancelled,Amazon,Amazon.in,Expedited,SET343,SET343-KR-NP-M,Set,M,B09NDK1LZ3,Cancelled,0,INR,,DELHI,False,,cancelled,non_positive_quantity
+405-1682999-1001141,2022-06-13,Cancelled,Amazon,Amazon.in,Expedited,J0008,J0008-SKD-M,Set,M,B0894YTN3H,Cancelled,0,INR,,MAHARASHTRA,False,,cancelled,non_positive_quantity
+407-1552302-1574745,2022-06-13,Cancelled,Amazon,Amazon.in,Expedited,JNE3764,JNE3764-KR-XL,Kurta,XL,B09K3ST3YW,Unshipped,1,INR,387.0,MAHARASHTRA,False,,cancelled,valid
+402-7059282-5315566,2022-06-14,Shipped,Amazon,Amazon.in,Expedited,NW020,NW020-ST-SR-XXXL,Set,3XL,B099NV3XFT,Shipped,1,INR,517.0,MAHARASHTRA,False,,sale,valid
+408-9124766-1641146,2022-06-14,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3721,JNE3721-KR-L,Kurta,L,B099FBM4FZ,Shipped,1,INR,292.0,TAMIL NADU,False,Easy Ship,sale,valid
+171-3743479-6751528,2022-06-15,Shipped,Amazon,Amazon.in,Expedited,MEN5021,MEN5021-KR-L,Kurta,L,B08YYZNNWM,Shipped,1,INR,754.0,ANDHRA PRADESH,False,,sale,valid
+402-0365305-2448324,2022-06-15,Shipped,Amazon,Amazon.in,Expedited,J0198,J0198-TP-XL,Top,XL,B0986YD8K8,Shipped,1,INR,826.0,TELANGANA,False,,sale,valid
+403-5176833-2251537,2022-06-15,Cancelled,Merchant,Amazon.in,Standard,JNE3373,JNE3373-KR-XXXL,Kurta,3XL,B082W7MZVQ,,0,INR,358.1,KERALA,False,Easy Ship,cancelled,non_positive_quantity
+402-0542598-0773952,2022-06-16,Cancelled,Amazon,Amazon.in,Expedited,PJNE2171,PJNE2171-KR-N-5XL,Kurta,5XL,B09LD23MRS,Unshipped,1,INR,1043.0,MAHARASHTRA,False,,cancelled,valid
+402-8857520-8897168,2022-06-17,Cancelled,Amazon,Amazon.in,Expedited,SET402,SET402-KR-NP-XXL,Set,XXL,B09VC57SBH,Unshipped,1,INR,988.0,MAHARASHTRA,False,,cancelled,valid
+403-3697717-2373101,2022-06-17,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET323,SET323-KR-NP-L,Set,L,B09NDKDH96,Shipped,1,INR,999.0,TELANGANA,False,Easy Ship,sale,valid
+406-0221265-1945135,2022-06-17,Shipped,Amazon,Amazon.in,Expedited,SET197,SET197-KR-NP-XXL,Set,XXL,B08B3YH18X,Shipped,1,INR,759.0,TAMIL NADU,False,,sale,valid
+406-9898129-1511523,2022-06-17,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3860,JNE3860-DR-L,Western Dress,L,B09SDY4TFK,Shipped,1,INR,614.0,KARNATAKA,False,Easy Ship,sale,valid
+407-4620154-5764325,2022-06-17,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET293,SET293-KR-NP-XXXL,Set,3XL,B09K3CNYF5,Shipped,1,INR,692.0,KARNATAKA,False,Easy Ship,sale,valid
+402-1016194-6469150,2022-06-19,Cancelled,Amazon,Amazon.in,Expedited,JNE3680,JNE3680-TU-M,Top,M,B09438FK2J,Unshipped,1,INR,758.0,ANDHRA PRADESH,False,,cancelled,valid
+402-5472084-1085151,2022-06-19,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET145,SET145-KR-NP-M,Set,M,B0822TVYZ1,Shipped,1,INR,764.0,KARNATAKA,False,Easy Ship,sale,valid
+403-7879136-4944317,2022-06-20,Cancelled,Merchant,Amazon.in,Standard,SET350,SET350-KR-NP-XL,Set,XL,B09RKD2Z9R,,0,INR,971.43,MEGHALAYA,False,Easy Ship,cancelled,non_positive_quantity
+402-8321041-9367562,2022-06-21,Shipped,Amazon,Amazon.in,Expedited,JNE3811,JNE3811-KR-XS,Kurta,XS,B09RKBG19J,Shipped,1,INR,460.0,PUNJAB,False,,sale,valid
+403-3500470-2393109,2022-06-21,Cancelled,Merchant,Amazon.in,Standard,SET350,SET350-KR-NP-XL,Set,XL,B09RKD2Z9R,,0,INR,971.43,MEGHALAYA,False,Easy Ship,cancelled,non_positive_quantity
+404-6094068-4599536,2022-06-21,Shipped,Amazon,Amazon.in,Expedited,JNE3562,JNE3562-KR-S,Kurta,S,B08MYSDK2X,Shipped,1,INR,476.0,TAMIL NADU,False,,sale,valid
+404-6322922-3350749,2022-06-21,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,SET293,SET293-KR-NP-XL,Set,XL,B09K3DQZ66,Shipped,1,INR,702.0,UTTAR PRADESH,False,Easy Ship,sale,valid
+405-0585625-1524321,2022-06-21,Shipped,Amazon,Amazon.in,Expedited,J0353,J0353-KR-XL,Kurta,XL,B098124BPM,Shipped,1,INR,597.0,MADHYA PRADESH,False,,sale,valid
+407-4007573-8703536,2022-06-21,Cancelled,Amazon,Amazon.in,Expedited,JNE3634,JNE3634-KR-XXL,Kurta,XXL,B097ZZZR1P,Unshipped,1,INR,521.0,HARYANA,False,,cancelled,valid
+408-0615941-7921151,2022-06-21,Shipped,Amazon,Amazon.in,Expedited,JNE3431,JNE3431-KR-XL,Kurta,XL,B08KS7M7F7,Shipped,1,INR,323.0,ODISHA,False,,sale,valid
+402-3288009-4233125,2022-06-22,Shipped,Amazon,Amazon.in,Expedited,SET130,SET130-KR-NP-M,Set,M,B07VT3QVYC,Shipped,1,INR,612.0,KARNATAKA,False,,sale,valid
+402-6602840-6820314,2022-06-22,Shipped,Amazon,Amazon.in,Expedited,JNE3613,JNE3613-KR-L,Kurta,L,B08XVFSDR2,Shipped,1,INR,399.0,ANDHRA PRADESH,False,,sale,valid
+403-9992755-1381159,2022-06-22,Cancelled,Amazon,Amazon.in,Expedited,SET335,SET335-KR-NP-XXXL,Set,3XL,B09Y3FNK98,Cancelled,0,INR,,UTTAR PRADESH,False,,cancelled,non_positive_quantity
+404-1308390-6333931,2022-06-22,Shipped,Amazon,Amazon.in,Expedited,JNE3749,JNE3749-KR-XL,Kurta,XL,B09K3WVV5F,Shipped,1,INR,457.0,SIKKIM,False,,sale,valid
+405-6813535-2178711,2022-06-22,Shipped,Amazon,Amazon.in,Expedited,JNE3738,JNE3738-KR-XXL,Kurta,XXL,B099NN5V8M,Shipped,1,INR,372.0,KARNATAKA,False,,sale,valid
+408-4093348-8808337,2022-06-22,Shipped,Amazon,Amazon.in,Expedited,JNE3781,JNE3781-KR-L,Kurta,L,B09K3XK9ZZ,Shipped,1,INR,416.0,KERALA,False,,sale,valid
+402-7283225-8156327,2022-06-23,Shipped,Amazon,Amazon.in,Expedited,J0402,J0402-DR-S,Western Dress,S,B09SDYKL4S,Shipped,1,INR,688.0,MAHARASHTRA,False,,sale,valid
+407-5663534-3971567,2022-06-23,Shipped,Amazon,Amazon.in,Expedited,JNE3732,JNE3732-KR-XXXL,Kurta,3XL,B09RKCQDKG,Shipped,1,INR,431.0,UTTAR PRADESH,False,,sale,valid
+407-6792602-5001953,2022-06-23,Shipped,Amazon,Amazon.in,Expedited,SET357,SET357-KR-NP-XXL,Set,XXL,B09Y3H5PY8,Shipped,1,INR,725.0,JAMMU & KASHMIR,False,,sale,valid
+171-3465311-8423562,2022-06-24,Shipped,Amazon,Amazon.in,Expedited,JNE3810,JNE3810-KR-M,Kurta,M,B09RKCK42L,Shipped,1,INR,569.0,GOA,False,,sale,valid
+406-9658031-3717101,2022-06-24,Shipped - Delivered to Buyer,Merchant,Amazon.in,Standard,JNE3603,JNE3603-KR-XXL,Kurta,XXL,B08RYNBTRN,Shipped,1,INR,301.0,MAHARASHTRA,False,Easy Ship,sale,valid
+407-7005861-7473161,2022-06-24,Shipped,Amazon,Amazon.in,Expedited,SET197,SET197-KR-NP-XXL,Set,XXL,B08B3YH18X,Shipped,1,INR,759.0,GUJARAT,False,,sale,valid
+171-0386161-6873916,2022-06-25,Cancelled,Merchant,Amazon.in,Standard,JNE3670,JNE3670-TU-XL,Top,XL,B0943KWXGV,,0,INR,369.52,KERALA,False,Easy Ship,cancelled,non_positive_quantity
+402-5161581-8154727,2022-06-25,Shipped - Returning to Seller,Merchant,Amazon.in,Standard,SET405,SET405-KR-NP-M,Set,M,B09QJ5M6TW,Shipped,1,INR,771.0,UTTARAKHAND,False,Easy Ship,return,valid
+408-8579537-5217160,2022-06-25,Shipped - Picked Up,Merchant,Amazon.in,Standard,J0013,J0013-SKD-XXXL,Set,3XL,B08CN3P4HX,Shipped,1,INR,1018.0,TAMIL NADU,False,Easy Ship,sale,valid
+402-3950363-0984342,2022-06-26,Shipped,Amazon,Amazon.in,Expedited,J0332,J0332-DR-XXL,Western Dress,XXL,B09LM6C4WH,Shipped,1,INR,828.0,TAMIL NADU,False,,sale,valid
+407-9818190-1929151,2022-06-28,Shipped,Amazon,Amazon.in,Expedited,J0413,J0413-DR-M,Western Dress,M,B09TY1HFLG,Shipped,1,INR,741.0,TAMIL NADU,False,,sale,valid
+408-1366117-3801959,2022-06-28,Shipped,Amazon,Amazon.in,Expedited,SET185,SET185-KR-NP-L,Set,L,B082Z36JBJ,Shipped,1,INR,0.0,MAHARASHTRA,False,,sale,valid
+171-8180864-7814728,2022-06-29,Pending,Amazon,Amazon.in,Expedited,JNE3665,JNE3665-TP-M,Top,M,B098755S1W,Unshipped,1,INR,545.0,GUJARAT,False,,sale,valid
+408-4104547-1752318,2022-06-29,Pending,Merchant,Amazon.in,Standard,JNE3797,JNE3797-KR-XL,Western Dress,XL,B09SDXRYBG,Unshipped,1,INR,735.0,MAHARASHTRA,False,Easy Ship,sale,valid
